@@ -14,7 +14,7 @@ from flask import (
     url_for,
 )
 
-from .. import entries, models, photos, scoring
+from .. import entries, flags, models, photos, scoring
 
 bp = Blueprint("animals", __name__)
 
@@ -79,6 +79,7 @@ def show_animal(animal_id: int):
         animal=animal,
         recent=recent,
         today_entry=today_entry,
+        flag_list=flags.for_animal(animal_id) if not animal.archived else [],
         max_total=scoring.MAX_TOTAL,
         describe_total=scoring.describe_total,
     )

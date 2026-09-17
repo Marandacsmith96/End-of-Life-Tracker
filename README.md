@@ -36,6 +36,6 @@ pytest
 - [x] Milestone 2: animals (add, edit, archive, photo, pick current pet)
 - [x] Milestone 3: daily entry (scores, weight, appetite, notes, medications, photos)
 - [x] Milestone 4: history and charts
-- [ ] Milestone 5: flags
+- [x] Milestone 5: flags (patterns to watch)
 - [ ] Milestone 6: PDF export
 - [ ] Milestone 7: polish and packaging

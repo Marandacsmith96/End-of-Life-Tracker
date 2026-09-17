@@ -1,0 +1,15 @@
+{# Expects `flag_list` (list of Flag). Renders nothing when empty. #}
+{% if flag_list %}
+<section class="flags" aria-label="Things to watch">
+  {% for flag in flag_list %}
+    <div class="flag {{ flag.level }}">
+      <span class="flag-icon" aria-hidden="true">{{ '!' if flag.is_health else 'i' }}</span>
+      <div>
+        <strong>{{ flag.title }}</strong>
+        <p>{{ flag.detail }}</p>
+      </div>
+    </div>
+  {% endfor %}
+  <p class="muted small flag-note">These are patterns in what you logged, not a diagnosis. Only your vet can say what they mean for {{ animal.name }}.</p>
+</section>
+{% endif %}

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from flask import Flask, g, render_template, session
 
-from . import db, models
+from . import db, flags, models
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -48,6 +48,11 @@ def create_app(test_config: dict | None = None) -> Flask:
     def dashboard():
         active = models.list_animals()
         archived = [a for a in models.list_animals(include_archived=True) if a.archived]
-        return render_template("dashboard.html", animals=active, archived=archived)
+        flag_counts = {
+            a.id: sum(1 for f in flags.for_animal(a.id) if f.is_health) for a in active
+        }
+        return render_template(
+            "dashboard.html", animals=active, archived=archived, flag_counts=flag_counts
+        )
 
     return app

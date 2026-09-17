@@ -11,6 +11,9 @@
     <p class="muted">
       {{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}
     </p>
+    {% if not animal.archived and flag_counts is defined and flag_counts.get(animal.id) %}
+      <a class="badge watch" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ flag_counts[animal.id] }} {{ 'pattern' if flag_counts[animal.id] == 1 else 'patterns' }} to watch</a>
+    {% endif %}
     {% if not animal.archived %}
       {% if g.current_animal and g.current_animal.id == animal.id %}
         <span class="badge">Currently tracking</span>

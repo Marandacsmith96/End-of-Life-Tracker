@@ -1,7 +1,7 @@
 """History page: table of entries plus charts for a chosen date range."""
 from flask import Blueprint, abort, render_template, request
 
-from .. import charts, entries, models, scoring
+from .. import charts, entries, flags, models, scoring
 
 bp = Blueprint("history", __name__)
 
@@ -23,6 +23,7 @@ def history(animal_id: int):
         med_names=med_names,
         series=charts.build_series(rows),
         summary=charts.summarize(rows),
+        flag_list=flags.for_animal(animal_id) if not animal.archived else [],
         start=start,
         end=end,
         preset=preset,
