@@ -4,12 +4,14 @@
 <h1>Summary for the vet</h1>
 <p>Choose a date range and download a PDF you can print or bring on your phone. It includes the score charts, weight, medications, patterns to discuss, the daily table, and your notes.</p>
 
-<form method="get" class="form">
+<form method="get" class="form card block">
   <fieldset>
     <legend>Date range</legend>
+    <div class="choice-grid">
     {% for key in presets %}
-      <label class="inline"><input type="radio" name="range" value="{{ key }}" {% if preset == key %}checked{% endif %}> {{ 'All time' if key == 'all' else 'Last ' + key + ' days' }}</label>
+      <label class="choice"><input type="radio" name="range" value="{{ key }}" {% if preset == key %}checked{% endif %}> {{ 'All time' if key == 'all' else 'Last ' + key + ' days' }}</label>
     {% endfor %}
+    </div>
   </fieldset>
   <fieldset>
     <legend>Or a custom range</legend>

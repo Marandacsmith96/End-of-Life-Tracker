@@ -1,35 +1,50 @@
 <article class="card animal-card{% if animal.archived %} archived{% endif %}">
-  <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">
-    {% if animal.photo_path %}
-      <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
-    {% else %}
-      <span class="placeholder" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
-    {% endif %}
-  </a>
-  <div class="card-body">
-    <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a></h3>
-    <p class="muted">
-      {{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}
-    </p>
-    {% if not animal.archived and latest is defined %}
-      {% set e = latest.get(animal.id) %}
-      {% if e %}
-        <p class="small">Last logged {{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }} · total <span class="total {{ 'low' if e.total <= 35 else 'ok' }}">{{ e.total }}</span></p>
+  <div class="top">
+    <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">
+      {% if animal.photo_path %}
+        <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
       {% else %}
-        <p class="small muted">Nothing logged yet</p>
+        <span class="placeholder" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
       {% endif %}
-    {% endif %}
-    {% if not animal.archived and flag_counts is defined and flag_counts.get(animal.id) %}
-      <a class="badge watch" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ flag_counts[animal.id] }} {{ 'pattern' if flag_counts[animal.id] == 1 else 'patterns' }} to watch</a>
-    {% endif %}
-    {% if not animal.archived %}
+    </a>
+    <div>
+      <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a></h3>
+      <p class="meta">{{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}</p>
+    </div>
+  </div>
+
+  {% if not animal.archived and latest is defined %}
+    {% set e = latest.get(animal.id) %}
+    <div class="status">
+      {% if e %}
+        {% set low = e.total <= 35 %}
+        <div class="ring {{ 'low' if low }}" aria-hidden="true">
+          <svg viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="23"/><circle class="value" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="{{ (144.5 * (1 - e.total / 70))|round(1) }}"/></svg>
+          <span class="label">{{ e.total }}</span>
+        </div>
+        <p><strong>{{ e.total }} / 70</strong> on {{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}<br>
+          {% if flag_counts is defined and flag_counts.get(animal.id) %}
+            <a class="badge watch" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ flag_counts[animal.id] }} {{ 'pattern' if flag_counts[animal.id] == 1 else 'patterns' }} to watch</a>
+          {% else %}
+            <span class="muted">No patterns to watch</span>
+          {% endif %}
+        </p>
+      {% else %}
+        <p class="muted">Nothing logged yet. The first entry takes about a minute.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if not animal.archived %}
+    <div class="foot">
       {% if g.current_animal and g.current_animal.id == animal.id %}
         <span class="badge">Currently tracking</span>
       {% else %}
         <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
-          <button class="button small" type="submit">Track {{ animal.name }}</button>
+          <button class="button small secondary" type="submit">Track {{ animal.name }}</button>
         </form>
       {% endif %}
-    {% endif %}
-  </div>
+      <a class="button small" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a>
+    </div>
+  {% endif %}
 </article>

@@ -25,7 +25,7 @@ def test_add_animal_and_it_becomes_current(client, app):
     assert len(animals) == 1
     assert animals[0].breed == "Tabby"
     assert animals[0].birth_date == date(2012, 5, 1)
-    assert b"Tracking:" in client.get("/").data
+    assert b"Tracking <a" in client.get("/").data
 
 
 def test_name_is_required(client, app):
@@ -66,7 +66,7 @@ def test_archive_hides_from_active_list_and_clears_selection(client, app):
     _add(client)
     response = client.post("/animals/1/archive", follow_redirects=True)
     assert b"has been archived" in response.data
-    assert b"Tracking:" not in response.data
+    assert b"Tracking <a" not in response.data
     assert b"Archived pets (1)" in response.data
     with app.app_context():
         assert models.list_animals() == []
@@ -85,7 +85,7 @@ def test_unarchive_restores_animal(client, app):
 def test_select_switches_current_animal(client):
     _add(client, name="Mochi")
     _add(client, name="Rex", species="dog")  # adding makes Rex current
-    assert b"Tracking: <a" in client.get("/").data
+    assert b"Tracking <a" in client.get("/").data
     response = client.post("/animals/1/select", follow_redirects=True)
     assert b"Now tracking Mochi" in response.data
 

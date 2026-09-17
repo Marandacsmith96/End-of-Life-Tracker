@@ -33,6 +33,8 @@ with sync_playwright() as p:
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     for name, path in PAGES.items():
         page.goto(BASE + path, wait_until="networkidle")
+        # Sticky bars render mid-page in full-page captures; pin them for the shot.
+        page.add_style_tag(content=".sticky-actions, .topbar { position: static !important; }")
         page.screenshot(path=OUT / f"{name}.png", full_page=True)
         print("saved", name)
     browser.close()

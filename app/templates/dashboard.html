@@ -2,8 +2,9 @@
 {% block content %}
 {% if not animals and not archived %}
   <section class="empty">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#e4efe7"/><circle cx="10" cy="11" r="3" fill="#3f7d5a"/><circle cx="16" cy="8" r="3" fill="#3f7d5a"/><circle cx="22" cy="11" r="3" fill="#3f7d5a"/><ellipse cx="16" cy="20" rx="7" ry="5.5" fill="#3f7d5a"/></svg>
     <h1>Welcome</h1>
-    <p>Start by adding the pet you want to keep an eye on.</p>
+    <p>Start by adding the pet you want to keep an eye on. You'll log how they're doing once a day, and the app will show you the pattern over time.</p>
     <a class="button" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
   </section>
 {% else %}

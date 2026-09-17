@@ -120,4 +120,4 @@ def test_pet_page_without_flags_shows_nothing(client):
     _log(client, 0, 8)
     page = client.get("/animals/1").data
     assert b"Things to watch" not in page
-    assert b"patterns to watch" not in client.get("/").data
+    assert b"badge watch" not in client.get("/").data

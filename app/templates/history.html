@@ -30,22 +30,22 @@
 
 {% if rows %}
   <div class="stats">
-    <div class="stat">
+    <div class="card stat">
       <span class="stat-label">Latest total</span>
       <span class="stat-value {{ 'low' if summary.latest_total <= threshold else 'ok' }}">{{ summary.latest_total }}<span class="muted"> / {{ max_total }}</span></span>
       <span class="muted small">{{ summary.latest_date.strftime('%b') }} {{ summary.latest_date.day }}</span>
     </div>
-    <div class="stat">
+    <div class="card stat">
       <span class="stat-label">Average</span>
       <span class="stat-value">{{ summary.average }}</span>
       <span class="muted small">over {{ summary.count }} {{ 'day' if summary.count == 1 else 'days' }}</span>
     </div>
-    <div class="stat">
+    <div class="card stat">
       <span class="stat-label">Range</span>
       <span class="stat-value">{{ summary.lowest }}–{{ summary.highest }}</span>
       <span class="muted small">lowest to highest</span>
     </div>
-    <div class="stat">
+    <div class="card stat">
       <span class="stat-label">Trend</span>
       <span class="stat-value">{{ '+' if summary.trend > 0 }}{{ summary.trend }}</span>
       <span class="muted small">last week vs first week</span>

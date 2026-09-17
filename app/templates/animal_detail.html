@@ -1,95 +1,93 @@
 {% extends "base.html" %}
 {% block title %}{{ animal.name }} · Pet Quality-of-Life Tracker{% endblock %}
 {% block content %}
-<div class="detail">
-  <div class="detail-photo">
+<div class="hero">
+  <div class="hero-photo">
     {% if animal.photo_path %}
       <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
     {% else %}
-      <span class="placeholder large" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
+      <span class="placeholder" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
     {% endif %}
     {% if not animal.archived %}
-      <form method="post" action="{{ url_for('animals.upload_photo', animal_id=animal.id) }}" enctype="multipart/form-data" class="photo-form">
-        <label class="button small">
-          {{ 'Change photo' if animal.photo_path else 'Add a photo' }}
-          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()" hidden>
-        </label>
-      </form>
-      {% if animal.photo_path %}
-        <form method="post" action="{{ url_for('animals.delete_photo', animal_id=animal.id) }}">
-          <button class="link" type="submit">Remove photo</button>
+      <div class="photo-actions">
+        <form method="post" action="{{ url_for('animals.upload_photo', animal_id=animal.id) }}" enctype="multipart/form-data">
+          <label class="button small secondary">
+            {{ 'Change photo' if animal.photo_path else 'Add a photo' }}
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()" hidden>
+          </label>
         </form>
-      {% endif %}
+        {% if animal.photo_path %}
+          <form method="post" action="{{ url_for('animals.delete_photo', animal_id=animal.id) }}">
+            <button class="link small" type="submit">Remove</button>
+          </form>
+        {% endif %}
+      </div>
     {% endif %}
   </div>
-  <div class="detail-body">
+  <div class="hero-body">
     <h1>{{ animal.name }}{% if animal.archived %} <span class="badge muted-badge">Archived</span>{% endif %}</h1>
-    <dl class="facts">
-      <dt>Species</dt><dd>{{ animal.species|capitalize }}</dd>
-      {% if animal.breed %}<dt>Breed</dt><dd>{{ animal.breed }}</dd>{% endif %}
-      {% if animal.birth_date %}<dt>Born</dt><dd>{{ animal.birth_date.strftime('%B') }} {{ animal.birth_date.day }}, {{ animal.birth_date.year }} ({{ animal.age_text }})</dd>{% endif %}
-    </dl>
-
-    <div class="actions">
+    <div class="chips">
+      <span class="chip quiet">{{ animal.species|capitalize }}</span>
+      {% if animal.breed %}<span class="chip quiet">{{ animal.breed }}</span>{% endif %}
+      {% if animal.birth_date %}<span class="chip quiet">Born {{ animal.birth_date.strftime('%B') }} {{ animal.birth_date.day }}, {{ animal.birth_date.year }} · {{ animal.age_text }}</span>{% endif %}
+    </div>
+    <div class="actions compact">
       {% if animal.archived %}
         <form method="post" action="{{ url_for('animals.unarchive_animal', animal_id=animal.id) }}">
           <button class="button" type="submit">Restore {{ animal.name }}</button>
         </form>
+        <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
+        <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
       {% else %}
+        <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">{{ 'Edit today' if today_entry else 'Log today' }}</a>
         {% if not g.current_animal or g.current_animal.id != animal.id %}
           <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
-            <button class="button" type="submit">Track {{ animal.name }}</button>
+            <button class="button secondary" type="submit">Track {{ animal.name }}</button>
           </form>
         {% endif %}
-        <a class="button secondary" href="{{ url_for('animals.edit_animal', animal_id=animal.id) }}">Edit details</a>
+        <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
+        <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
+        <a class="link" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a>
+        <a class="link" href="{{ url_for('animals.edit_animal', animal_id=animal.id) }}">Edit details</a>
         <form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}"
               onsubmit="return confirm('Archive {{ animal.name }}? Their records are kept and you can restore them later.')">
           <button class="link" type="submit">Archive</button>
         </form>
       {% endif %}
     </div>
-
-    {% include "_flags.html" %}
-
-    <section class="entries-section">
-      <div class="section-head">
-        <h2>Daily entries</h2>
-        {% if not animal.archived %}
-          <div class="actions compact">
-            <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">{{ 'Edit today' if today_entry else 'Log today' }}</a>
-            <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
-            <a class="link" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a>
-            <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
-          </div>
-        {% else %}
-          <div class="actions compact">
-            <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
-            <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
-          </div>
-        {% endif %}
-      </div>
-      {% if recent %}
-        <table class="table entries">
-          <thead><tr><th>Date</th><th>Total</th><th>Weight</th><th>Appetite</th><th>Notes</th></tr></thead>
-          <tbody>
-          {% for e in recent %}
-            <tr>
-              <td><a href="{{ url_for('entries.log_entry', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
-              <td><span class="total {{ 'low' if e.total <= 35 else 'ok' }}">{{ e.total }}</span> <span class="muted">/ {{ max_total }}</span></td>
-              <td>{% if e.weight is not none %}{{ '%g'|format(e.weight) }} {{ e.weight_unit }}{% endif %}</td>
-              <td>{{ {'none': 'Not eating', 'low': 'Less', 'normal': 'Normal', 'high': 'More'}.get(e.appetite, '') }}</td>
-              <td class="notes-cell">{{ (e.notes or '')|truncate(60) }}</td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% if recent|length == 14 %}<p class="muted small">Showing the last 14 entries. <a href="{{ url_for('history.history', animal_id=animal.id) }}">See full history and charts</a>.</p>{% endif %}
-      {% elif not animal.archived %}
-        <p class="muted">No entries yet. Logging takes about a minute a day.</p>
-      {% else %}
-        <p class="muted">No entries were logged.</p>
-      {% endif %}
-    </section>
   </div>
 </div>
+
+{% include "_flags.html" %}
+
+<section class="entries-section">
+  <div class="section-head">
+    <h2>Recent entries</h2>
+    {% if recent %}<a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">See all and charts</a>{% endif %}
+  </div>
+  {% if recent %}
+    <div class="table-scroll">
+    <table class="table entries">
+      <thead><tr><th>Date</th><th>Total</th><th>Weight</th><th>Appetite</th><th>Notes</th></tr></thead>
+      <tbody>
+      {% for e in recent %}
+        <tr>
+          <td class="nowrap"><a href="{{ url_for('entries.log_entry', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
+          <td class="nowrap"><span class="total {{ 'low' if e.total <= 35 else 'ok' }}">{{ e.total }}</span> <span class="muted small">/ {{ max_total }}</span></td>
+          <td class="nowrap">{% if e.weight is not none %}{{ '%g'|format(e.weight) }} {{ e.weight_unit }}{% endif %}</td>
+          <td>{{ {'none': 'Not eating', 'low': 'Less', 'normal': 'Normal', 'high': 'More'}.get(e.appetite, '') }}</td>
+          <td class="notes-cell">{{ (e.notes or '')|truncate(60) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  {% elif not animal.archived %}
+    <div class="card block">
+      <p class="muted" style="margin:0">No entries yet. Logging takes about a minute a day, and the charts start making sense after a week or so.</p>
+    </div>
+  {% else %}
+    <p class="muted">No entries were logged.</p>
+  {% endif %}
+</section>
 {% endblock %}

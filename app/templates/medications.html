@@ -32,7 +32,7 @@
 {% endif %}
 
 <h2>Add a medication</h2>
-<form method="post" class="form">
+<form method="post" class="form card block">
   <label>Name <input type="text" name="name" value="{{ values.get('name', '') }}" maxlength="80" required></label>
   <label>Dose <span class="muted">(optional)</span> <input type="text" name="dose" value="{{ values.get('dose', '') }}" maxlength="80" placeholder="e.g. 50 mg"></label>
   <label>Schedule <span class="muted">(optional)</span> <input type="text" name="schedule" value="{{ values.get('schedule', '') }}" maxlength="80" placeholder="e.g. twice a day with food"></label>

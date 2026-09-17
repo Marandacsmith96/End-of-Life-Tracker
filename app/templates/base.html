@@ -3,16 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   <title>{% block title %}Pet Quality-of-Life Tracker{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/nunito-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('dashboard') }}">Pet Quality-of-Life Tracker</a>
+    <a class="brand" href="{{ url_for('dashboard') }}">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#3f7d5a"/><circle cx="10" cy="11" r="3" fill="#fff"/><circle cx="16" cy="8" r="3" fill="#fff"/><circle cx="22" cy="11" r="3" fill="#fff"/><ellipse cx="16" cy="20" rx="7" ry="5.5" fill="#fff"/></svg>
+      <span>Pet Quality-of-Life Tracker</span>
+    </a>
     <nav class="nav">
       {% if g.current_animal %}
-        <span class="current">Tracking: <a href="{{ url_for('animals.show_animal', animal_id=g.current_animal.id) }}">{{ g.current_animal.name }}</a></span>
+        <span class="current">Tracking <a href="{{ url_for('animals.show_animal', animal_id=g.current_animal.id) }}">{{ g.current_animal.name }}</a></span>
         <a class="button small" href="{{ url_for('entries.log_entry', animal_id=g.current_animal.id) }}">Log today</a>
       {% endif %}
       <a class="button small secondary" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
@@ -29,5 +34,6 @@
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
