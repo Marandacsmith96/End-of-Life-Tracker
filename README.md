@@ -54,7 +54,34 @@ observations, and it is not a validated medical device.
 | --- | --- | --- |
 | ![Check-in](docs/screenshots/checkin.png) | ![Trends](docs/screenshots/trends.png) | ![Vet](docs/screenshots/vet.png) |
 
-## Run it
+## Use it for real
+
+The app keeps your entries on the computer that runs it, so there are two
+ways to have it:
+
+**1. On your own computer (no commands needed)**
+
+1. Install Python 3.11 or newer from <https://www.python.org/downloads/>.
+   On Windows, tick "Add python.exe to PATH" in the installer.
+2. Download this project: the green **Code** button on GitHub, then
+   **Download ZIP**, and unzip it somewhere you'll find again.
+3. Double-click `start.bat` (Windows) or `start.command` (Mac). The first
+   start takes a minute to set things up; after that it opens your browser
+   at the app straight away. On a Mac, if it refuses to open the first time,
+   right-click it and choose Open.
+
+Everything stays in the `data` folder next to those files. Back it up from
+the More page now and again.
+
+**2. On the internet (from your phone too)**
+
+The repo includes a `Dockerfile`, a `render.yaml` for Render, and a
+`fly.toml` for Fly.io. Set the `PET_QOL_PASSCODE` environment variable on the
+host and the app asks for that passcode before showing anything. Give it a
+persistent disk at `/data` so entries survive restarts. Either host takes a
+few minutes to set up with an account of your own.
+
+## Run it from a terminal
 
 You need Python 3.11 or newer.
 

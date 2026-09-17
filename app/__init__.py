@@ -21,6 +21,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         DATABASE=data_dir / "tracker.sqlite",
         PHOTO_DIR=data_dir / "photos",
         MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+        PASSCODE=os.environ.get("PET_QOL_PASSCODE") or None,  # set this on a hosted copy
     )
     if test_config:
         app.config.update(test_config)
@@ -29,13 +30,18 @@ def create_app(test_config: dict | None = None) -> Flask:
     if not app.config["SECRET_KEY"]:
         app.config["SECRET_KEY"] = _load_or_create_secret(Path(app.config["DATA_DIR"]))
 
-    from .routes import animals, baseline, caregiver, dashboard, export, markers, settings, trends
+    from .routes import animals, auth, baseline, caregiver, dashboard, export, markers, settings, trends
     from .routes import entries as entry_routes
     from .routes import events as event_routes
 
-    for module in (dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
+    for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
                    caregiver, export, settings):
         app.register_blueprint(module.bp)
+
+    @app.before_request
+    def require_passcode():
+        if auth.passcode_required() and request.endpoint not in auth.OPEN_ENDPOINTS and not auth.is_unlocked():
+            return redirect(url_for("auth.login", next=request.path if request.method == "GET" else None))
 
     @app.route("/animals/<int:animal_id>/history")
     def history_redirect(animal_id: int):

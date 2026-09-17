@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Unlock{% endblock %}
+{% block content %}
+<section class="gentle">
+  <h1>Enter your passcode</h1>
+  <p class="lede">This copy of the tracker is private. Enter the passcode you set when it was installed.</p>
+  <form method="post" class="form card block">
+    <label>Passcode <input type="password" name="passcode" autocomplete="current-password" required autofocus></label>
+    <div class="actions"><button class="button" type="submit">Unlock</button></div>
+  </form>
+</section>
+{% endblock %}

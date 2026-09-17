@@ -1,0 +1,17 @@
+# Render blueprint: one private web service with a persistent disk.
+# Deploy: create a Render account, "New +" > "Blueprint", pick this repo.
+services:
+  - type: web
+    name: quality-of-life-tracker
+    runtime: docker
+    plan: starter            # persistent disks need a paid plan
+    autoDeploy: true
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: PET_QOL_PASSCODE
+        sync: false          # you enter it in the Render dashboard; it is never in the repo
+      - key: PET_QOL_DATA_DIR
+        value: /data

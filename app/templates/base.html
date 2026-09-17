@@ -45,7 +45,7 @@
   </main>
   <footer class="footer">
     <p class="disclaimer">{{ disclaimer }}</p>
-    <p class="muted small">{{ attribution }} <a href="{{ url_for('settings.settings') }}">About and backup</a></p>
+    <p class="muted small">{{ attribution }} <a href="{{ url_for('settings.settings') }}">About and backup</a>{% if config.PASSCODE and session.get('unlocked') %} · <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form"><button class="link small" type="submit">Lock</button></form>{% endif %}</p>
   </footer>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
