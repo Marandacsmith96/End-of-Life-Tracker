@@ -2,6 +2,11 @@
 
 **See the pattern, not just the day.**
 
+**[Try the demo](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** · a read-only
+snapshot with 90 days of sample data for Maggie. Click through Today, Trends,
+Calendar, and Vet; saving is switched off there. To track a real pet, run the
+app on your computer (instructions below).
+
 A gentle quality-of-life tracker for aging and seriously ill pets. Record
 daily observations in seconds, see changes over time, and bring clearer
 information to conversations with your veterinarian. Built in Python with
@@ -83,6 +88,9 @@ pytest
 The suite covers the schema and migration, every page, the check-in flows, the
 analytics (smoothing, sufficiency, classification), the insight engine, the
 safety rules, the PDF's text, backup and restore, and the tone of the copy.
+
+`python scripts/build_static_demo.py` rebuilds the read-only demo snapshot in
+`dist/demo/` (a plain static site you can host anywhere).
 
 There is also a browser walkthrough of every flow, from onboarding to the
 passing flow, that runs against a throwaway data folder:
