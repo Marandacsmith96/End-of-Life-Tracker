@@ -19,7 +19,7 @@
       {% if e %}
         {% set low = e.total <= 35 %}
         <div class="ring {{ 'low' if low }}" aria-hidden="true">
-          <svg viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="23"/><circle class="value" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="{{ (144.5 * (1 - e.total / 70))|round(1) }}"/></svg>
+          <svg viewBox="0 0 56 56"><defs><linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b6cf5"/><stop offset="1" stop-color="#6f8cff"/></linearGradient></defs><circle class="track" cx="28" cy="28" r="23"/><circle class="value" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="{{ (144.5 * (1 - e.total / 70))|round(1) }}"/></svg>
           <span class="label">{{ e.total }}</span>
         </div>
         <p><strong>{{ e.total }} / 70</strong> on {{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}<br>
@@ -44,7 +44,11 @@
           <button class="button small secondary" type="submit">Track {{ animal.name }}</button>
         </form>
       {% endif %}
-      <a class="button small" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a>
+      {% if logged_today is defined and logged_today.get(animal.id) %}
+        <a class="button small secondary" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Logged today ✓</a>
+      {% else %}
+        <a class="button small" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Start check-in</a>
+      {% endif %}
     </div>
   {% endif %}
 </article>

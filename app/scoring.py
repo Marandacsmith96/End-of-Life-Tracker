@@ -16,6 +16,17 @@ CATEGORIES = (
     ("good_days", "More good days than bad", "Overall, good days outnumber bad ones."),
 )
 
+# Asked one at a time in the daily check-in. {name} is the pet's name.
+QUESTIONS = {
+    "hurt": "How comfortable is {name} today?",
+    "hunger": "How well is {name} eating?",
+    "hydration": "How well is {name} drinking?",
+    "hygiene": "How clean and comfortable is {name}'s body?",
+    "happiness": "How happy does {name} seem?",
+    "mobility": "How well is {name} getting around?",
+    "good_days": "Lately, are {name}'s good days outnumbering the bad?",
+}
+
 CATEGORY_KEYS = tuple(key for key, _, _ in CATEGORIES)
 CATEGORY_LABELS = {key: label for key, label, _ in CATEGORIES}
 MIN_SCORE = 0

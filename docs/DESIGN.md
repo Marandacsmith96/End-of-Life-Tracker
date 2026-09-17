@@ -59,6 +59,19 @@ with a single hue, all on the same 0 to 10 axis, let the eye compare shapes.
 The total-score chart is the headline; it has a dashed threshold line and is
 the only chart with a legend.
 
+**One question at a time.** The first version showed all seven sliders on
+one page. Owners found that a wall of controls on a hard day, so the check-in
+became a guided flow: one question per screen, phrased as a question about the
+pet by name, a progress bar, and a review at the end. It is the same HTML form
+underneath; a small script hides and shows steps, so it degrades to the
+one-page form without JavaScript, and a toggle lets people choose. A banner
+prompts for the check-in whenever today has not been logged.
+
+**Blue, not beige.** The first palette was cream and sage, which read as
+"natural" but also a little sombre. The current theme is a clean blue with a
+soft gradient accent, white cards, and coral for low scores, which feels
+lighter without being flippant.
+
 **Offline for real.** Chart.js is vendored into the repo rather than loaded
 from a CDN, so the history page works with no network. Fonts are system fonts.
 

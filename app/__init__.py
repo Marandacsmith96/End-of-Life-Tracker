@@ -1,6 +1,7 @@
 """Application factory for the Pet Quality-of-Life Tracker."""
 import os
 import secrets
+from datetime import date
 from pathlib import Path
 
 from flask import Flask, g, render_template, session
@@ -50,6 +51,10 @@ def create_app(test_config: dict | None = None) -> Flask:
         if animal_id and (g.current_animal is None or g.current_animal.archived):
             session.pop("current_animal_id", None)
             g.current_animal = None
+        g.today_logged = (
+            entries.get_entry_for_date(g.current_animal.id, date.today()) is not None
+            if g.current_animal else None
+        )
 
     @app.route("/")
     def dashboard():
@@ -60,9 +65,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         }
         latest = {a.id: entries.list_entries(a.id, limit=1) for a in active}
         latest = {k: v[0] if v else None for k, v in latest.items()}
+        today = date.today()
+        logged_today = {k: v is not None and v.entry_date == today for k, v in latest.items()}
         return render_template(
             "dashboard.html", animals=active, archived=archived,
-            flag_counts=flag_counts, latest=latest,
+            flag_counts=flag_counts, latest=latest, logged_today=logged_today,
         )
 
     return app

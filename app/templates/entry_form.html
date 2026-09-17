@@ -1,11 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Log {{ animal.name }} · Pet Quality-of-Life Tracker{% endblock %}
+{% block title %}{{ animal.name }}'s check-in · Pet Quality-of-Life Tracker{% endblock %}
 {% block content %}
-<h1>{{ 'Edit' if entry else 'Log' }} {{ animal.name }}'s day</h1>
-<p class="muted">Score each area from 0 (worst) to 10 (best). Go with your gut; there are no wrong answers.</p>
+<div class="section-head">
+  <h1>{{ 'Edit' if entry else '' }} {{ animal.name }}'s {{ 'entry' if entry else 'daily check-in' }}</h1>
+  <button class="link small" type="button" id="mode-toggle" hidden></button>
+</div>
+<p class="muted intro">Score each area from 0 (worst) to 10 (best). Go with your gut; there are no wrong answers.</p>
 
-<form method="post" class="form entry-form" enctype="multipart/form-data">
-  <div class="card panel">
+<form method="post" class="form entry-form" enctype="multipart/form-data" id="entry-form" data-guided="{{ '0' if entry else '1' }}">
+  <div class="progress" id="progress" hidden>
+    <div class="progress-bar"><span id="progress-fill"></span></div>
+    <span class="progress-label" id="progress-label"></span>
+  </div>
+
+  <div class="card panel always">
     <div class="date-row">
       <label for="entry_date">Date</label>
       <input type="date" id="entry_date" name="entry_date" value="{{ values.get('entry_date', today) }}" max="{{ today }}" required>
@@ -13,12 +21,12 @@
     </div>
   </div>
 
-  <div class="card panel">
-    <fieldset class="scores">
-      <legend>How is {{ animal.name }} doing?</legend>
-      <p class="hint">Slide each one. Low scores turn orange so they're easy to spot.</p>
-      {% for key, label, help in categories %}
+  <fieldset class="scores">
+    <legend class="visually-hidden">Quality-of-life scores</legend>
+    {% for key, label, help in categories %}
+      <div class="card panel step" data-title="{{ label }}">
         <div class="score-row">
+          <p class="question">{{ questions[key].replace('{name}', animal.name) }}</p>
           <label for="score-{{ key }}">
             <span>{{ label }}<span class="help">{{ help }}</span></span>
           </label>
@@ -29,17 +37,13 @@
             <output for="score-{{ key }}">{{ values.get(key, 5) }}</output>
           </div>
         </div>
-      {% endfor %}
-      <div class="live-total" id="live-total">
-        <div><span class="muted small">Today's total</span><br><strong>— / 70</strong></div>
-        <p class="reading"></p>
       </div>
-    </fieldset>
-  </div>
+    {% endfor %}
+  </fieldset>
 
-  <div class="card panel">
+  <div class="card panel step" data-title="Weight">
     <fieldset>
-      <legend>Weight <span class="muted">(optional)</span></legend>
+      <legend>Do you have a weight for {{ animal.name }} today? <span class="muted">(optional)</span></legend>
       <p class="hint">Log it whenever you have a number. Every week or two is plenty.</p>
       <div class="weight-row">
         <input type="number" name="weight" step="0.01" min="0" inputmode="decimal" value="{{ values.get('weight', '') }}" placeholder="e.g. 4.2">
@@ -51,9 +55,9 @@
     </fieldset>
   </div>
 
-  <div class="card panel">
+  <div class="card panel step" data-title="Appetite">
     <fieldset>
-      <legend>Appetite <span class="muted">(optional)</span></legend>
+      <legend>How was {{ animal.name }}'s appetite? <span class="muted">(optional)</span></legend>
       <div class="choice-grid">
         {% for value, label in appetite_options %}
           <label class="choice"><input type="radio" name="appetite" value="{{ value }}" {% if values.get('appetite') == value %}checked{% endif %}> {{ label }}</label>
@@ -62,9 +66,9 @@
     </fieldset>
   </div>
 
-  <div class="card panel">
+  <div class="card panel step" data-title="Medications">
     <fieldset>
-      <legend>Medications given today</legend>
+      <legend>Which medications did {{ animal.name }} get today?</legend>
       {% if medications %}
         <div class="choice-grid">
         {% for med in medications %}
@@ -75,19 +79,16 @@
         {% endfor %}
         </div>
       {% else %}
-        <p class="hint">No medications yet.</p>
+        <p class="hint">No medications on the list yet. You can skip this.</p>
       {% endif %}
       <p style="margin:10px 0 0"><a class="link small" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Manage medications</a></p>
     </fieldset>
   </div>
 
-  <div class="card panel">
-    <label for="notes">Notes <span class="muted">(optional)</span></label>
-    <textarea id="notes" name="notes" rows="4" maxlength="5000" placeholder="Anything you noticed today: sleeping more, a good walk, a new lump, a change in breathing...">{{ values.get('notes', '') }}</textarea>
-  </div>
-
-  <div class="card panel">
-    <fieldset>
+  <div class="card panel step" data-title="Notes and photos">
+    <label for="notes">Anything you noticed today? <span class="muted">(optional)</span></label>
+    <textarea id="notes" name="notes" rows="4" maxlength="5000" placeholder="Sleeping more, a good walk, a new lump, a change in breathing...">{{ values.get('notes', '') }}</textarea>
+    <fieldset style="margin-top:16px">
       <legend>Photos <span class="muted">(optional)</span></legend>
       {% if photos %}
         <div class="photo-strip">
@@ -103,7 +104,22 @@
     </fieldset>
   </div>
 
-  <div class="actions sticky-actions">
+  <div class="card panel step review" data-title="Review">
+    <h2 class="review-title">All done. Here's today at a glance.</h2>
+    <div class="live-total" id="live-total">
+      <div><span class="muted small">Today's total</span><br><strong>— / 70</strong></div>
+      <p class="reading"></p>
+    </div>
+    <ul class="review-list" id="review-list"></ul>
+    <p class="hint">Want to change something? Use Back, or the step names above.</p>
+  </div>
+
+  <div class="step-nav" id="step-nav" hidden>
+    <button class="button secondary" type="button" id="step-back">Back</button>
+    <button class="button" type="button" id="step-next">Next</button>
+  </div>
+
+  <div class="actions sticky-actions" id="final-actions">
     <button class="button" type="submit">{{ 'Update entry' if entry else 'Save entry' }}</button>
     <a class="link" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">Cancel</a>
     {% if entry %}

@@ -28,9 +28,9 @@ SHORT_APPETITE = {"none": "Not eating", "low": "Less", "normal": "Normal", "high
 
 INK = colors.HexColor("#2b2b2b")
 MUTED = colors.HexColor("#6b6b6b")
-ACCENT = colors.HexColor("#3b6347")
+ACCENT = colors.HexColor("#2c55cc")
 BORDER = colors.HexColor("#e0ddd5")
-LOW = colors.HexColor("#a33333")
+LOW = colors.HexColor("#d23b58")
 WARN_BG = colors.HexColor("#fdf6e7")
 
 
@@ -110,7 +110,7 @@ def build_pdf(
         return buf.getvalue()
 
     # Summary tiles as a table
-    latest_color = "#a33333" if summary["latest_total"] <= ACCEPTABLE_TOTAL else "#3b6347"
+    latest_color = "#d23b58" if summary["latest_total"] <= ACCEPTABLE_TOTAL else "#2c55cc"
     tiles = [
         ("Latest total", f"{summary['latest_total']} / {MAX_TOTAL}", _fmt(summary["latest_date"]), latest_color),
         ("Average", f"{summary['average']}", f"over {summary['count']} entries", "#2b2b2b"),

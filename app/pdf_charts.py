@@ -15,7 +15,7 @@ from matplotlib.ticker import FuncFormatter  # noqa: E402
 
 from .scoring import ACCEPTABLE_TOTAL, MAX_TOTAL  # noqa: E402
 
-SERIES = "#2a78d6"
+SERIES = "#3b6cf5"
 THRESHOLD = "#8a8a8a"
 GRID = "#e0ddd5"
 INK = "#2b2b2b"

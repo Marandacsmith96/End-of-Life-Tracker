@@ -9,10 +9,12 @@ your computer; no account, no internet needed.
 
 ## What it does
 
-- **Log each day in about a minute.** Seven sliders following the HHHHHMM
-  scale (Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good days
-  than bad), each 0 to 10, plus weight, appetite, medications given, notes, and
-  photos.
+- **A daily check-in that asks one question at a time.** When today isn't
+  logged yet, the app prompts you. The check-in walks through the seven HHHHHMM
+  questions (Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good
+  days than bad), each scored 0 to 10, then weight, appetite, medications given,
+  notes, and photos, and ends with a review of the day. Prefer everything on one
+  page? One click switches, and the app remembers.
 - **See the pattern.** Total score over time with the scale's threshold, one
   small chart per category, and a weight chart, for the last 14, 30, or 90
   days, all time, or any custom range.

@@ -122,6 +122,7 @@ def _render_form(animal, entry, values, status=200):
             entry=entry,
             values=values,
             categories=scoring.CATEGORIES,
+            questions=scoring.QUESTIONS,
             appetite_options=scoring.APPETITE_OPTIONS,
             medications=medications,
             given=given,

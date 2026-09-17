@@ -1,0 +1,9 @@
+{% if g.current_animal and g.today_logged is sameas false and request.endpoint != 'entries.log_entry' %}
+<aside class="checkin-banner">
+  <div class="checkin-text">
+    <strong>Time for {{ g.current_animal.name }}'s daily check-in</strong>
+    <span>Seven quick questions, about a minute. Answering every day is what makes the patterns show.</span>
+  </div>
+  <a class="button light" href="{{ url_for('entries.log_entry', animal_id=g.current_animal.id) }}">Start check-in</a>
+</aside>
+{% endif %}
