@@ -78,11 +78,14 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
             out.append(Insight(guard(f"All of the last {len(statuses)} logged days were marked as good days."),
                                "days", "info", {"n": len(statuses)}))
 
-    # 3. Per-category movement.
+    # 3. Per-category movement: the three largest moves, so a steep week
+    #    doesn't become a wall of near-identical sentences.
+    moves = []
     for key in CATEGORY_KEYS:
         comp = an.period_comparison(an.category_points(entries, key), end)
-        if not comp.usable or comp.delta is None:
-            continue
+        if comp.usable and comp.delta is not None and abs(comp.delta) >= 1.0:
+            moves.append((abs(comp.delta), key, comp))
+    for _, key, comp in sorted(moves, reverse=True)[:3]:
         label = CATEGORY_LABELS[key]
         if comp.delta <= -1.0:
             out.append(Insight(
@@ -131,9 +134,13 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
         recent_rates = an.marker_rates(entries, responses, markers, end - timedelta(days=29), end)
         earlier_rates = an.marker_rates(entries, responses, markers, end - timedelta(days=59), end - timedelta(days=30))
         earlier = {r.marker_id: r for r in earlier_rates}
+        changes = []
         for r in recent_rates:
             prev = earlier.get(r.marker_id)
             if r.logged >= 8 and prev and prev.logged >= 8 and r.pct is not None and prev.pct is not None:
+                changes.append((abs(prev.pct - r.pct), r, prev))
+        for _, r, prev in sorted(changes, key=lambda c: c[0], reverse=True)[:2]:
+            if True:
                 if prev.pct - r.pct >= 25:
                     out.append(Insight(
                         guard(f"“{r.label}” decreased from {prev.pct}% of logged days last month "

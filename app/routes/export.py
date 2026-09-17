@@ -19,7 +19,10 @@ def _prep(animal, since: date | None):
     all_entries = entries.list_entries(animal.id)
     last_visit = events.last_vet_visit(animal.id)
     if since is None:
-        since = last_visit.event_date if last_visit and last_visit.event_date < end else end - timedelta(days=29)
+        # Compare since the last recorded vet visit, unless it was so recent that
+        # there would be almost nothing to compare; then use the last 30 days.
+        recent_enough = last_visit and 14 <= (end - last_visit.event_date).days <= 120
+        since = last_visit.event_date if recent_enough else end - timedelta(days=29)
     length = max((end - since).days + 1, 7)
     prev_start = since - timedelta(days=length)
     prev_end = since - timedelta(days=1)

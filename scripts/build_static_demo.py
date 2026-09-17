@@ -22,14 +22,16 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "demo"
-PET = 1
-MAX_PAGES = 120
+PETS = {1: "", 2: "bruno-"}   # animal id -> file prefix (the first pet owns the plain names)
+MAX_PAGES = 220
 
 BANNER = (
     '<aside class="notice demo-notice" aria-label="Demo">'
-    '<span><strong>Read-only demo</strong> with sample data for Maggie, a fictional 13-year-old Golden Retriever. '
-    'Saving is switched off here. Run the app on your own computer to track a real pet.</span>'
-    '<a class="button small secondary" href="how-it-works.html">How it works</a></aside>'
+    '<span><strong>Read-only demo</strong> with sample data for two fictional dogs. Saving is switched off here; '
+    'run the app on your own computer to track a real pet.</span>'
+    '<span class="presets"><a class="chip" href="index.html">Maggie · stable, then declining</a>'
+    '<a class="chip" href="bruno-index.html">Bruno · steady decline</a>'
+    '<a class="chip quiet" href="how-it-works.html">How it works</a></span></aside>'
 )
 DEMO_SCRIPT = """<script>
 (function () {
@@ -55,18 +57,20 @@ def to_file(url: str) -> str | None:
         return path[1:]
     if path in SHORTCUTS and not query:
         return SHORTCUTS[path]
-    prefix = f"/animals/{PET}/"
-    if path == prefix + "export.pdf":
-        return "maggie-summary.pdf"
-    if path.startswith(prefix):
-        rest = path[len(prefix):]
+    m = re.match(r"^/animals/(\d+)/(.*)$", path)
+    if m and int(m.group(1)) in PETS:
+        pet, rest = int(m.group(1)), m.group(2)
+        pre = PETS[pet]
+        if rest == "export.pdf":
+            return pre + "summary.pdf"
         if rest in ("select", "archive", "unarchive", "keep", "photo", "reminder", "passed", "remove",
                     "checkin/quick") or rest.startswith("photo/"):
-            return {"passed": "passed.html", "remove": "remove.html", "checkin/quick": "quick.html"}.get(rest)
+            target = {"passed": "passed.html", "remove": "remove.html", "checkin/quick": "quick.html"}.get(rest)
+            return pre + target if target else None
         if rest == "today":
-            return "index.html"
+            return pre + (f"today-range-{query['range'][0]}.html" if "range" in query else "index.html")
         if rest == "checkin":
-            return "checkin.html"  # every date links to the same sample check-in
+            return pre + "checkin.html"  # every date links to the same sample check-in
         if rest == "calendar" and "month" in query:
             year, month = (int(x) for x in query["month"][0].split("-"))
             from datetime import date
@@ -74,13 +78,19 @@ def to_file(url: str) -> str | None:
             if (today.year - year) * 12 + today.month - month > 4:
                 return None  # only the last few months are worth snapshotting
         keep = "".join(f"-{k}-{query[k][0]}" for k in sorted(query) if k in KEEP_QUERY)
-        return re.sub(r"[^a-z0-9._-]+", "-", (rest + keep).lower()) + ".html"
+        return pre + re.sub(r"[^a-z0-9._-]+", "-", (rest + keep).lower()) + ".html"
     if path == "/animals/new":
         return "add-pet.html"
     return None
 
 
 def rewrite(page: str, seen: set, queue: deque) -> str:
+    # "Open" / pet-switch forms post to /select; in the snapshot they become plain links.
+    page = re.sub(
+        r'<form method="post" action="/animals/(\d+)/select"[^>]*>\s*<button class="([^"]*)" type="submit">([^<]*)</button>\s*</form>',
+        lambda m: f'<a class="{m.group(2)}" href="{PETS.get(int(m.group(1)), "")}index.html">{m.group(3)}</a>'
+        if int(m.group(1)) in PETS else m.group(0), page)
+
     def sub(match):
         attr, url = match.group(1), html.unescape(match.group(2))
         target = to_file(url)
@@ -115,23 +125,28 @@ def main() -> None:
     app = create_app()
     client = app.test_client()
     with client.session_transaction() as s:
-        s["current_animal_id"] = PET
+        s["current_animal_id"] = 1
 
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
     shutil.copytree(ROOT / "app" / "static", OUT / "static")
-    (OUT / "maggie-summary.pdf").write_bytes(client.get(f"/animals/{PET}/export.pdf?range=90").data)
+    for pet, pre in PETS.items():
+        (OUT / f"{pre}summary.pdf").write_bytes(client.get(f"/animals/{pet}/export.pdf?range=90").data)
 
     seen = {"index.html"}
-    queue = deque([(f"/animals/{PET}/today", "index.html"), ("/how-it-works", "how-it-works.html"),
-                   (f"/animals/{PET}/checkin", "checkin.html"), (f"/animals/{PET}/checkin/quick", "quick.html"),
-                   ("/more", "more.html"), ("/settings", "settings.html"), ("/pets", "pets.html"),
-                   ("/animals/new", "add-pet.html")])
+    queue = deque([("/how-it-works", "how-it-works.html"), ("/more", "more.html"), ("/settings", "settings.html"),
+                   ("/pets", "pets.html"), ("/animals/new", "add-pet.html")])
+    for pet, pre in PETS.items():
+        queue += [(f"/animals/{pet}/today", f"{pre}index.html"), (f"/animals/{pet}/checkin", f"{pre}checkin.html"),
+                  (f"/animals/{pet}/checkin/quick", f"{pre}quick.html")]
     seen.update(t for _, t in queue)
     written = 0
     while queue and written < MAX_PAGES:
         url, target = queue.popleft()
+        pet_match = re.match(r"^/animals/(\d+)/", url)
+        with client.session_transaction() as sess:   # navigation reflects the pet being crawled
+            sess["current_animal_id"] = int(pet_match.group(1)) if pet_match else 1
         response = client.get(url, follow_redirects=True)
         if response.status_code != 200:
             print("skip", url, response.status_code)

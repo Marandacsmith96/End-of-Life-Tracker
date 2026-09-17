@@ -3,7 +3,8 @@
 **See the pattern, not just the day.**
 
 **[Try the demo](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** · a read-only
-snapshot with 90 days of sample data for Maggie. Click through Today, Trends,
+snapshot with sample data for two dogs: Maggie (stable, then declining after a
+treatment bump) and Bruno (a steady decline). Click through Today, Trends,
 Calendar, and Vet; saving is switched off there. To track a real pet, run the
 app on your computer (instructions below).
 
@@ -61,7 +62,7 @@ You need Python 3.11 or newer.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/seed_demo.py --reset   # optional: Maggie, 90 days of demo data
+python scripts/seed_demo.py --reset   # optional: two demo dogs, Maggie and Bruno
 python run.py
 ```
 
