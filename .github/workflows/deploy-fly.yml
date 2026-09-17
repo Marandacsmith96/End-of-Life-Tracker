@@ -44,9 +44,19 @@ jobs:
           if [ -z "$FLY_API_TOKEN" ]; then echo "::error::Add the FLY_API_TOKEN repository secret first."; exit 1; fi
           if [ -z "${{ secrets.PET_QOL_PASSCODE }}" ]; then echo "::error::Add the PET_QOL_PASSCODE repository secret first."; exit 1; fi
       - name: Create the app if it doesn't exist
-        run: flyctl apps list --json | grep -q "\"Name\": *\"$FLY_APP\"" || flyctl apps create "$FLY_APP" --org personal
+        run: |
+          if flyctl status -a "$FLY_APP" >/dev/null 2>&1; then
+            echo "App $FLY_APP exists."
+          else
+            flyctl apps create "$FLY_APP" --org personal
+          fi
       - name: Create the data disk if it doesn't exist
-        run: flyctl volumes list -a "$FLY_APP" --json | grep -q '"name": *"data"' || flyctl volumes create data -a "$FLY_APP" --region "$FLY_REGION" --size 1 --yes
+        run: |
+          if flyctl volumes list -a "$FLY_APP" | grep -q " data "; then
+            echo "Volume exists."
+          else
+            flyctl volumes create data -a "$FLY_APP" --region "$FLY_REGION" --size 1 --yes
+          fi
       - name: Set the passcode
         run: flyctl secrets set -a "$FLY_APP" --stage PET_QOL_PASSCODE="${{ secrets.PET_QOL_PASSCODE }}"
       - name: Deploy
