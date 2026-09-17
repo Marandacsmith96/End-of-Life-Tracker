@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Log {{ animal.name }} · Pet Quality-of-Life Tracker{% endblock %}
+{% block content %}
+<h1>{{ 'Edit' if entry else 'Log' }} {{ animal.name }}'s day</h1>
+<p class="muted">Score each area from 0 (worst) to 10 (best). Go with your gut; there are no wrong answers.</p>
+
+<form method="post" class="form entry-form" enctype="multipart/form-data">
+  <label>
+    Date
+    <input type="date" name="entry_date" value="{{ values.get('entry_date', today) }}" max="{{ today }}" required>
+  </label>
+  {% if entry %}<p class="muted small">You already logged this day. Saving will update it.</p>{% endif %}
+
+  <fieldset class="scores">
+    <legend>Quality-of-life scores</legend>
+    {% for key, label, help in categories %}
+      <div class="score-row">
+        <label for="score-{{ key }}">
+          <span class="score-label">{{ label }}</span>
+          <span class="muted small">{{ help }}</span>
+        </label>
+        <div class="slider">
+          <input type="range" id="score-{{ key }}" name="{{ key }}" min="0" max="10" step="1"
+                 value="{{ values.get(key, 5) }}" oninput="this.nextElementSibling.textContent = this.value">
+          <output for="score-{{ key }}">{{ values.get(key, 5) }}</output>
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset>
+    <legend>Weight <span class="muted">(optional)</span></legend>
+    <div class="weight-row">
+      <input type="number" name="weight" step="0.01" min="0" inputmode="decimal" value="{{ values.get('weight', '') }}" placeholder="e.g. 4.2">
+      <select name="weight_unit">
+        <option value="kg" {% if values.get('weight_unit', 'kg') == 'kg' %}selected{% endif %}>kg</option>
+        <option value="lb" {% if values.get('weight_unit') == 'lb' %}selected{% endif %}>lb</option>
+      </select>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Appetite <span class="muted">(optional)</span></legend>
+    {% for value, label in appetite_options %}
+      <label class="inline"><input type="radio" name="appetite" value="{{ value }}" {% if values.get('appetite') == value %}checked{% endif %}> {{ label }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <fieldset>
+    <legend>Medications given today</legend>
+    {% if medications %}
+      {% for med in medications %}
+        <label class="inline block">
+          <input type="checkbox" name="given" value="{{ med.id }}" {% if med.id in given or (not entry and request.form.getlist('given') and med.id|string in request.form.getlist('given')) %}checked{% endif %}>
+          {{ med.name }}{% if med.dose %} <span class="muted">· {{ med.dose }}</span>{% endif %}{% if med.schedule %} <span class="muted">· {{ med.schedule }}</span>{% endif %}
+        </label>
+      {% endfor %}
+    {% else %}
+      <p class="muted small">No medications yet.</p>
+    {% endif %}
+    <a class="small" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Manage medications</a>
+  </fieldset>
+
+  <label>
+    Notes <span class="muted">(optional)</span>
+    <textarea name="notes" rows="4" maxlength="5000" placeholder="Anything you noticed today: sleeping more, a good walk, a new lump, a change in breathing...">{{ values.get('notes', '') }}</textarea>
+  </label>
+
+  <fieldset>
+    <legend>Photos <span class="muted">(optional)</span></legend>
+    {% if photos %}
+      <div class="photo-strip">
+        {% for photo in photos %}
+          <figure>
+            <img src="{{ url_for('animals.serve_photo', filename=photo.file_path) }}" alt="Photo from this day">
+            <button class="link small" type="submit" formaction="{{ url_for('entries.delete_entry_photo', photo_id=photo.id) }}" formnovalidate>Remove</button>
+          </figure>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple>
+  </fieldset>
+
+  <div class="actions">
+    <button class="button" type="submit">{{ 'Update entry' if entry else 'Save entry' }}</button>
+    <a class="link" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">Cancel</a>
+    {% if entry %}
+      <button class="link danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate
+              onclick="return confirm('Delete this day\'s entry? This cannot be undone.')">Delete entry</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

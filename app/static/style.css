@@ -158,3 +158,45 @@ button.link {
 @media (max-width: 600px) {
   .topbar { flex-direction: column; align-items: flex-start; }
 }
+
+/* Entry form */
+.entry-form { max-width: 640px; }
+.entry-form textarea {
+  display: block; width: 100%; margin-top: 4px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 6px; font: inherit; background: var(--surface);
+}
+.entry-form input[type="number"], .entry-form select {
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; background: var(--surface);
+}
+.entry-form fieldset { margin-bottom: 20px; }
+.entry-form label.block { display: block; margin: 4px 0; }
+.small { font-size: 0.9rem; }
+.scores .score-row { margin-bottom: 14px; }
+.scores .score-row label { margin-bottom: 2px; }
+.score-label { display: block; font-weight: 500; }
+.slider { display: flex; align-items: center; gap: 12px; }
+.slider input[type="range"] { flex: 1; accent-color: var(--accent); }
+.slider output { min-width: 2ch; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.weight-row { display: flex; gap: 8px; }
+.weight-row input { width: 120px; }
+.photo-strip { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.photo-strip figure { margin: 0; text-align: center; }
+.photo-strip img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; display: block; margin-bottom: 4px; }
+.danger { color: #a33; }
+
+/* Tables */
+.table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.table th, .table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table th { font-weight: 600; color: var(--muted); font-size: 0.9rem; }
+.table tr:last-child td { border-bottom: none; }
+.table tr.inactive { color: var(--muted); }
+.row-actions { display: flex; gap: 12px; }
+.row-actions form { margin: 0; }
+.notes-cell { color: var(--muted); max-width: 260px; }
+.total { font-weight: 600; }
+.total.low { color: #a33; }
+.total.ok { color: var(--accent-dark); }
+.section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.section-head h2 { margin: 24px 0 8px; }
+.actions.compact { margin-top: 0; }
+.entries-section { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--border); }

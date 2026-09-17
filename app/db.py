@@ -4,12 +4,21 @@ The database file and photo folder are created automatically the first time
 the app starts, so there is no separate "install" step.
 """
 import sqlite3
+from datetime import date, datetime
 from pathlib import Path
 
 import click
 from flask import Flask, current_app, g
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
+
+# Store dates as ISO text and turn DATE / TIMESTAMP columns back into objects.
+sqlite3.register_adapter(date, date.isoformat)
+sqlite3.register_adapter(datetime, datetime.isoformat)
+sqlite3.register_converter("DATE", lambda b: date.fromisoformat(b.decode()))
+sqlite3.register_converter(
+    "TIMESTAMP", lambda b: datetime.fromisoformat(b.decode().replace(" ", "T"))
+)
 
 
 def get_db() -> sqlite3.Connection:

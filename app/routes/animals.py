@@ -14,7 +14,7 @@ from flask import (
     url_for,
 )
 
-from .. import models, photos
+from .. import entries, models, photos, scoring
 
 bp = Blueprint("animals", __name__)
 
@@ -72,7 +72,16 @@ def new_animal():
 @bp.route("/animals/<int:animal_id>")
 def show_animal(animal_id: int):
     animal = _load_or_404(animal_id)
-    return render_template("animal_detail.html", animal=animal)
+    recent = entries.list_entries(animal_id, limit=14)
+    today_entry = entries.get_entry_for_date(animal_id, date.today())
+    return render_template(
+        "animal_detail.html",
+        animal=animal,
+        recent=recent,
+        today_entry=today_entry,
+        max_total=scoring.MAX_TOTAL,
+        describe_total=scoring.describe_total,
+    )
 
 
 @bp.route("/animals/<int:animal_id>/edit", methods=("GET", "POST"))

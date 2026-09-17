@@ -34,7 +34,7 @@ pytest
 
 - [x] Milestone 1: project skeleton, database schema, tests
 - [x] Milestone 2: animals (add, edit, archive, photo, pick current pet)
-- [ ] Milestone 3: daily entry
+- [x] Milestone 3: daily entry (scores, weight, appetite, notes, medications, photos)
 - [ ] Milestone 4: history and charts
 - [ ] Milestone 5: flags
 - [ ] Milestone 6: PDF export

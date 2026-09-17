@@ -49,9 +49,37 @@
       {% endif %}
     </div>
 
-    <section class="placeholder-section">
-      <h2>Daily entries</h2>
-      <p class="muted">Logging comes in the next milestone.</p>
+    <section class="entries-section">
+      <div class="section-head">
+        <h2>Daily entries</h2>
+        {% if not animal.archived %}
+          <div class="actions compact">
+            <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">{{ 'Edit today' if today_entry else 'Log today' }}</a>
+            <a class="link" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a>
+          </div>
+        {% endif %}
+      </div>
+      {% if recent %}
+        <table class="table entries">
+          <thead><tr><th>Date</th><th>Total</th><th>Weight</th><th>Appetite</th><th>Notes</th></tr></thead>
+          <tbody>
+          {% for e in recent %}
+            <tr>
+              <td><a href="{{ url_for('entries.log_entry', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
+              <td><span class="total {{ 'low' if e.total <= 35 else 'ok' }}">{{ e.total }}</span> <span class="muted">/ {{ max_total }}</span></td>
+              <td>{% if e.weight is not none %}{{ '%g'|format(e.weight) }} {{ e.weight_unit }}{% endif %}</td>
+              <td>{{ {'none': 'Not eating', 'low': 'Less', 'normal': 'Normal', 'high': 'More'}.get(e.appetite, '') }}</td>
+              <td class="notes-cell">{{ (e.notes or '')|truncate(60) }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% if recent|length == 14 %}<p class="muted small">Showing the last 14 entries. Full history and charts come in the next milestone.</p>{% endif %}
+      {% elif not animal.archived %}
+        <p class="muted">No entries yet. Logging takes about a minute a day.</p>
+      {% else %}
+        <p class="muted">No entries were logged.</p>
+      {% endif %}
     </section>
   </div>
 </div>
