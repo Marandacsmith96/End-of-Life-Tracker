@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# App data (database + photos live here, never committed)
+data/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
