@@ -59,9 +59,13 @@
             <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">{{ 'Edit today' if today_entry else 'Log today' }}</a>
             <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
             <a class="link" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a>
+            <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
           </div>
         {% else %}
-          <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
+          <div class="actions compact">
+            <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
+            <a class="link" href="{{ url_for('export.export_page', animal_id=animal.id) }}">PDF for the vet</a>
+          </div>
         {% endif %}
       </div>
       {% if recent %}

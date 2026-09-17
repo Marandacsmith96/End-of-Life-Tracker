@@ -29,11 +29,12 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     db.init_app(app)
 
-    from .routes import animals, entries, history
+    from .routes import animals, entries, export, history
 
     app.register_blueprint(animals.bp)
     app.register_blueprint(entries.bp)
     app.register_blueprint(history.bp)
+    app.register_blueprint(export.bp)
 
     @app.before_request
     def load_current_animal():

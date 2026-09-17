@@ -37,5 +37,5 @@ pytest
 - [x] Milestone 3: daily entry (scores, weight, appetite, notes, medications, photos)
 - [x] Milestone 4: history and charts
 - [x] Milestone 5: flags (patterns to watch)
-- [ ] Milestone 6: PDF export
+- [x] Milestone 6: PDF export for the vet
 - [ ] Milestone 7: polish and packaging

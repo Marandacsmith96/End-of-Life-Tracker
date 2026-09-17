@@ -4,9 +4,13 @@
 {% block content %}
 <div class="section-head">
   <h1>{{ animal.name }}'s history</h1>
-  {% if not animal.archived %}
-    <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a>
-  {% endif %}
+  <div class="actions compact">
+    {% set query = {'range': preset} if preset != 'custom' else {'start': start.isoformat(), 'end': end.isoformat()} %}
+    <a class="button secondary" href="{{ url_for('export.export_page', animal_id=animal.id, **query) }}">PDF for the vet</a>
+    {% if not animal.archived %}
+      <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a>
+    {% endif %}
+  </div>
 </div>
 
 <form method="get" class="range-bar" aria-label="Date range">
