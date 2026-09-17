@@ -1,5 +1,7 @@
 # Design notes
 
+See ARCHITECTURE.md for the technical summary. This file is the narrative.
+
 Written for the class write-up: why the app is shaped the way it is, what was
 hard, and what I would do next.
 
@@ -97,6 +99,27 @@ confirm dialog, because it is the one destructive action in the app.
 - **The test that was wrong.** One test asserted a medication name no longer
   appeared on a page, but the "removed" flash message contained the name. The
   code was right; the test needed to consume the message first.
+
+## The second version
+
+After the first build the product was reworked around one insight: people
+can't remember the slope of decline, and the app can. The changes that
+followed, in the order they mattered:
+
+1. **A single tap is the core record.** "Was today a good day or a bad day?"
+   is the first question, the least mood-corruptible field, and enough on its
+   own to draw a trend. Scores became optional.
+2. **Personal behaviors instead of generic happiness.** Three to five things
+   this animal does when she feels like herself, chosen at setup, ticked daily.
+3. **A baseline from before decline**, stored apart from daily data and drawn
+   as a labelled reference line, so the reference point isn't already sad.
+4. **Honest smoothing.** A time-windowed mean that goes blank when the window
+   is too empty, a classifier that needs sustained and consistent evidence,
+   and copy that says "limited data" out loud.
+5. **A safety layer** through which every generated sentence must pass.
+6. **Tone.** No streaks, badges, paw prints, or "you missed a day". A graceful
+   flow for when the animal dies, with nothing deleted automatically.
+7. **The caregiver.** A weekly "How are you doing?" kept entirely separate.
 
 ## What I would do next
 

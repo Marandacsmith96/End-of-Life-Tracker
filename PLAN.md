@@ -147,5 +147,6 @@ follows this plan with two additions: entry data access lives in
 
 ## Status
 
-All seven milestones are built. See README.md for how to run it and
-docs/DESIGN.md for the design write-up.
+All seven milestones were built, and the app was then reworked into a second
+version around good/bad days, personalized behaviors, a baseline, honest trend
+analysis, and a one-page vet summary. See README.md and docs/ARCHITECTURE.md.

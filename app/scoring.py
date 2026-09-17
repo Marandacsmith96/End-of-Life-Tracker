@@ -1,38 +1,57 @@
-"""The HHHHHMM quality-of-life scale (Villalobos).
+"""The HHHHHMM Quality of Life Scale (Villalobos).
 
-Seven categories, each scored 0 (worst) to 10 (best). A total above 35 is
-generally read as an acceptable quality of life, but only a vet who knows
-the animal can interpret it. This module holds the scale definition and pure
-helper functions; nothing here touches the database.
+Seven domains, each scored 0 (worst) to 10 (best). This tracker incorporates the
+scale as one framework for organizing owner observations; it is not itself a
+validated clinical instrument. Nothing here touches the database.
 """
 
+ATTRIBUTION = (
+    "This tracker incorporates the HHHHHMM Quality of Life Scale developed by "
+    "Dr. Alice Villalobos as one framework for organizing owner observations."
+)
+
+# key, label, one-line guidance, 0 anchor, 10 anchor
 CATEGORIES = (
-    ("hurt", "Hurt", "Pain is controlled and breathing is easy."),
-    ("hunger", "Hunger", "Eating enough, with hand-feeding or coaxing if needed."),
-    ("hydration", "Hydration", "Drinking enough; not dehydrated."),
-    ("hygiene", "Hygiene", "Clean, brushed, no soiling or pressure sores."),
-    ("happiness", "Happiness", "Shows interest, responds to family, seems content."),
-    ("mobility", "Mobility", "Gets up and moves around without too much help."),
-    ("good_days", "More good days than bad", "Overall, good days outnumber bad ones."),
+    ("hurt", "Hurt", "How comfortable did your pet seem today?",
+     "severe or uncontrolled discomfort", "comfortable; pain appears well controlled"),
+    ("hunger", "Hunger", "How well did your pet eat today?",
+     "would not eat", "normal healthy appetite"),
+    ("hydration", "Hydration", "How well hydrated did your pet seem?",
+     "not drinking; signs of dehydration", "drinking normally"),
+    ("hygiene", "Hygiene", "Could your pet stay clean, dry, and comfortable?",
+     "soiled or unable to stay clean", "clean, dry, and comfortable"),
+    ("happiness", "Happiness",
+     "Did your pet show interest in family, surroundings, routines, or things they usually enjoy?",
+     "withdrawn; no interest", "engaged and interested"),
+    ("mobility", "Mobility", "How easily could your pet move around?",
+     "unable to move without help", "moves around freely"),
+    ("good_days", "More good days than bad",
+     "Looking at the recent pattern, are good days still outweighing bad days?",
+     "bad days clearly outnumber good", "good days clearly outnumber bad"),
 )
 
 # Asked one at a time in the daily check-in. {name} is the pet's name.
 QUESTIONS = {
-    "hurt": "How comfortable is {name} today?",
-    "hunger": "How well is {name} eating?",
-    "hydration": "How well is {name} drinking?",
-    "hygiene": "How clean and comfortable is {name}'s body?",
-    "happiness": "How happy does {name} seem?",
-    "mobility": "How well is {name} getting around?",
-    "good_days": "Lately, are {name}'s good days outnumbering the bad?",
+    "hurt": "How comfortable did {name} seem today?",
+    "hunger": "How well did {name} eat today?",
+    "hydration": "How well hydrated did {name} seem?",
+    "hygiene": "Could {name} stay clean, dry, and comfortable?",
+    "happiness": "Did {name} show interest in family, surroundings, or things they usually enjoy?",
+    "mobility": "How easily could {name} move around?",
+    "good_days": "Looking at the recent pattern, are {name}'s good days still outweighing bad days?",
 }
 
-CATEGORY_KEYS = tuple(key for key, _, _ in CATEGORIES)
-CATEGORY_LABELS = {key: label for key, label, _ in CATEGORIES}
+CATEGORY_KEYS = tuple(c[0] for c in CATEGORIES)
+CATEGORY_LABELS = {c[0]: c[1] for c in CATEGORIES}
+CATEGORY_GUIDANCE = {c[0]: c[2] for c in CATEGORIES}
+CATEGORY_ANCHORS = {c[0]: (c[3], c[4]) for c in CATEGORIES}
 MIN_SCORE = 0
 MAX_SCORE = 10
 MAX_TOTAL = MAX_SCORE * len(CATEGORIES)  # 70
-ACCEPTABLE_TOTAL = 35  # the scale's commonly cited threshold
+# The scale's published reference: totals above 35 are described as acceptable.
+# Shown only as a reference marker, never as a verdict.
+ACCEPTABLE_TOTAL = 35
+ACCEPTABLE_MEAN = ACCEPTABLE_TOTAL / len(CATEGORIES)  # 5.0
 
 APPETITE_OPTIONS = (
     ("none", "Not eating"),
@@ -45,8 +64,14 @@ WEIGHT_UNITS = ("kg", "lb")
 
 
 def total_score(scores: dict) -> int:
-    """Sum the seven category scores."""
+    """Sum the seven category scores (all must be present)."""
     return sum(int(scores[key]) for key in CATEGORY_KEYS)
+
+
+def mean_score(scores: dict) -> float | None:
+    """Mean of whichever categories were scored, or None if none were."""
+    values = [int(v) for v in scores.values() if v is not None]
+    return round(sum(values) / len(values), 2) if values else None
 
 
 def is_valid_score(value) -> bool:
@@ -55,12 +80,3 @@ def is_valid_score(value) -> bool:
     except (TypeError, ValueError):
         return False
     return MIN_SCORE <= number <= MAX_SCORE
-
-
-def describe_total(total: int) -> str:
-    """Plain-language reading of a total, phrased for the owner, not as a verdict."""
-    if total >= 50:
-        return "Scores are in a comfortable range."
-    if total > ACCEPTABLE_TOTAL:
-        return "Scores are above the scale's usual threshold, but worth watching."
-    return "Scores are at or below the scale's usual threshold. Consider talking with your vet."

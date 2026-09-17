@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}More{% endblock %}
+{% block content %}
+<h1>More</h1>
+{% if animal %}
+<section class="card block">
+  <h2>{{ animal.name }}</h2>
+  <ul class="link-list">
+    <li><a href="{{ url_for('animals.settings', animal_id=animal.id) }}">Profile and settings</a></li>
+    <li><a href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Good-day behaviors</a></li>
+    <li><a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
+    <li><a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
+    <li><a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a></li>
+    <li><a href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">How are you doing?</a> <span class="muted small">caregiver check-in</span></li>
+  </ul>
+</section>
+{% endif %}
+<section class="card block">
+  <h2>Pets</h2>
+  <ul class="link-list">
+    {% for a in animals %}
+      <li><form method="post" action="{{ url_for('animals.select_animal', animal_id=a.id) }}" class="inline-form"><button class="link" type="submit">{{ a.name }}</button></form>
+        {% if a.passed %}<span class="muted small">in memory</span>{% elif a.archived %}<span class="muted small">archived</span>{% elif animal and a.id == animal.id %}<span class="muted small">current</span>{% endif %}</li>
+    {% endfor %}
+    <li><a href="{{ url_for('animals.new_animal') }}">Add a pet</a></li>
+  </ul>
+</section>
+<section class="card block">
+  <h2>App</h2>
+  <ul class="link-list">
+    <li><a href="{{ url_for('settings.settings') }}">Backup, restore, and about</a></li>
+    <li><a href="{{ url_for('dashboard.landing') }}">How it works</a></li>
+  </ul>
+</section>
+{% endblock %}

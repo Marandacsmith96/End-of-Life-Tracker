@@ -1,0 +1,14 @@
+{# Expects `observations` (list of Insight) and `animal`. #}
+{% if observations %}
+<section class="observations" aria-label="Observations">
+  <ul class="insight-list">
+    {% for i in observations %}
+      <li class="insight {{ i.level }} {{ i.kind }}">
+        <span class="insight-mark" aria-hidden="true"></span>
+        <span>{{ i.text }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+  <p class="muted small">These observations are calculated from what you've recorded. They are not a diagnosis or a recommendation.</p>
+</section>
+{% endif %}

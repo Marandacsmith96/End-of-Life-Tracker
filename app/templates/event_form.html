@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit event' if event else 'Add an event' }} · {{ animal.name }}{% endblock %}
+{% block content %}
+<h1>{{ 'Edit event' if event else 'Add an event' }}</h1>
+<form method="post" class="form card block">
+  <label>Date <input type="date" name="event_date" value="{{ values.get('event_date', today) }}" max="{{ today }}" required></label>
+  <label>Type
+    <select name="type">
+      {% for value, label in types %}<option value="{{ value }}" {% if values.get('type') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Title <span class="muted">(optional; the type is used if blank)</span> <input type="text" name="title" value="{{ values.get('title', '') }}" maxlength="120" placeholder="e.g. Started gabapentin 100 mg"></label>
+  <label>Note <span class="muted">(optional)</span> <textarea name="note" rows="3" maxlength="2000">{{ values.get('note', '') }}</textarea></label>
+  {% if request.args.get('next') %}<input type="hidden" name="next" value="{{ request.args.get('next') }}">{% endif %}
+  <div class="actions">
+    <button class="button" type="submit">{{ 'Save' if event else 'Add' }}</button>
+    <a class="link" href="{{ url_for('events.timeline', animal_id=animal.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

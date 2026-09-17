@@ -1,38 +1,54 @@
-# Pet Quality-of-Life Tracker
+# Quality-of-Life Tracker
 
-A small offline app for pet owners to log a daily quality-of-life score for a
-cat or dog near the end of its life, see trends over time, and bring a PDF
-summary to the vet. Built in Python with Flask and SQLite. Everything stays on
-your computer; no account, no internet needed.
+**See the pattern, not just the day.**
 
-![Dashboard](docs/screenshots/dashboard.png)
+A gentle quality-of-life tracker for aging and seriously ill pets. Record
+daily observations in seconds, see changes over time, and bring clearer
+information to conversations with your veterinarian. Built in Python with
+Flask and SQLite. Everything stays on your computer.
+
+![Today](docs/screenshots/today.png)
+
+The app never gives a verdict. It shows the trend and the criteria; the owner
+and the vet decide. It incorporates the HHHHHMM Quality of Life Scale
+developed by Dr. Alice Villalobos as one framework for organizing owner
+observations, and it is not a validated medical device.
 
 ## What it does
 
-- **A daily check-in that asks one question at a time.** When today isn't
-  logged yet, the app prompts you. The check-in walks through the seven HHHHHMM
-  questions (Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good
-  days than bad), each scored 0 to 10, then weight, appetite, medications given,
-  notes, and photos, and ends with a review of the day. Prefer everything on one
-  page? One click switches, and the app remembers.
-- **See the pattern.** Total score over time with the scale's threshold, one
-  small chart per category, and a weight chart, for the last 14, 30, or 90
-  days, all time, or any custom range.
-- **Notice things worth raising.** Gentle flags when the total sits at or below
-  35 for three entries, a category stays at 3 or lower, weight drops 10% in a
-  month, or appetite is logged as "not eating" two days running. Flags point at
-  a pattern and suggest a conversation. They never make a decision.
-- **Bring it to the vet.** A PDF with the charts, medications, patterns to
-  discuss, the daily table, and your notes.
-- **Track several pets.** Archive a pet when the time comes; their records are
-  kept.
-- **Back up in one click.** Download a zip of everything, and restore from it.
+- **A check-in under thirty seconds.** First question: was today a good day or
+  a bad day? Then a few yes/no behaviors specific to your pet, then optional
+  0–10 scores for the seven HHHHHMM areas, one at a time, with a note. A
+  **quick check-in** with only the first two steps takes under ten seconds.
+- **What a good day looks like for *your* pet.** During setup you choose three
+  to five concrete behaviors ("Greets me at the door", "Gets onto the couch
+  herself"). They become the daily checkboxes and their own trend.
+- **A baseline from before.** An optional estimate of what things were like
+  about six months ago, stored separately and shown as a labelled reference
+  line.
+- **Honest trends.** Daily scores stay visible as dots. A 7-day windowed
+  average is drawn only where there is enough data, lighter when data is
+  limited. Missing days are never filled in. A single bad day is never a
+  trend.
+- **Observations, not verdicts.** Plain sentences with their numbers: "Mobility
+  has been below Maggie's earlier baseline on 12 of the last 12 logged days."
+  Every generated sentence passes a safety check.
+- **Calendar** of good, mixed, and bad days with counts and last-month
+  comparison. **Category views** and **behavior trends**. **Events** (vet
+  visits, medication changes) marked on the charts.
+- **Prepare for my vet visit**: what changed since your last visit, and a short
+  list of things you may want to discuss.
+- **A one-page PDF** for the appointment.
+- **A weekly "How are you doing?"** for the caregiver, kept apart from the
+  pet's data.
+- **A gentle ending.** "My pet has passed away" keeps everything, stops
+  prompts, and offers to keep, archive, export, or remove the profile.
 
-| Daily log | History and charts |
-| --- | --- |
-| ![Daily log](docs/screenshots/log.png) | ![History](docs/screenshots/history.png) |
+| Check-in | Trends | Vet visit |
+| --- | --- | --- |
+| ![Check-in](docs/screenshots/checkin.png) | ![Trends](docs/screenshots/trends.png) | ![Vet](docs/screenshots/vet.png) |
 
-## Setup
+## Run it
 
 You need Python 3.11 or newer.
 
@@ -40,113 +56,44 @@ You need Python 3.11 or newer.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-## Run
-
-```bash
+python scripts/seed_demo.py --reset   # optional: Maggie, 90 days of demo data
 python run.py
 ```
 
-Your browser opens at <http://127.0.0.1:5000>. Press Ctrl+C in the terminal to
-stop. The database, photos, and a session key are created automatically under
-`data/` on first start. That folder is your data; back it up from the Backup
-page and never commit it.
-
-Environment variables you can set:
+Your browser opens at <http://127.0.0.1:5000>. Press Ctrl+C to stop. Data is
+created under `data/` on first start; back it up from the More page.
 
 | Variable | Effect |
 | --- | --- |
-| `PET_QOL_PORT` | Port to listen on (default 5000) |
+| `PET_QOL_PORT` | Port (default 5000) |
 | `PET_QOL_DATA_DIR` | Where to keep the data folder |
-| `PET_QOL_NO_BROWSER=1` | Do not open a browser tab on start |
-| `FLASK_DEBUG=1` | Auto-reload and tracebacks while developing |
+| `PET_QOL_NO_BROWSER=1` | Don't open a browser tab |
+| `FLASK_DEBUG=1` | Auto-reload while developing |
 
-### Try it with sample data
+Optional: `pip install pywebview` then `python desktop.py` for a desktop
+window, or `pip install pyinstaller` then `pyinstaller pet_qol.spec` for a
+standalone build in `dist/`.
 
-```bash
-python scripts/seed_demo.py --reset
-python run.py
-```
-
-This adds a dog named Biscuit with 45 days of made-up entries so the charts,
-flags, and PDF have something to show.
-
-### Optional: run it as a desktop window
-
-```bash
-pip install pywebview
-python desktop.py
-```
-
-Same app, in its own window instead of a browser tab. Without pywebview
-installed, `desktop.py` falls back to opening your browser.
-
-### Optional: build a double-click executable
-
-```bash
-pip install pyinstaller
-pyinstaller pet_qol.spec
-```
-
-The result is in `dist/PetQoLTracker/`. Run the `PetQoLTracker` executable
-inside it; data is kept in a `data/` folder next to it. Build on the same kind
-of computer you want to run it on (a Windows build for Windows, and so on).
-
-## Test
+## Tests
 
 ```bash
 pytest
 ```
 
-The suite covers the database constraints, every page, the scoring and flag
-rules, chart data, backup and restore, and the generated PDF's text.
+The suite covers the schema and migration, every page, the check-in flows, the
+analytics (smoothing, sufficiency, classification), the insight engine, the
+safety rules, the PDF's text, backup and restore, and the tone of the copy.
 
-## Project layout
+## Documentation
 
-```
-run.py              start the app in a browser
-desktop.py          start the app in a desktop window (optional pywebview)
-pet_qol.spec        PyInstaller recipe (optional)
-app/
-  __init__.py       app factory, dashboard, secret key
-  db.py             SQLite connection and schema setup
-  schema.sql        tables: animals, entries, medications, entry_medications, photos
-  models.py         animal data access
-  entries.py        entry, medication, and photo data access
-  scoring.py        the HHHHHMM scale definition and helpers
-  flags.py          pattern rules (pure functions)
-  charts.py         series and summaries for the charts and PDF
-  pdf.py            the vet summary PDF (ReportLab)
-  pdf_charts.py     chart images for the PDF (matplotlib)
-  photos.py         image validation and resizing
-  backup.py         zip backup and restore
-  routes/           one file per area: animals, entries, history, export, settings
-  templates/        Jinja pages
-  static/           stylesheet, chart script, favicon, vendored Chart.js
-scripts/
-  seed_demo.py      sample data for demos
-  screenshot.py     regenerates docs/screenshots (needs Playwright)
-tests/              pytest suite
-docs/               design write-up and screenshots
-```
-
-See [PLAN.md](PLAN.md) for the original plan and [docs/DESIGN.md](docs/DESIGN.md)
-for the design decisions and what I'd do next.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): architecture, schema, the
+  trend and smoothing algorithm, safety rules, limitations, next steps.
+- [docs/DESIGN.md](docs/DESIGN.md): design decisions and what was hard.
+- [PLAN.md](PLAN.md): the original semester plan.
 
 ## A note on what this app is not
 
-It is not a medical device and it does not tell anyone when to make an end-of-
-life decision. It records an owner's daily impressions using a published scale
-and shows them clearly, so that the conversation with the vet starts from
-shared information instead of memory.
-
-## Status
-
-- [x] Milestone 1: project skeleton, database schema, tests
-- [x] Milestone 2: animals (add, edit, archive, photo, pick current pet)
-- [x] Milestone 3: daily entry (scores, weight, appetite, notes, medications, photos)
-- [x] Milestone 4: history and charts
-- [x] Milestone 5: flags (patterns to watch)
-- [x] Milestone 6: PDF export for the vet
-- [x] Milestone 7: polish, backup and restore, packaging, docs
+It does not provide veterinary diagnosis, medical advice, or a recommendation
+about euthanasia. Treatment and end-of-life decisions should be made with your
+veterinarian. If you're concerned about a sudden or severe change in your
+pet's condition, contact your veterinarian or an emergency veterinary clinic.

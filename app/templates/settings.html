@@ -1,14 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Backup &amp; settings · Pet Quality-of-Life Tracker{% endblock %}
+{% block title %}Backup and about{% endblock %}
 {% block content %}
-<h1>Backup &amp; settings</h1>
-
+<h1>Backup and about</h1>
 <section class="card block">
   <h2>Back up your data</h2>
-  <p>Everything lives in one folder on this computer: <code>{{ config.DATA_DIR }}</code>. Download a copy now and again and keep it somewhere safe, like a USB stick or cloud drive.</p>
+  <p>Everything lives in one folder on this computer: <code>{{ config.DATA_DIR }}</code>. Download a copy now and again and keep it somewhere safe.</p>
   <a class="button" href="{{ url_for('settings.download_backup') }}">Download backup (.zip)</a>
 </section>
-
 <section class="card block">
   <h2>Restore from a backup</h2>
   <p class="danger-text">This replaces everything currently in the app with the contents of the backup. It cannot be undone, so download a fresh backup first if you're unsure.</p>
@@ -16,15 +14,14 @@
         onsubmit="return confirm('Replace all current data with this backup? This cannot be undone.')">
     <label>Backup file <input type="file" name="backup" accept=".zip,application/zip" required></label>
     <label class="inline"><input type="checkbox" name="confirm" value="yes"> I understand my current data will be replaced</label>
-    <div class="actions">
-      <button class="button danger-button" type="submit">Restore</button>
-    </div>
+    <div class="actions"><button class="button danger-button" type="submit">Restore</button></div>
   </form>
 </section>
-
 <section class="card block">
   <h2>About</h2>
-  <p>Pet Quality-of-Life Tracker helps you notice patterns in how your cat or dog is doing near the end of their life, using the HHHHHMM scale (Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good days than bad) developed by Dr. Alice Villalobos.</p>
-  <p>The app runs entirely on this computer. Nothing is sent anywhere. It is not a medical device and does not make decisions; it helps you and your vet have a clearer conversation.</p>
+  <p>{{ attribution }}</p>
+  <p>{{ disclaimer }}</p>
+  <p>{{ emergency }}</p>
+  <p class="muted small">The app runs entirely on this computer. Nothing is sent anywhere.</p>
 </section>
 {% endblock %}

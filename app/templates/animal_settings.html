@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} · Settings{% endblock %}
+{% block content %}
+<h1>{{ animal.name }}</h1>
+
+<section class="card block">
+  <h2>Profile</h2>
+  <div class="hero compact">
+    <div class="hero-photo small">
+      {% if animal.photo_path %}<img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">{% else %}<span class="placeholder" aria-hidden="true">{{ animal.initials }}</span>{% endif %}
+    </div>
+    <div>
+      <p>{{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}{% if animal.sex and animal.sex != 'unknown' %} · {{ animal.sex }}{% endif %}</p>
+      {% if animal.diagnoses %}<p class="muted small">Diagnoses (as entered): {{ animal.diagnoses }}</p>{% endif %}
+      <div class="actions compact">
+        <a class="button small secondary" href="{{ url_for('animals.edit_animal', animal_id=animal.id) }}">Edit details</a>
+        <form method="post" action="{{ url_for('animals.upload_photo', animal_id=animal.id) }}" enctype="multipart/form-data">
+          <label class="button small secondary">{{ 'Change photo' if animal.photo_path else 'Add a photo' }}
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()" hidden></label>
+        </form>
+        {% if animal.photo_path %}
+          <form method="post" action="{{ url_for('animals.delete_photo', animal_id=animal.id) }}"><button class="link small" type="submit">Remove photo</button></form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card block">
+  <h2>Tracking</h2>
+  <ul class="link-list">
+    <li><a href="{{ url_for('markers.setup', animal_id=animal.id) }}">Good-day behaviors</a> <span class="muted small">the daily yes/no questions</span></li>
+    <li><a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a> <span class="muted small">owner estimate, shown as a reference line</span></li>
+    <li><a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
+    <li><a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
+  </ul>
+</section>
+
+{% if not animal.archived %}
+<section class="card block">
+  <h2>Optional check-in reminder</h2>
+  <p class="muted">Shown inside the app as a quiet note. Never a notification, never a streak.</p>
+  <form method="post" action="{{ url_for('animals.set_reminder', animal_id=animal.id) }}" class="form">
+    <div class="choice-grid">
+      {% for value, label in reminders %}
+        <label class="choice"><input type="radio" name="reminder" value="{{ value }}" {% if animal.reminder == value %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </div>
+    <div class="actions"><button class="button secondary" type="submit">Save</button></div>
+  </form>
+</section>
+{% endif %}
+
+<section class="card block">
+  <h2>Records</h2>
+  <ul class="link-list">
+    <li><a href="{{ url_for('export.export_pdf', animal_id=animal.id, range='all', appendix=1, download=1) }}">Export {{ animal.name }}'s full records as PDF</a></li>
+    <li><a href="{{ url_for('settings.download_backup') }}">Download a backup of everything</a></li>
+  </ul>
+</section>
+
+<section class="card block quiet-block">
+  {% if animal.passed %}
+    <h2>In memory of {{ animal.name }}</h2>
+    <p>Their history stays here for as long as you would like.</p>
+    <ul class="link-list">
+      <li><form method="post" action="{{ url_for('animals.unarchive_animal', animal_id=animal.id) }}"><button class="link" type="submit">Mark as active again</button></form> <span class="muted small">if this was selected by mistake</span></li>
+      <li><a href="{{ url_for('animals.remove_animal', animal_id=animal.id) }}">Remove this profile</a></li>
+    </ul>
+  {% elif animal.archived %}
+    <h2>Archived</h2>
+    <ul class="link-list">
+      <li><form method="post" action="{{ url_for('animals.unarchive_animal', animal_id=animal.id) }}"><button class="link" type="submit">Restore {{ animal.name }}'s profile</button></form></li>
+      <li><a href="{{ url_for('animals.remove_animal', animal_id=animal.id) }}">Remove this profile</a></li>
+    </ul>
+  {% else %}
+    <h2>If things change</h2>
+    <ul class="link-list">
+      <li><a href="{{ url_for('animals.passed', animal_id=animal.id) }}">My pet has passed away</a></li>
+      <li><form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}" onsubmit="return confirm('Archive {{ animal.name }}\'s profile? Everything is kept and you can restore it later.')"><button class="link" type="submit">Archive this profile</button></form> <span class="muted small">pause tracking, keep everything</span></li>
+    </ul>
+  {% endif %}
+</section>
+{% endblock %}

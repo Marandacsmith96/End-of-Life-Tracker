@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Your pets · Quality-of-Life Tracker{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>Your pets</h1>
+  <a class="button secondary" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+</div>
+{% if animals %}
+  <div class="grid">
+    {% for animal in animals %}{% include "_animal_card.html" %}{% endfor %}
+  </div>
+{% else %}
+  <p class="muted">No active profiles.</p>
+{% endif %}
+{% if others %}
+  <h2>Archived and remembered</h2>
+  <div class="grid">
+    {% for animal in others %}{% include "_animal_card.html" %}{% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

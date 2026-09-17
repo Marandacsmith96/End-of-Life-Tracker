@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Check in · {{ animal.name }}{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>{% if entry %}{{ entry.entry_date.strftime('%A, %B') }} {{ entry.entry_date.day }}{% else %}Check in{% endif %}</h1>
+  <button class="link small" type="button" id="mode-toggle" hidden></button>
+</div>
+
+<form method="post" class="form entry-form" enctype="multipart/form-data" id="entry-form"
+      data-guided="{{ '0' if entry and not start_step else '1' }}" data-start="{{ start_step or '' }}">
+  <div class="progress" id="progress" hidden>
+    <div class="progress-bar"><span id="progress-fill"></span></div>
+    <span class="progress-label" id="progress-label"></span>
+  </div>
+
+  <div class="card panel always compact-panel">
+    <div class="date-row">
+      <label for="entry_date">Date</label>
+      <input type="date" id="entry_date" name="entry_date" value="{{ values.get('entry_date', today) }}" max="{{ today }}" required>
+      {% if entry %}<span class="note muted">Already recorded. Saving updates it.</span>{% endif %}
+    </div>
+  </div>
+
+  {# Step 1: good / bad / mixed #}
+  <div class="card panel step" data-step="status" data-title="Today">
+    <fieldset>
+      <legend class="question">Was today a good day or a bad day for {{ animal.name }}?</legend>
+      <div class="day-choice">
+        {% for value, label in day_statuses %}
+          <label class="day-option {{ value }}">
+            <input type="radio" name="day_status" value="{{ value }}" {% if values.get('day_status') == value %}checked{% endif %}>
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <p class="hint">This one answer is the most useful thing you can record. Everything else is optional.</p>
+    </fieldset>
+  </div>
+
+  {# Step 2: personalized behaviors #}
+  <div class="card panel step" data-step="markers" data-title="Behaviors">
+    <input type="hidden" name="markers_included" value="1">
+    <fieldset>
+      <legend class="question">What did {{ animal.name }} do today?</legend>
+      {% if markers %}
+        <div class="choice-grid">
+          {% for m in markers %}
+            <label class="choice big">
+              <input type="checkbox" name="markers" value="{{ m.id }}" {% if answers.get(m.id) or (m.id|string in request.form.getlist('markers')) %}checked{% endif %}>
+              <span>{{ m.label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <p class="hint">Tick what happened. Leave the rest.</p>
+      {% else %}
+        <p class="hint">No good-day behaviors set up yet. <a href="{{ url_for('markers.setup', animal_id=animal.id) }}">Choose a few</a> to make check-ins more specific.</p>
+      {% endif %}
+    </fieldset>
+  </div>
+
+  {# Steps 3-9: HHHHHMM #}
+  <fieldset class="scores">
+    <legend class="visually-hidden">Quality-of-life scores</legend>
+    <input type="hidden" name="scores_included" id="scores-included" value="{{ '1' if (entry and has_scores) or request.form.get('scores_included') == '1' else '0' }}">
+    {% for key, label, guidance, low, high in categories %}
+      <div class="card panel step score-step" data-step="{{ key }}" data-title="{{ label }}">
+        <div class="score-row">
+          <p class="question">{{ questions[key].replace('{name}', animal.name) }}</p>
+          <label for="score-{{ key }}"><span>{{ label }}<span class="help">{{ guidance }}</span></span></label>
+          <div class="slider">
+            <input type="range" id="score-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key, 5) }}" aria-describedby="anchors-{{ key }}">
+            <output for="score-{{ key }}">{{ values.get(key, 5) }}</output>
+          </div>
+          <div class="anchors" id="anchors-{{ key }}"><span>0 = {{ low }}</span><span>10 = {{ high }}</span></div>
+          {% if loop.first %}
+            <p class="hint skip-hint">Scores are optional. <button class="link" type="button" id="skip-scores">Skip the scores today</button></p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+
+  {# Step 10: anything different? #}
+  <div class="card panel step" data-step="note" data-title="Anything different?">
+    <label for="notes" class="question">Anything different today?</label>
+    <textarea id="notes" name="notes" rows="3" maxlength="5000" placeholder="Medication change, vet visit, didn't finish breakfast, slept more than usual…">{{ values.get('notes', '') }}</textarea>
+    <p class="hint">Optional.</p>
+    <details class="extras">
+      <summary>More details (optional): weight, appetite, medications, photos</summary>
+      <input type="hidden" name="meds_included" value="1">
+      <div class="extras-grid">
+        <fieldset>
+          <legend>Weight</legend>
+          <div class="weight-row">
+            <input type="number" name="weight" step="0.01" min="0" inputmode="decimal" value="{{ values.get('weight', '') }}" placeholder="e.g. 24.5" aria-label="Weight">
+            <select name="weight_unit" aria-label="Weight unit">
+              <option value="kg" {% if values.get('weight_unit', 'kg') == 'kg' %}selected{% endif %}>kg</option>
+              <option value="lb" {% if values.get('weight_unit') == 'lb' %}selected{% endif %}>lb</option>
+            </select>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Appetite</legend>
+          {% for value, label in appetite_options %}
+            <label class="inline"><input type="radio" name="appetite" value="{{ value }}" {% if values.get('appetite') == value %}checked{% endif %}> {{ label }}</label>
+          {% endfor %}
+        </fieldset>
+        <fieldset>
+          <legend>Medications given</legend>
+          {% if medications %}
+            {% for med in medications %}
+              <label class="inline"><input type="checkbox" name="given" value="{{ med.id }}" {% if med.id in given or (not entry and med.id|string in request.form.getlist('given')) %}checked{% endif %}> {{ med.name }}{% if med.dose %} <span class="muted small">{{ med.dose }}</span>{% endif %}</label>
+            {% endfor %}
+          {% else %}
+            <p class="muted small">None on the list. <a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Add medications</a></p>
+          {% endif %}
+        </fieldset>
+        <fieldset>
+          <legend>Photos</legend>
+          {% if photos %}
+            <div class="photo-strip">
+              {% for photo in photos %}
+                <figure>
+                  <img src="{{ url_for('animals.serve_photo', filename=photo.file_path) }}" alt="Photo from this day">
+                  <button class="link small" type="submit" formaction="{{ url_for('entries.delete_entry_photo', photo_id=photo.id) }}" formnovalidate>Remove</button>
+                </figure>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple aria-label="Add photos">
+        </fieldset>
+      </div>
+    </details>
+  </div>
+
+  {# Step 11: review #}
+  <div class="card panel step review" data-step="review" data-title="Review">
+    <h2 class="review-title">Today at a glance</h2>
+    <ul class="review-list" id="review-list"></ul>
+    <p class="hint">Use Back to change anything.</p>
+  </div>
+
+  <div class="step-nav" id="step-nav" hidden>
+    <button class="button secondary" type="button" id="step-back">Back</button>
+    <button class="button" type="button" id="step-next">Next</button>
+  </div>
+
+  <div class="actions sticky-actions" id="final-actions">
+    <button class="button" type="submit">{{ 'Save changes' if entry else 'Save check-in' }}</button>
+    <a class="link" href="{{ url_for('dashboard.today', animal_id=animal.id) }}">Cancel</a>
+    {% if entry %}
+      <button class="link danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate
+              onclick="return confirm('Remove this day\'s check-in? This cannot be undone.')">Remove this check-in</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

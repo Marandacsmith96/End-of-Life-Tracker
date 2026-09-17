@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Quick check-in · {{ animal.name }}{% endblock %}
+{% block content %}
+<h1>Quick check-in</h1>
+<form method="post" class="form entry-form quick" id="quick-form">
+  <input type="hidden" name="entry_date" value="{{ values.get('entry_date', today) }}">
+  <input type="hidden" name="markers_included" value="1">
+  <div class="card panel">
+    <fieldset>
+      <legend class="question">Was today a good day or a bad day for {{ animal.name }}?</legend>
+      <div class="day-choice">
+        {% for value, label in day_statuses %}
+          <label class="day-option {{ value }}">
+            <input type="radio" name="day_status" value="{{ value }}" {% if values.get('day_status') == value %}checked{% endif %} required>
+            <span>{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+  </div>
+  {% if markers %}
+  <div class="card panel">
+    <fieldset>
+      <legend class="question">What did {{ animal.name }} do today?</legend>
+      <div class="choice-grid">
+        {% for m in markers %}
+          <label class="choice big">
+            <input type="checkbox" name="markers" value="{{ m.id }}" {% if answers.get(m.id) %}checked{% endif %}>
+            <span>{{ m.label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+  </div>
+  {% endif %}
+  <div class="actions">
+    <button class="button large" type="submit">Done</button>
+    <a class="link" href="{{ url_for('entries.checkin', animal_id=animal.id) }}">Full check-in instead</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Baseline · {{ animal.name }}{% endblock %}
+{% block content %}
+{% if onboarding %}<p class="eyebrow">Step 3 of 3 · optional</p>{% endif %}
+<h1>A reference point from before</h1>
+<p class="lede">Think back to about six months ago, before the recent changes. What was {{ animal.name }} like then? This is only an estimate. It's stored separately from your daily check-ins and shown on charts as a labelled reference line, never as measured data.</p>
+
+<form method="post" class="form entry-form card block">
+  <label>Roughly when
+    <input type="date" name="approximate_date" value="{{ values.get('approximate_date', '') }}">
+  </label>
+  <fieldset>
+    <legend>Back then, most days were</legend>
+    <div class="choice-grid">
+      {% for value, label in patterns %}
+        <label class="choice"><input type="radio" name="good_day_pattern" value="{{ value }}" {% if values.get('good_day_pattern') == value %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>{{ animal.name }} did their usual good-day behaviors</legend>
+    <div class="choice-grid">
+      {% for value, label in frequencies %}
+        <label class="choice"><input type="radio" name="marker_frequency" value="{{ value }}" {% if values.get('marker_frequency') == value %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <fieldset class="scores">
+    <legend>Estimated scores back then (0 to 10)</legend>
+    <p class="hint">Leave any you're unsure about blank.</p>
+    {% for key, label, guidance, low, high in categories %}
+      <div class="score-row">
+        <label for="base-{{ key }}"><span>{{ label }}<span class="help">{{ guidance }}</span></span></label>
+        <div class="slider">
+          <input type="range" id="base-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key) if values.get(key) not in ('', None) else 7 }}" data-optional="1">
+          <output for="base-{{ key }}">{{ values.get(key) if values.get(key) not in ('', None) else 7 }}</output>
+          <label class="inline small"><input type="checkbox" class="unsure" data-for="base-{{ key }}" {% if values.get(key) in ('', None) and values %}checked{% endif %}> Unsure</label>
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+  <label>Notes <span class="muted">(optional)</span>
+    <textarea name="notes" rows="2" maxlength="2000">{{ values.get('notes', '') }}</textarea>
+  </label>
+  <div class="actions">
+    <button class="button" type="submit">{{ 'Save and finish' if onboarding else 'Save baseline' }}</button>
+    <button class="link" type="submit" name="skip" value="1" formnovalidate>{{ 'Skip for now' if onboarding else 'Cancel' }}</button>
+  </div>
+</form>
+{% endblock %}

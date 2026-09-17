@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}See the pattern, not just the day · Quality-of-Life Tracker{% endblock %}
+{% block content %}
+<section class="hero-landing">
+  <h1>See the pattern, not just the day.</h1>
+  <p class="lede">A gentle quality-of-life tracker for aging and seriously ill pets. Record daily observations in seconds, see changes over time, and bring clearer information to conversations with your veterinarian.</p>
+  <div class="actions">
+    <a class="button large" href="{{ url_for('animals.new_animal', onboarding=1) }}">Start tracking</a>
+    <a class="link" href="#how">See how it works</a>
+  </div>
+</section>
+
+<section class="steps-landing" id="how" aria-label="How it works">
+  <div class="card block">
+    <h2>Check in</h2>
+    <p>Record a good or bad day, the behaviors that matter for your pet, and optional quality-of-life scores. Under thirty seconds.</p>
+  </div>
+  <div class="card block">
+    <h2>See the trend</h2>
+    <p>Understand how comfort, mobility, appetite, happiness, and good days are changing over weeks, not just how today felt.</p>
+  </div>
+  <div class="card block">
+    <h2>Talk with your vet</h2>
+    <p>Create a simple one-page summary for veterinary appointments, with the charts and the changes worth discussing.</p>
+  </div>
+</section>
+
+<section class="card block quiet-block">
+  <h2>Why this exists</h2>
+  <p>People can't reliably remember the slope of decline. Memory of "how was she last month" is rewritten daily by hope, fear, and tiredness. Short daily observations, kept over time, answer a question no amount of thinking can: is this a decline, a plateau, or a run of bad days?</p>
+  <p>The app never gives a verdict. It shows the trend and the criteria; you and your veterinarian decide.</p>
+  <p class="muted small">{{ attribution }}</p>
+</section>
+{% endblock %}

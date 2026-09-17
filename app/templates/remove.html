@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Remove {{ animal.name }}'s profile{% endblock %}
+{% block content %}
+<section class="gentle">
+  <h1>Remove {{ animal.name }}'s profile</h1>
+  <p class="lede">This permanently deletes every check-in, event, photo, and note for {{ animal.name }} from this device. It cannot be undone. If you're unsure, download a backup first.</p>
+  <form method="post" class="form card block">
+    <label>Type <strong>{{ animal.name }}</strong> to confirm
+      <input type="text" name="confirm_name" autocomplete="off" required>
+    </label>
+    <div class="actions">
+      <button class="button danger-button" type="submit">Remove permanently</button>
+      <a class="link" href="{{ url_for('animals.settings', animal_id=animal.id) }}">Keep the profile</a>
+      <a class="link" href="{{ url_for('settings.download_backup') }}">Download a backup first</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

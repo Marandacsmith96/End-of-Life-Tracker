@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}What makes a good day? · {{ animal.name }}{% endblock %}
+{% block content %}
+{% if onboarding %}<p class="eyebrow">Step 2 of 3</p>{% endif %}
+<h1>What does a good day look like for {{ animal.name }}?</h1>
+<p class="lede">Think about the specific things {{ animal.name }} does when they feel like themselves. Choose {{ min }} to {{ max }}. They become quick yes/no questions each day.</p>
+
+<form method="post" class="form card block" id="markers-form" data-max="{{ max }}">
+  <fieldset>
+    <legend>Suggestions</legend>
+    <div class="choice-grid">
+      {% for s in suggestions %}
+        <label class="choice"><input type="checkbox" name="labels" value="{{ s }}" {% if s in labels %}checked{% endif %}> {{ s }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Your own</legend>
+    <p class="hint">Anything specific to {{ animal.name }}: "Walks to the barn gate", "Sleeps on my pillow", "Comes when the treat jar opens".</p>
+    {% set custom = labels|reject('in', suggestions)|list %}
+    {% for i in range(3) %}
+      <input type="text" name="labels" maxlength="80" value="{{ custom[i] if i < custom|length else '' }}" placeholder="Something {{ animal.name }} does on a good day" aria-label="Custom behavior {{ i + 1 }}">
+    {% endfor %}
+  </fieldset>
+  <p class="muted small" id="marker-count"></p>
+  <div class="actions">
+    <button class="button" type="submit">{{ 'Continue' if onboarding else 'Save' }}</button>
+    {% if not onboarding %}<a class="link" href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Cancel</a>{% endif %}
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} · Calendar{% endblock %}
+{% block content %}
+<h1>Good and bad days</h1>
+
+<section class="card block">
+  <h2>Last 30 days</h2>
+  <div class="day-counts">
+    <div class="count good"><span class="n">{{ last30.good }}</span><span class="l">good</span></div>
+    <div class="count mixed"><span class="n">{{ last30.mixed }}</span><span class="l">mixed</span></div>
+    <div class="count bad"><span class="n">{{ last30.bad }}</span><span class="l">bad</span></div>
+    <div class="count none"><span class="n">{{ last30.not_logged }}</span><span class="l">not logged</span></div>
+  </div>
+  {% if prev30.logged %}
+    <p class="muted small">Previous 30 days: {{ prev30.good }} good, {{ prev30.mixed }} mixed, {{ prev30.bad }} bad ({{ prev30.not_logged }} not logged).</p>
+  {% endif %}
+</section>
+
+<section class="card block">
+  <div class="section-head tight">
+    <a class="link" href="{{ url_for('trends.calendar', animal_id=animal.id, month=prev_link) }}" aria-label="Previous month">← {{ prev_first.strftime('%b') }}</a>
+    <h2>{{ month_name }}</h2>
+    {% if next_link %}<a class="link" href="{{ url_for('trends.calendar', animal_id=animal.id, month=next_link) }}" aria-label="Next month">Next →</a>{% else %}<span></span>{% endif %}
+  </div>
+  <table class="calendar" aria-label="{{ month_name }}">
+    <thead><tr>{% for d in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for week in weeks %}
+      <tr>
+      {% for cell in week %}
+        {% set e = cell.entry %}
+        {% set status = e.day_status if (e and cell.in_month) else none %}
+        <td class="cal-cell {{ 'out' if not cell.in_month }} {{ 'future' if cell.future }} {{ status or ('logged' if (e and cell.in_month) else '') }}">
+          {% if cell.in_month %}
+            {% if e and not cell.future %}
+              <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=cell.date.isoformat()) }}" aria-label="{{ cell.date.strftime('%B') }} {{ cell.date.day }}: {{ day_labels[status] if status else 'logged, day not rated' }}">
+                <span class="num">{{ cell.date.day }}</span>
+                <span class="glyph {{ status or 'logged' }}" aria-hidden="true"></span>
+              </a>
+            {% else %}
+              <span class="num" aria-label="{{ cell.date.strftime('%B') }} {{ cell.date.day }}: {{ 'future' if cell.future else 'no entry' }}">{{ cell.date.day }}</span>
+            {% endif %}
+            {% if cell.date in event_days %}<span class="event-dot" title="Event"></span>{% endif %}
+          {% endif %}
+        </td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="cal-legend">
+    <span><i class="glyph good"></i> Good</span><span><i class="glyph mixed"></i> Mixed</span><span><i class="glyph bad"></i> Bad</span><span><i class="glyph logged"></i> Logged, not rated</span><span><i class="event-dot"></i> Event</span>
+  </div>
+  <p class="muted small">{{ month_name }}: {{ this_month.good }} good, {{ this_month.mixed }} mixed, {{ this_month.bad }} bad. {{ prev_first.strftime('%B') }}: {{ prev_month.good }} good, {{ prev_month.mixed }} mixed, {{ prev_month.bad }} bad.</p>
+</section>
+{% endblock %}

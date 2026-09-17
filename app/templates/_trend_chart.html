@@ -1,0 +1,11 @@
+{# Expects `series` (from charts.build_series), `chart_id`, `summary_text`, optional `height`. #}
+<div class="chart-wrap {{ height or '' }}" data-chart="overall" data-series="{{ series|tojson|forceescape }}">
+  <canvas id="{{ chart_id }}" role="img" aria-label="Quality-of-life trend. {{ summary_text }}"></canvas>
+</div>
+<div class="chart-legend" aria-hidden="true">
+  <span><i class="swatch dot"></i> Daily score</span>
+  <span><i class="swatch line"></i> 7-day average</span>
+  {% if series.baseline %}<span><i class="swatch dashed"></i> Owner-estimated baseline</span>{% endif %}
+  {% if series.events %}<span><i class="swatch event"></i> Event</span>{% endif %}
+</div>
+<p class="chart-summary">{{ summary_text }}</p>

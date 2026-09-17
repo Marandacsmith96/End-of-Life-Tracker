@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} · Vet{% endblock %}
+{% block content %}
+<h1>Prepare for my vet visit</h1>
+<p class="lede">Changes since {{ prep.since.strftime('%B') }} {{ prep.since.day }}{% if prep.last_visit and prep.last_visit.event_date == prep.since %} (your last recorded vet visit){% endif %}, compared with the {{ (prep.prev_end - prep.prev_start).days + 1 }} days before.</p>
+<form method="get" class="range-bar" aria-label="Compare since">
+  <label class="muted small">Compare since <input type="date" name="since" value="{{ prep.since.isoformat() }}" max="{{ prep.end.isoformat() }}"></label>
+  <button class="button small secondary" type="submit">Update</button>
+</form>
+
+<section class="card block">
+  <h2>Quality-of-life scores</h2>
+  <div class="table-scroll">
+  <table class="table compare">
+    <thead><tr><th>Category</th><th>Previous period</th><th>Recent period</th><th></th></tr></thead>
+    <tbody>
+      {% for c in prep.cats %}
+        <tr>
+          <td>{{ c.label }}</td>
+          <td>{% if c.previous is not none %}{{ '%.1f'|format(c.previous) }} <span class="muted small">({{ c.previous_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td>{% if c.recent is not none %}{{ '%.1f'|format(c.recent) }} <span class="muted small">({{ c.recent_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td class="muted small">{{ c.text }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Averages out of 10, with the number of scored days in brackets.</p>
+</section>
+
+<section class="card block">
+  <h2>Good days</h2>
+  <p>Previous period: <strong>{{ prep.prev_days.good }}</strong> good, {{ prep.prev_days.mixed }} mixed, {{ prep.prev_days.bad }} bad ({{ prep.prev_days.logged }} logged).<br>
+     Recent period: <strong>{{ prep.recent_days.good }}</strong> good, {{ prep.recent_days.mixed }} mixed, {{ prep.recent_days.bad }} bad ({{ prep.recent_days.logged }} logged).</p>
+</section>
+
+{% if prep.recent_rates %}
+<section class="card block">
+  <h2>Good-day behaviors</h2>
+  <ul class="marker-list">
+    {% for r in prep.recent_rates %}
+      {% set p = prep.prev_rates.get(r.marker_id) %}
+      <li><div class="marker-head"><span>{{ r.label }}</span>
+        <span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of recent logged days{% else %}no recent answers{% endif %}{% if p and p.pct is not none %}, compared with {{ p.pct }}% before{% endif %}</span></div>
+        <div class="bar" aria-hidden="true"><span style="width: {{ r.pct or 0 }}%"></span></div></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if prep.events %}
+<section class="card block">
+  <h2>Events in this period</h2>
+  <ul class="event-list">{% for ev in prep.events %}<li><span class="date">{{ ev.event_date.strftime('%b') }} {{ ev.event_date.day }}</span> <span>{{ ev.title }}</span> <span class="muted small">{{ ev.type_label }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="card block">
+  <h2>Things you may want to discuss with your veterinarian</h2>
+  {% if prep.points %}
+    <ul class="discuss">{% for p in prep.points %}<li>{{ p }}</li>{% endfor %}</ul>
+  {% else %}
+    <p class="muted">Nothing stands out in the recorded observations for this period. That is worth sharing too.</p>
+  {% endif %}
+  <p class="muted small">Based only on what you've recorded. Not a diagnosis or a treatment suggestion.</p>
+</section>
+
+<section class="card block share" id="share">
+  <h2>Share with my vet</h2>
+  <p>A one-page summary: the trend chart, current scores with the previous period, good and bad days, {{ animal.name }}'s behaviors, events, medications, and the changes above.</p>
+  <form method="get" class="range-bar" action="#share">
+    <input type="hidden" name="since" value="{{ prep.since.isoformat() }}">
+    <div class="presets">
+      {% for key, label in [('30', 'Last 30 days'), ('90', 'Last 90 days'), ('all', 'All time')] %}
+        <a class="chip {{ 'active' if preset == key }}" href="{{ url_for('export.vet', animal_id=animal.id, range=key, since=prep.since.isoformat()) }}#share">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <span class="muted small">{{ count }} {{ 'entry' if count == 1 else 'entries' }} in range</span>
+  </form>
+  <div class="actions">
+    <a class="button" href="{{ url_for('export.export_pdf', animal_id=animal.id, range=preset, download=1) }}">Download PDF</a>
+    <a class="button secondary" href="{{ url_for('export.export_pdf', animal_id=animal.id, range=preset) }}" target="_blank" rel="noopener">Print</a>
+    <button class="button secondary" type="button" id="share-button" data-title="{{ animal.name }} quality-of-life summary" data-url="{{ url_for('export.export_pdf', animal_id=animal.id, range=preset, download=1, _external=True) }}" hidden>Share</button>
+    <a class="link small" href="{{ url_for('export.export_pdf', animal_id=animal.id, range=preset, appendix=1, download=1) }}">With daily table and notes</a>
+  </div>
+  <p class="muted small">{{ report_note }}</p>
+</section>
+{% endblock %}

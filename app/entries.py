@@ -3,7 +3,10 @@ from dataclasses import dataclass
 from datetime import date
 
 from .db import get_db
-from .scoring import CATEGORY_KEYS, total_score
+from .scoring import CATEGORY_KEYS
+
+DAY_STATUSES = (("good", "Good day"), ("bad", "Bad day"), ("mixed", "Mixed / unsure"))
+DAY_STATUS_LABELS = dict(DAY_STATUSES)
 
 
 @dataclass
@@ -11,43 +14,42 @@ class Entry:
     id: int
     animal_id: int
     entry_date: date
-    hurt: int
-    hunger: int
-    hydration: int
-    hygiene: int
-    happiness: int
-    mobility: int
-    good_days: int
+    day_status: str | None
+    hurt: int | None
+    hunger: int | None
+    hydration: int | None
+    hygiene: int | None
+    happiness: int | None
+    mobility: int | None
+    good_days: int | None
     weight: float | None
     weight_unit: str | None
     appetite: str | None
     notes: str | None
 
     @property
-    def scores(self) -> dict[str, int]:
+    def scores(self) -> dict[str, int | None]:
         return {key: getattr(self, key) for key in CATEGORY_KEYS}
 
     @property
-    def total(self) -> int:
-        return total_score(self.scores)
+    def has_scores(self) -> bool:
+        """True when every HHHHHMM category was scored."""
+        return all(v is not None for v in self.scores.values())
 
+    @property
+    def scored_values(self) -> list[int]:
+        return [v for v in self.scores.values() if v is not None]
 
-@dataclass
-class Medication:
-    id: int
-    animal_id: int
-    name: str
-    dose: str | None
-    schedule: str | None
-    active: bool
+    @property
+    def total(self) -> int | None:
+        """Sum of the seven scores (0-70), or None if the full assessment wasn't done."""
+        return sum(self.scored_values) if self.has_scores else None
 
-
-@dataclass
-class EntryPhoto:
-    id: int
-    entry_id: int
-    file_path: str
-    caption: str | None
+    @property
+    def mean(self) -> float | None:
+        """Overall quality-of-life score, 0-10: mean of whichever categories were scored."""
+        values = self.scored_values
+        return round(sum(values) / len(values), 2) if values else None
 
 
 def _row_to_entry(row) -> Entry:
@@ -55,6 +57,7 @@ def _row_to_entry(row) -> Entry:
         id=row["id"],
         animal_id=row["animal_id"],
         entry_date=row["entry_date"],
+        day_status=row["day_status"],
         hurt=row["hurt"],
         hunger=row["hunger"],
         hydration=row["hydration"],
@@ -109,31 +112,48 @@ def list_entries(
 def save_entry(
     animal_id: int,
     entry_date: date,
-    scores: dict[str, int],
-    weight: float | None,
-    weight_unit: str | None,
-    appetite: str | None,
-    notes: str | None,
+    day_status: str | None = None,
+    scores: dict[str, int | None] | None = None,
+    weight: float | None = None,
+    weight_unit: str | None = None,
+    appetite: str | None = None,
+    notes: str | None = None,
+    keep_missing: bool = True,
 ) -> int:
-    """Insert the day's entry, or update it if one already exists. Returns its id."""
+    """Insert the day's entry, or update it if one already exists. Returns its id.
+
+    With ``keep_missing`` (the default) a quick check-in that omits scores does
+    not wipe scores recorded earlier the same day.
+    """
     db = get_db()
+    scores = scores or {}
     existing = get_entry_for_date(animal_id, entry_date)
-    values = [scores[key] for key in CATEGORY_KEYS] + [weight, weight_unit, appetite, notes]
     if existing:
+        merged = {
+            key: scores.get(key, getattr(existing, key) if keep_missing else None)
+            for key in CATEGORY_KEYS
+        }
+        fields = {
+            "day_status": day_status if day_status is not None or not keep_missing else existing.day_status,
+            **merged,
+            "weight": weight if weight is not None or not keep_missing else existing.weight,
+            "weight_unit": weight_unit if weight is not None or not keep_missing else existing.weight_unit,
+            "appetite": appetite if appetite is not None or not keep_missing else existing.appetite,
+            "notes": notes if notes is not None or not keep_missing else existing.notes,
+        }
+        assignments = ", ".join(f"{k} = ?" for k in fields)
         db.execute(
-            """UPDATE entries SET hurt=?, hunger=?, hydration=?, hygiene=?, happiness=?,
-                   mobility=?, good_days=?, weight=?, weight_unit=?, appetite=?, notes=?,
-                   updated_at=CURRENT_TIMESTAMP
-               WHERE id = ?""",
-            values + [existing.id],
+            f"UPDATE entries SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [*fields.values(), existing.id],
         )
         db.commit()
         return existing.id
+    values = [scores.get(key) for key in CATEGORY_KEYS]
     cur = db.execute(
-        """INSERT INTO entries (animal_id, entry_date, hurt, hunger, hydration, hygiene,
-               happiness, mobility, good_days, weight, weight_unit, appetite, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        [animal_id, entry_date] + values,
+        """INSERT INTO entries (animal_id, entry_date, day_status, hurt, hunger, hydration,
+               hygiene, happiness, mobility, good_days, weight, weight_unit, appetite, notes)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        [animal_id, entry_date, day_status, *values, weight, weight_unit, appetite, notes],
     )
     db.commit()
     return cur.lastrowid
@@ -147,13 +167,22 @@ def delete_entry(entry_id: int) -> None:
 
 # --- medications -------------------------------------------------------------
 
+@dataclass
+class Medication:
+    id: int
+    animal_id: int
+    name: str
+    dose: str | None
+    schedule: str | None
+    start_date: date | None
+    end_date: date | None
+    active: bool
+
+
 def _row_to_medication(row) -> Medication:
     return Medication(
-        id=row["id"],
-        animal_id=row["animal_id"],
-        name=row["name"],
-        dose=row["dose"],
-        schedule=row["schedule"],
+        id=row["id"], animal_id=row["animal_id"], name=row["name"], dose=row["dose"],
+        schedule=row["schedule"], start_date=row["start_date"], end_date=row["end_date"],
         active=bool(row["active"]),
     )
 
@@ -167,25 +196,32 @@ def list_medications(animal_id: int, active_only: bool = False) -> list[Medicati
 
 
 def get_medication(medication_id: int) -> Medication | None:
-    row = get_db().execute(
-        "SELECT * FROM medications WHERE id = ?", (medication_id,)
-    ).fetchone()
+    row = get_db().execute("SELECT * FROM medications WHERE id = ?", (medication_id,)).fetchone()
     return _row_to_medication(row) if row else None
 
 
-def create_medication(animal_id: int, name: str, dose: str | None, schedule: str | None) -> int:
+def create_medication(
+    animal_id: int, name: str, dose: str | None = None, schedule: str | None = None,
+    start_date: date | None = None,
+) -> int:
     db = get_db()
     cur = db.execute(
-        "INSERT INTO medications (animal_id, name, dose, schedule) VALUES (?, ?, ?, ?)",
-        (animal_id, name, dose, schedule),
+        "INSERT INTO medications (animal_id, name, dose, schedule, start_date) VALUES (?, ?, ?, ?, ?)",
+        (animal_id, name, dose, schedule, start_date),
     )
     db.commit()
     return cur.lastrowid
 
 
-def set_medication_active(medication_id: int, active: bool) -> None:
+def set_medication_active(medication_id: int, active: bool, on: date | None = None) -> None:
     db = get_db()
-    db.execute("UPDATE medications SET active = ? WHERE id = ?", (int(active), medication_id))
+    if active:
+        db.execute("UPDATE medications SET active = 1, end_date = NULL WHERE id = ?", (medication_id,))
+    else:
+        db.execute(
+            "UPDATE medications SET active = 0, end_date = ? WHERE id = ?",
+            (on or date.today(), medication_id),
+        )
     db.commit()
 
 
@@ -229,6 +265,14 @@ def medications_given_names(entry_id: int) -> list[str]:
 
 # --- photos ------------------------------------------------------------------
 
+@dataclass
+class EntryPhoto:
+    id: int
+    entry_id: int
+    file_path: str
+    caption: str | None
+
+
 def add_entry_photo(entry_id: int, file_path: str, caption: str | None = None) -> int:
     db = get_db()
     cur = db.execute(
@@ -240,9 +284,7 @@ def add_entry_photo(entry_id: int, file_path: str, caption: str | None = None) -
 
 
 def list_entry_photos(entry_id: int) -> list[EntryPhoto]:
-    rows = get_db().execute(
-        "SELECT * FROM photos WHERE entry_id = ? ORDER BY id", (entry_id,)
-    ).fetchall()
+    rows = get_db().execute("SELECT * FROM photos WHERE entry_id = ? ORDER BY id", (entry_id,)).fetchall()
     return [EntryPhoto(r["id"], r["entry_id"], r["file_path"], r["caption"]) for r in rows]
 
 

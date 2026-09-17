@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }}{% endblock %}
+{% block content %}
+<section class="gentle">
+  <h1>In memory of {{ animal.name }}</h1>
+  <p class="lede">Take whatever time you need. Here is what you can do with {{ animal.name }}'s history, now or later.</p>
+  <div class="option-list">
+    <form method="post" action="{{ url_for('animals.keep_profile', animal_id=animal.id) }}" class="card block option">
+      <h2>Keep their profile and history</h2>
+      <p class="muted">Everything stays where it is, marked in memory of {{ animal.name }}.</p>
+      <button class="button" type="submit">Keep</button>
+    </form>
+    <form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}" class="card block option">
+      <h2>Archive their profile</h2>
+      <p class="muted">Moves {{ animal.name }} out of the main view. Nothing is removed and you can bring it back.</p>
+      <button class="button secondary" type="submit">Archive</button>
+    </form>
+    <div class="card block option">
+      <h2>Export their records</h2>
+      <p class="muted">A PDF of the full history, and a backup file you can keep anywhere.</p>
+      <div class="actions compact">
+        <a class="button secondary" href="{{ url_for('export.export_pdf', animal_id=animal.id, range='all', appendix=1, download=1) }}">Download PDF</a>
+        <a class="link" href="{{ url_for('settings.download_backup') }}">Download backup</a>
+      </div>
+    </div>
+    <div class="card block option">
+      <h2>Remove their profile</h2>
+      <p class="muted">Permanently deletes {{ animal.name }}'s records from this device. You'll be asked to confirm.</p>
+      <a class="link" href="{{ url_for('animals.remove_animal', animal_id=animal.id) }}">Remove</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

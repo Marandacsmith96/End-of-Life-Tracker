@@ -1,44 +1,36 @@
 {% extends "base.html" %}
-{% block title %}{{ animal.name }}'s medications · Pet Quality-of-Life Tracker{% endblock %}
+{% block title %}{{ animal.name }} · Medications{% endblock %}
 {% block content %}
-<h1>{{ animal.name }}'s medications</h1>
-<p class="muted">Active medications show up as checkboxes on the daily log. Mark one inactive when it stops, so past entries keep their history.</p>
-
+<h1>Medications</h1>
+<p class="muted">Active medications appear as optional checkboxes in the daily check-in. Mark one stopped when it ends so past entries keep their history. Dose changes are best recorded as <a href="{{ url_for('events.new', animal_id=animal.id, type='dose_change') }}">events</a> so they show on the charts.</p>
 {% if medications %}
+  <div class="table-scroll">
   <table class="table">
-    <thead><tr><th>Name</th><th>Dose</th><th>Schedule</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Name</th><th>Dose</th><th>Schedule</th><th>Started</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for med in medications %}
       <tr class="{{ '' if med.active else 'inactive' }}">
-        <td>{{ med.name }}</td>
-        <td>{{ med.dose or '' }}</td>
-        <td>{{ med.schedule or '' }}</td>
-        <td>{{ 'Active' if med.active else 'Inactive' }}</td>
+        <td>{{ med.name }}</td><td>{{ med.dose or '' }}</td><td>{{ med.schedule or '' }}</td>
+        <td class="nowrap">{% if med.start_date %}{{ med.start_date.strftime('%b') }} {{ med.start_date.day }}, {{ med.start_date.year }}{% endif %}</td>
+        <td>{{ 'Active' if med.active else 'Stopped' ~ (' ' ~ med.end_date.strftime('%b') ~ ' ' ~ med.end_date.day if med.end_date else '') }}</td>
         <td class="row-actions">
-          <form method="post" action="{{ url_for('entries.toggle_medication', medication_id=med.id) }}">
-            <button class="link" type="submit">{{ 'Mark inactive' if med.active else 'Mark active' }}</button>
-          </form>
-          <form method="post" action="{{ url_for('entries.delete_medication', medication_id=med.id) }}"
-                onsubmit="return confirm('Remove {{ med.name }}? It will also disappear from past entries.')">
-            <button class="link danger" type="submit">Remove</button>
-          </form>
+          <form method="post" action="{{ url_for('entries.toggle_medication', medication_id=med.id) }}"><button class="link small" type="submit">{{ 'Mark stopped' if med.active else 'Mark active' }}</button></form>
+          <form method="post" action="{{ url_for('entries.delete_medication', medication_id=med.id) }}" onsubmit="return confirm('Remove {{ med.name }}? It will also disappear from past entries.')"><button class="link small danger" type="submit">Remove</button></form>
         </td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
+  </div>
 {% else %}
-  <p>No medications yet.</p>
+  <p class="card block muted">No medications yet.</p>
 {% endif %}
-
 <h2>Add a medication</h2>
 <form method="post" class="form card block">
   <label>Name <input type="text" name="name" value="{{ values.get('name', '') }}" maxlength="80" required></label>
-  <label>Dose <span class="muted">(optional)</span> <input type="text" name="dose" value="{{ values.get('dose', '') }}" maxlength="80" placeholder="e.g. 50 mg"></label>
-  <label>Schedule <span class="muted">(optional)</span> <input type="text" name="schedule" value="{{ values.get('schedule', '') }}" maxlength="80" placeholder="e.g. twice a day with food"></label>
-  <div class="actions">
-    <button class="button" type="submit">Add</button>
-    <a class="link" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">Back to {{ animal.name }}</a>
-  </div>
+  <label>Dose <span class="muted">(optional)</span> <input type="text" name="dose" value="{{ values.get('dose', '') }}" maxlength="80" placeholder="e.g. 100 mg"></label>
+  <label>Frequency <span class="muted">(optional)</span> <input type="text" name="schedule" value="{{ values.get('schedule', '') }}" maxlength="80" placeholder="e.g. twice a day with food"></label>
+  <label>Start date <span class="muted">(optional)</span> <input type="date" name="start_date" value="{{ values.get('start_date', '') }}" max="{{ today }}"></label>
+  <div class="actions"><button class="button" type="submit">Add</button><a class="link" href="{{ url_for('dashboard.more') }}">Back</a></div>
 </form>
 {% endblock %}

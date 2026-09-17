@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} · Good-day behaviors{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>Good-day behaviors</h1>
+  <div class="presets">
+    {% for key, label in [('30', '30 days'), ('90', '90 days'), ('all', 'All time')] %}
+      <a class="chip {{ 'active' if preset == key }}" href="{{ url_for('markers.behaviors', animal_id=animal.id, range=key) }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+</div>
+<p class="muted">How often {{ animal.name }} did each of the things you chose, on the days you answered.</p>
+
+<section class="card block">
+  {% if recent %}
+    <ul class="marker-list">
+      {% for r in recent %}
+        {% set p = prev_by_id.get(r.marker_id) %}
+        <li>
+          <div class="marker-head">
+            <span>{{ r.label }}</span>
+            <span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of {{ r.logged }} logged days{% else %}No answers yet{% endif %}</span>
+          </div>
+          <div class="bar" aria-hidden="true"><span style="width: {{ r.pct or 0 }}%"></span></div>
+          {% if p and p.pct is not none and r.pct is not none and p.logged >= 5 %}
+            <p class="muted small">Previous {{ window }} days: {{ p.pct }}% of {{ p.logged }} logged days.</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No behaviors set up yet.</p>
+  {% endif %}
+  <div class="actions compact"><a class="link" href="{{ url_for('markers.setup', animal_id=animal.id) }}">Change the list</a></div>
+</section>
+
+{% if weeks|length > 1 %}
+<section class="card block">
+  <h2>Week by week</h2>
+  <div class="chart-wrap" data-chart="markers" data-series="{{ {'weeks': weeks, 'series': series}|tojson|forceescape }}">
+    <canvas id="chart-markers" role="img" aria-label="Percentage of logged days each behavior happened, per week"></canvas>
+  </div>
+  <p class="muted small">Percentage of logged days in each week. Weeks with few answers are noisier.</p>
+</section>
+{% endif %}
+
+{% if inactive %}
+<section class="card block quiet-block">
+  <h2>No longer tracked</h2>
+  <ul class="link-list">
+    {% for m in inactive %}<li>{{ m.label }} <form method="post" action="{{ url_for('markers.restore', marker_id=m.id) }}" class="inline-form"><button class="link small" type="submit">Restore</button></form></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

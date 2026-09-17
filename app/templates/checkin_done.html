@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Saved · {{ animal.name }}{% endblock %}
+{% block content %}
+<section class="done">
+  <h1>Done</h1>
+  <p class="muted">Saved for {{ entry.entry_date.strftime('%A, %B') }} {{ entry.entry_date.day }}.</p>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('entries.checkin', animal_id=animal.id, date=entry.entry_date.isoformat(), step='scores') }}">Add full quality-of-life scores</a>
+    <a class="button" href="{{ url_for('dashboard.today', animal_id=animal.id) }}">Back to today</a>
+  </div>
+</section>
+{% endblock %}

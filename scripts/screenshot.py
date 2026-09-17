@@ -14,13 +14,19 @@ OUT = Path(__file__).resolve().parent.parent / "docs" / "screenshots"
 OUT.mkdir(parents=True, exist_ok=True)
 
 PAGES = {
-    "dashboard": "/",
-    "pet": "/animals/1",
-    "log": "/animals/1/log",
-    "history": "/animals/1/history?range=30",
-    "medications": "/animals/1/medications",
-    "export": "/animals/1/export",
-    "settings": "/settings",
+    "landing": "/how-it-works",
+    "today": "/animals/1/today",
+    "checkin": "/animals/1/checkin",
+    "quick": "/animals/1/checkin/quick",
+    "trends": "/animals/1/trends?range=90",
+    "category": "/animals/1/trends/mobility",
+    "calendar": "/animals/1/calendar",
+    "behaviors": "/animals/1/behaviors",
+    "vet": "/animals/1/vet",
+    "events": "/animals/1/events",
+    "caregiver": "/animals/1/caregiver",
+    "settings": "/animals/1/settings",
+    "passed": "/animals/1/passed",
 }
 
 with sync_playwright() as p:

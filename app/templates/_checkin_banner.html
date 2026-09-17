@@ -1,9 +1,6 @@
-{% if g.current_animal and g.today_logged is sameas false and request.endpoint != 'entries.log_entry' %}
-<aside class="checkin-banner">
-  <div class="checkin-text">
-    <strong>Time for {{ g.current_animal.name }}'s daily check-in</strong>
-    <span>Seven quick questions, about a minute. Answering every day is what makes the patterns show.</span>
-  </div>
-  <a class="button light" href="{{ url_for('entries.log_entry', animal_id=g.current_animal.id) }}">Start check-in</a>
+{% if g.current_animal and g.checkin_prompt and request.endpoint not in ('entries.checkin', 'entries.quick_checkin', 'dashboard.today') %}
+<aside class="notice" aria-label="Optional check-in">
+  <span><strong>No check-in recorded today</strong> for {{ g.current_animal.name }}.</span>
+  <a class="button small" href="{{ url_for('entries.checkin', animal_id=g.current_animal.id) }}">Check in</a>
 </aside>
 {% endif %}

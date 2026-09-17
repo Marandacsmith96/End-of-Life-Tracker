@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }}{% endblock %}
+{% block content %}
+<section class="gentle">
+  <h1>We're sorry you're saying goodbye to {{ animal.name }}.</h1>
+  <p class="lede">You can keep their history here for as long as you would like. Nothing is deleted unless you choose that.</p>
+  <form method="post" class="form card block">
+    <label>Date <span class="muted">(optional)</span>
+      <input type="date" name="passed_date" value="{{ today }}" max="{{ today }}">
+    </label>
+    <p class="muted small">This stops check-in prompts for {{ animal.name }}. Their trends, calendar, and vet summary stay available.</p>
+    <div class="actions">
+      <button class="button" type="submit">Continue</button>
+      <a class="link" href="{{ url_for('animals.settings', animal_id=animal.id) }}">Go back</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

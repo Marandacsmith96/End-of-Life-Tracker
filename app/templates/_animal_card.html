@@ -1,54 +1,22 @@
 <article class="card animal-card{% if animal.archived %} archived{% endif %}">
   <div class="top">
-    <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">
+    <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}" aria-label="Open {{ animal.name }}">
       {% if animal.photo_path %}
-        <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
+        <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">
       {% else %}
-        <span class="placeholder" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
+        <span class="placeholder" aria-hidden="true">{{ animal.initials }}</span>
       {% endif %}
     </a>
     <div>
       <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a></h3>
       <p class="meta">{{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}</p>
+      {% if animal.passed %}<p class="meta">In memory of {{ animal.name }}{% if animal.passed_date %} · {{ animal.passed_date.strftime('%B') }} {{ animal.passed_date.day }}, {{ animal.passed_date.year }}{% endif %}</p>
+      {% elif animal.archived %}<p class="meta">Archived</p>{% endif %}
     </div>
   </div>
-
-  {% if not animal.archived and latest is defined %}
-    {% set e = latest.get(animal.id) %}
-    <div class="status">
-      {% if e %}
-        {% set low = e.total <= 35 %}
-        <div class="ring {{ 'low' if low }}" aria-hidden="true">
-          <svg viewBox="0 0 56 56"><defs><linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b6cf5"/><stop offset="1" stop-color="#6f8cff"/></linearGradient></defs><circle class="track" cx="28" cy="28" r="23"/><circle class="value" cx="28" cy="28" r="23" stroke-dasharray="144.5" stroke-dashoffset="{{ (144.5 * (1 - e.total / 70))|round(1) }}"/></svg>
-          <span class="label">{{ e.total }}</span>
-        </div>
-        <p><strong>{{ e.total }} / 70</strong> on {{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}<br>
-          {% if flag_counts is defined and flag_counts.get(animal.id) %}
-            <a class="badge watch" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ flag_counts[animal.id] }} {{ 'pattern' if flag_counts[animal.id] == 1 else 'patterns' }} to watch</a>
-          {% else %}
-            <span class="muted">No patterns to watch</span>
-          {% endif %}
-        </p>
-      {% else %}
-        <p class="muted">Nothing logged yet. The first entry takes about a minute.</p>
-      {% endif %}
-    </div>
-  {% endif %}
-
-  {% if not animal.archived %}
-    <div class="foot">
-      {% if g.current_animal and g.current_animal.id == animal.id %}
-        <span class="badge">Currently tracking</span>
-      {% else %}
-        <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
-          <button class="button small secondary" type="submit">Track {{ animal.name }}</button>
-        </form>
-      {% endif %}
-      {% if logged_today is defined and logged_today.get(animal.id) %}
-        <a class="button small secondary" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Logged today ✓</a>
-      {% else %}
-        <a class="button small" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Start check-in</a>
-      {% endif %}
-    </div>
-  {% endif %}
+  <div class="foot">
+    <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
+      <button class="button small secondary" type="submit">{{ 'View' if animal.archived else 'Open' }}</button>
+    </form>
+  </div>
 </article>
