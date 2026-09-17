@@ -242,3 +242,13 @@ button.link {
 .flag-note { margin: 4px 0 0; }
 .badge.watch { background: #fdf6e7; color: #8a5a10; text-decoration: none; margin-bottom: 6px; }
 .card-body .badge.watch { display: inline-block; }
+
+/* Settings */
+.card.block { display: block; margin-bottom: 16px; padding: 16px 18px; }
+.card.block h2 { margin-top: 0; }
+.card.block code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+.danger-text { color: #a33; }
+.button.danger-button { background: #a33; border-color: #a33; }
+.nav-link { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+.nav-link:hover { text-decoration: underline; }
+.card-body p.small { margin: 2px 0 4px; }

@@ -16,6 +16,7 @@
         <a class="button small" href="{{ url_for('entries.log_entry', animal_id=g.current_animal.id) }}">Log today</a>
       {% endif %}
       <a class="button small secondary" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+      <a class="nav-link" href="{{ url_for('settings.settings') }}">Backup</a>
     </nav>
   </header>
   <main class="content {% block content_class %}{% endblock %}">

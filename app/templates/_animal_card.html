@@ -11,6 +11,14 @@
     <p class="muted">
       {{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}
     </p>
+    {% if not animal.archived and latest is defined %}
+      {% set e = latest.get(animal.id) %}
+      {% if e %}
+        <p class="small">Last logged {{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }} · total <span class="total {{ 'low' if e.total <= 35 else 'ok' }}">{{ e.total }}</span></p>
+      {% else %}
+        <p class="small muted">Nothing logged yet</p>
+      {% endif %}
+    {% endif %}
     {% if not animal.archived and flag_counts is defined and flag_counts.get(animal.id) %}
       <a class="badge watch" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ flag_counts[animal.id] }} {{ 'pattern' if flag_counts[animal.id] == 1 else 'patterns' }} to watch</a>
     {% endif %}

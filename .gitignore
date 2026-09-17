@@ -11,4 +11,7 @@ data/
 .vscode/
 .idea/
 .DS_Store
-docs/screenshots/
+
+# PyInstaller output
+build/
+dist/

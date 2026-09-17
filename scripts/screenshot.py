@@ -19,6 +19,8 @@ PAGES = {
     "log": "/animals/1/log",
     "history": "/animals/1/history?range=30",
     "medications": "/animals/1/medications",
+    "export": "/animals/1/export",
+    "settings": "/settings",
 }
 
 with sync_playwright() as p:

@@ -2,8 +2,8 @@
 
 A desktop app for pet owners to log a daily quality-of-life score for a cat or
 dog near the end of its life, see patterns over time, and bring a PDF summary to
-the vet. Semester-long solo class project. No code exists yet; this file is the
-plan.
+the vet. Semester-long solo class project. This file is the original plan; see the
+Status section at the end.
 
 ## Decisions so far
 
@@ -21,7 +21,7 @@ plan.
 
 ## Recommended tools
 
-- **Python 3.12** with a virtual environment.
+- **Python 3.11 or newer** with a virtual environment.
 - **Flask** for the app. It runs a tiny local web server, and the UI opens in a
   browser window. Everything stays on the machine, so it works offline.
 - **SQLite** through Python's built-in `sqlite3` module for storage. One file,
@@ -118,42 +118,10 @@ always "consider talking with your vet", never a verdict.
 
 ## File layout
 
-```
-End-of-Life-Tracker/
-├── README.md
-├── PLAN.md
-├── requirements.txt
-├── run.py                  # starts the app
-├── app/
-│   ├── __init__.py         # create_app()
-│   ├── db.py               # connection, schema, migrations
-│   ├── models.py           # dataclasses for Animal, Entry, Medication
-│   ├── scoring.py          # HHHHHMM total and helpers (pure functions)
-│   ├── flags.py            # flag rules (pure functions)
-│   ├── pdf.py              # PDF summary builder
-│   ├── charts.py           # matplotlib images for the PDF
-│   ├── routes/
-│   │   ├── animals.py
-│   │   ├── entries.py
-│   │   └── export.py
-│   ├── templates/
-│   │   ├── base.html
-│   │   ├── dashboard.html
-│   │   ├── animal_form.html
-│   │   ├── entry_form.html
-│   │   ├── history.html
-│   │   └── export.html
-│   └── static/
-│       ├── style.css
-│       ├── app.js
-│       └── vendor/chart.min.js
-├── data/                   # gitignored: sqlite file + photos
-└── tests/
-    ├── test_scoring.py
-    ├── test_flags.py
-    ├── test_db.py
-    └── test_routes.py
-```
+See the "Project layout" section of README.md for the layout as built. It
+follows this plan with two additions: entry data access lives in
+`app/entries.py` rather than `models.py`, and backup/restore got its own
+`app/backup.py` and settings page.
 
 ## Definition of done for the semester
 
@@ -177,7 +145,7 @@ End-of-Life-Tracker/
 - **Packaging pain.** PyInstaller and pywebview are the last milestone so the
   core app is graded even if packaging is rough.
 
-## Next step
+## Status
 
-Start M1: set up the virtual environment, requirements, Flask skeleton, SQLite
-schema, and pytest.
+All seven milestones are built. See README.md for how to run it and
+docs/DESIGN.md for the design write-up.
