@@ -9,6 +9,12 @@
 <body>
   <header class="topbar">
     <a class="brand" href="{{ url_for('dashboard') }}">Pet Quality-of-Life Tracker</a>
+    <nav class="nav">
+      {% if g.current_animal %}
+        <span class="current">Tracking: <a href="{{ url_for('animals.show_animal', animal_id=g.current_animal.id) }}">{{ g.current_animal.name }}</a></span>
+      {% endif %}
+      <a class="button small" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+    </nav>
   </header>
   <main class="content">
     {% with messages = get_flashed_messages() %}

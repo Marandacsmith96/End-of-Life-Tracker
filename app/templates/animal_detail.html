@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }} · Pet Quality-of-Life Tracker{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="detail-photo">
+    {% if animal.photo_path %}
+      <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
+    {% else %}
+      <span class="placeholder large" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
+    {% endif %}
+    {% if not animal.archived %}
+      <form method="post" action="{{ url_for('animals.upload_photo', animal_id=animal.id) }}" enctype="multipart/form-data" class="photo-form">
+        <label class="button small">
+          {{ 'Change photo' if animal.photo_path else 'Add a photo' }}
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()" hidden>
+        </label>
+      </form>
+      {% if animal.photo_path %}
+        <form method="post" action="{{ url_for('animals.delete_photo', animal_id=animal.id) }}">
+          <button class="link" type="submit">Remove photo</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+  <div class="detail-body">
+    <h1>{{ animal.name }}{% if animal.archived %} <span class="badge muted-badge">Archived</span>{% endif %}</h1>
+    <dl class="facts">
+      <dt>Species</dt><dd>{{ animal.species|capitalize }}</dd>
+      {% if animal.breed %}<dt>Breed</dt><dd>{{ animal.breed }}</dd>{% endif %}
+      {% if animal.birth_date %}<dt>Born</dt><dd>{{ animal.birth_date.strftime('%B') }} {{ animal.birth_date.day }}, {{ animal.birth_date.year }} ({{ animal.age_text }})</dd>{% endif %}
+    </dl>
+
+    <div class="actions">
+      {% if animal.archived %}
+        <form method="post" action="{{ url_for('animals.unarchive_animal', animal_id=animal.id) }}">
+          <button class="button" type="submit">Restore {{ animal.name }}</button>
+        </form>
+      {% else %}
+        {% if not g.current_animal or g.current_animal.id != animal.id %}
+          <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
+            <button class="button" type="submit">Track {{ animal.name }}</button>
+          </form>
+        {% endif %}
+        <a class="button secondary" href="{{ url_for('animals.edit_animal', animal_id=animal.id) }}">Edit details</a>
+        <form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}"
+              onsubmit="return confirm('Archive {{ animal.name }}? Their records are kept and you can restore them later.')">
+          <button class="link" type="submit">Archive</button>
+        </form>
+      {% endif %}
+    </div>
+
+    <section class="placeholder-section">
+      <h2>Daily entries</h2>
+      <p class="muted">Logging comes in the next milestone.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}

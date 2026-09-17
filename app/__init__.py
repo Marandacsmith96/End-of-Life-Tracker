@@ -1,9 +1,9 @@
 """Application factory for the Pet Quality-of-Life Tracker."""
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask, g, render_template, session
 
-from . import db
+from . import db, models
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -22,14 +22,30 @@ def create_app(test_config: dict | None = None) -> Flask:
         DATA_DIR=data_dir,
         DATABASE=data_dir / "tracker.sqlite",
         PHOTO_DIR=data_dir / "photos",
+        MAX_CONTENT_LENGTH=10 * 1024 * 1024,  # 10 MB upload cap
     )
     if test_config:
         app.config.update(test_config)
 
     db.init_app(app)
 
+    from .routes import animals
+
+    app.register_blueprint(animals.bp)
+
+    @app.before_request
+    def load_current_animal():
+        """Make the chosen animal available to every template as g.current_animal."""
+        animal_id = session.get("current_animal_id")
+        g.current_animal = models.get_animal(animal_id) if animal_id else None
+        if animal_id and (g.current_animal is None or g.current_animal.archived):
+            session.pop("current_animal_id", None)
+            g.current_animal = None
+
     @app.route("/")
     def dashboard():
-        return render_template("dashboard.html")
+        active = models.list_animals()
+        archived = [a for a in models.list_animals(include_archived=True) if a.archived]
+        return render_template("dashboard.html", animals=active, archived=archived)
 
     return app

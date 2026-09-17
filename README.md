@@ -33,7 +33,7 @@ pytest
 ## Status
 
 - [x] Milestone 1: project skeleton, database schema, tests
-- [ ] Milestone 2: animals
+- [x] Milestone 2: animals (add, edit, archive, photo, pick current pet)
 - [ ] Milestone 3: daily entry
 - [ ] Milestone 4: history and charts
 - [ ] Milestone 5: flags

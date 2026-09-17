@@ -1,0 +1,24 @@
+<article class="card animal-card{% if animal.archived %} archived{% endif %}">
+  <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">
+    {% if animal.photo_path %}
+      <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="Photo of {{ animal.name }}">
+    {% else %}
+      <span class="placeholder" aria-hidden="true">{{ '🐱' if animal.species == 'cat' else '🐶' }}</span>
+    {% endif %}
+  </a>
+  <div class="card-body">
+    <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a></h3>
+    <p class="muted">
+      {{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}
+    </p>
+    {% if not animal.archived %}
+      {% if g.current_animal and g.current_animal.id == animal.id %}
+        <span class="badge">Currently tracking</span>
+      {% else %}
+        <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
+          <button class="button small" type="submit">Track {{ animal.name }}</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</article>

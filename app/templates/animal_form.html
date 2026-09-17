@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' + animal.name if animal else 'Add a pet' }} · Pet Quality-of-Life Tracker{% endblock %}
+{% block content %}
+<h1>{{ 'Edit ' + animal.name if animal else 'Add a pet' }}</h1>
+<form method="post" class="form">
+  <label>
+    Name
+    <input type="text" name="name" value="{{ values.get('name', '') }}" maxlength="60" required autofocus>
+  </label>
+  <fieldset>
+    <legend>Species</legend>
+    <label class="inline"><input type="radio" name="species" value="cat" {% if values.get('species') == 'cat' %}checked{% endif %} required> Cat</label>
+    <label class="inline"><input type="radio" name="species" value="dog" {% if values.get('species') == 'dog' %}checked{% endif %}> Dog</label>
+  </fieldset>
+  <label>
+    Breed <span class="muted">(optional)</span>
+    <input type="text" name="breed" value="{{ values.get('breed', '') }}" maxlength="60">
+  </label>
+  <label>
+    Birth date <span class="muted">(optional, a best guess is fine)</span>
+    <input type="date" name="birth_date" value="{{ values.get('birth_date', '') }}">
+  </label>
+  <div class="actions">
+    <button class="button" type="submit">{{ 'Save' if animal else 'Add pet' }}</button>
+    <a class="link" href="{{ url_for('animals.show_animal', animal_id=animal.id) if animal else url_for('dashboard') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

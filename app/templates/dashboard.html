@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Welcome</h1>
-<p>The app is running and your data folder is ready.</p>
-<p>Next milestone adds your first animal.</p>
+{% if not animals and not archived %}
+  <section class="empty">
+    <h1>Welcome</h1>
+    <p>Start by adding the pet you want to keep an eye on.</p>
+    <a class="button" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+  </section>
+{% else %}
+  <h1>Your pets</h1>
+  {% if animals %}
+    <div class="grid">
+      {% for animal in animals %}{% include "_animal_card.html" %}{% endfor %}
+    </div>
+  {% else %}
+    <p>No active pets. <a href="{{ url_for('animals.new_animal') }}">Add one</a> or restore an archived pet below.</p>
+  {% endif %}
+  {% if archived %}
+    <details class="archived-list">
+      <summary>Archived pets ({{ archived|length }})</summary>
+      <div class="grid">
+        {% for animal in archived %}{% include "_animal_card.html" %}{% endfor %}
+      </div>
+    </details>
+  {% endif %}
+{% endif %}
 {% endblock %}
