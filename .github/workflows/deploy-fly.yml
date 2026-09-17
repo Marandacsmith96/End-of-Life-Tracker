@@ -1,0 +1,55 @@
+# Deploys the tracker to Fly.io. Runs on GitHub's machines, so it works even
+# when the developer's own network can't reach Fly.
+#
+# One-time setup in the GitHub repo (Settings > Secrets and variables > Actions):
+#   FLY_API_TOKEN     an org-level token from https://fly.io/dashboard -> Tokens
+#   PET_QOL_PASSCODE  the passcode you want the app to ask for
+#
+# Then run it from the Actions tab ("Run workflow") or push to the deploy branch.
+name: Deploy to Fly.io
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, claude/animal-qol-tracker-planning-yavwqv]
+    paths-ignore: ["docs/**", "*.md"]
+
+concurrency:
+  group: fly-deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'claude/animal-qol-tracker-planning-yavwqv' }}
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP: ${{ vars.FLY_APP || 'pet-qol-tracker-9uwy' }}
+      FLY_REGION: ${{ vars.FLY_REGION || 'iad' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Check secrets are set
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then echo "::error::Add the FLY_API_TOKEN repository secret first."; exit 1; fi
+          if [ -z "${{ secrets.PET_QOL_PASSCODE }}" ]; then echo "::error::Add the PET_QOL_PASSCODE repository secret first."; exit 1; fi
+      - name: Create the app if it doesn't exist
+        run: flyctl apps list --json | grep -q "\"Name\": *\"$FLY_APP\"" || flyctl apps create "$FLY_APP" --org personal
+      - name: Create the data disk if it doesn't exist
+        run: flyctl volumes list -a "$FLY_APP" --json | grep -q '"name": *"data"' || flyctl volumes create data -a "$FLY_APP" --region "$FLY_REGION" --size 1 --yes
+      - name: Set the passcode
+        run: flyctl secrets set -a "$FLY_APP" --stage PET_QOL_PASSCODE="${{ secrets.PET_QOL_PASSCODE }}"
+      - name: Deploy
+        run: flyctl deploy -a "$FLY_APP" --primary-region "$FLY_REGION" --remote-only --ha=false
+      - name: Show the address
+        run: echo "Deployed to https://$FLY_APP.fly.dev"

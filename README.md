@@ -75,11 +75,20 @@ the More page now and again.
 
 **2. On the internet (from your phone too)**
 
-The repo includes a `Dockerfile`, a `render.yaml` for Render, and a
-`fly.toml` for Fly.io. Set the `PET_QOL_PASSCODE` environment variable on the
-host and the app asks for that passcode before showing anything. Give it a
-persistent disk at `/data` so entries survive restarts. Either host takes a
-few minutes to set up with an account of your own.
+The repo deploys itself to Fly.io from GitHub Actions. One-time setup:
+
+1. Create a Fly.io account at <https://fly.io> and, under **Tokens** in the
+   dashboard, create a token.
+2. In this GitHub repo, open **Settings > Secrets and variables > Actions**
+   and add two repository secrets: `FLY_API_TOKEN` (the token) and
+   `PET_QOL_PASSCODE` (the passcode the app will ask for).
+3. Open the **Actions** tab, choose **Deploy to Fly.io**, and click
+   **Run workflow**. Every later push to the deploy branch redeploys.
+
+The app then lives at `https://pet-qol-tracker-9uwy.fly.dev` (change the
+name with a `FLY_APP` repository variable). Entries are kept on a persistent
+disk, and every page asks for the passcode first. A `Dockerfile` and a
+`render.yaml` are included too if you prefer Render.
 
 ## Run it from a terminal
 

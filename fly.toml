@@ -1,6 +1,7 @@
-# Fly.io: `fly launch --copy-config --no-deploy`, then
-# `fly volumes create data --size 1`, `fly secrets set PET_QOL_PASSCODE=...`, `fly deploy`.
-app = "quality-of-life-tracker"
+# Fly.io. Deployed by .github/workflows/deploy-fly.yml, or by hand:
+# `fly apps create pet-qol-tracker-9uwy`, `fly volumes create data --size 1`,
+# `fly secrets set PET_QOL_PASSCODE=...`, `fly deploy`.
+app = "pet-qol-tracker-9uwy"
 primary_region = "iad"
 
 [build]
