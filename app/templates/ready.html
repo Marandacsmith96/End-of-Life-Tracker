@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}You're ready · {{ animal.name }}{% endblock %}
 {% block content %}
 <section class="done">
+  {{ icon('leaf', 'icon mark') }}
   <h1>You're ready.</h1>
   <p class="lede">Daily check-ins can take less than 30 seconds. After a week or two, the trend starts to show. {% if not has_baseline %}You can add a baseline from before any time in settings.{% endif %}</p>
   <div class="actions">

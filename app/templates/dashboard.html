@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }} · Today{% endblock %}
 {% block content %}
 <section class="hero">
@@ -6,7 +7,7 @@
     {% if animal.photo_path %}
       <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">
     {% else %}
-      <span class="placeholder" aria-hidden="true">{{ animal.initials }}</span>
+      <span class="placeholder portrait" aria-hidden="true">{{ icon(animal.species, 'icon species') }}</span>
     {% endif %}
   </div>
   <div class="hero-body">
@@ -35,7 +36,7 @@
         <div>
           <p class="eyebrow">Today</p>
           <p class="today-status">
-            {% if today_entry.day_status %}<span class="day-pill {{ today_entry.day_status }}">{{ day_labels[today_entry.day_status] }}</span>{% else %}<span class="muted">Day not rated</span>{% endif %}
+            {% if today_entry.day_status %}<span class="day-pill {{ today_entry.day_status }}">{{ icon({"good": "sun", "mixed": "cloud-sun", "bad": "cloud"}[today_entry.day_status]) }}{{ day_labels[today_entry.day_status] }}</span>{% else %}<span class="muted">Day not rated</span>{% endif %}
             {% if total_markers %}<span class="muted">· {{ done_today }} of {{ total_markers }} good-day behaviors</span>{% endif %}
             {% if today_entry.mean is not none %}<span class="muted">· scores {{ '%.1f'|format(today_entry.mean) }} / 10</span>{% endif %}
           </p>
@@ -68,9 +69,9 @@
     <a class="link small" href="{{ url_for('trends.calendar', animal_id=animal.id) }}">Calendar</a>
   </div>
   <div class="day-counts">
-    <div class="count good"><span class="n">{{ month.good }}</span><span class="l">good {{ 'day' if month.good == 1 else 'days' }}</span></div>
-    <div class="count mixed"><span class="n">{{ month.mixed }}</span><span class="l">mixed</span></div>
-    <div class="count bad"><span class="n">{{ month.bad }}</span><span class="l">bad</span></div>
+    <div class="count good">{{ icon('sun') }}<span class="n">{{ month.good }}</span><span class="l">good {{ 'day' if month.good == 1 else 'days' }}</span></div>
+    <div class="count mixed">{{ icon('cloud-sun') }}<span class="n">{{ month.mixed }}</span><span class="l">mixed</span></div>
+    <div class="count bad">{{ icon('cloud') }}<span class="n">{{ month.bad }}</span><span class="l">bad</span></div>
     <div class="count none"><span class="n">{{ month.not_logged }}</span><span class="l">not logged</span></div>
   </div>
   {% if recent_mean is not none %}
@@ -148,7 +149,7 @@
       {% for e in recent_entries %}
         <li>
           <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%a, %b') }} {{ e.entry_date.day }}</a>
-          {% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ day_labels[e.day_status] }}</span>{% endif %}
+          {% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ icon({"good": "sun", "mixed": "cloud-sun", "bad": "cloud"}[e.day_status]) }}{{ day_labels[e.day_status] }}</span>{% endif %}
           {% if e.mean is not none %}<span class="muted small">{{ '%.1f'|format(e.mean) }} / 10</span>{% endif %}
           {% if e.notes %}<span class="muted small note">{{ e.notes|truncate(70) }}</span>{% endif %}
         </li>

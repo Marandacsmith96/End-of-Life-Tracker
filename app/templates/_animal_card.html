@@ -1,10 +1,11 @@
+{% from "_icons.html" import icon %}
 <article class="card animal-card{% if animal.archived %} archived{% endif %}">
   <div class="top">
     <a class="thumb" href="{{ url_for('animals.show_animal', animal_id=animal.id) }}" aria-label="Open {{ animal.name }}">
       {% if animal.photo_path %}
         <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">
       {% else %}
-        <span class="placeholder" aria-hidden="true">{{ animal.initials }}</span>
+        <span class="placeholder portrait" aria-hidden="true">{{ icon(animal.species, 'icon species') }}</span>
       {% endif %}
     </a>
     <div>

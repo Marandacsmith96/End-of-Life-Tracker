@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}More{% endblock %}
 {% block content %}
 <h1>More</h1>
@@ -6,12 +7,12 @@
 <section class="card block">
   <h2>{{ animal.name }}</h2>
   <ul class="link-list">
-    <li><a href="{{ url_for('animals.settings', animal_id=animal.id) }}">Profile and settings</a></li>
-    <li><a href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Good-day behaviors</a></li>
-    <li><a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
-    <li><a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
-    <li><a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a></li>
-    <li><a href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">How are you doing?</a> <span class="muted small">caregiver check-in</span></li>
+    <li>{{ icon('settings') }}<a href="{{ url_for('animals.settings', animal_id=animal.id) }}">Profile and settings</a></li>
+    <li>{{ icon('check-circle') }}<a href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Good-day behaviors</a></li>
+    <li>{{ icon('flag') }}<a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
+    <li>{{ icon('pill') }}<a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
+    <li>{{ icon('baseline') }}<a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a></li>
+    <li>{{ icon('person') }}<a href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">How are you doing?</a> <span class="muted small">caregiver check-in</span></li>
   </ul>
 </section>
 {% endif %}
@@ -28,8 +29,8 @@
 <section class="card block">
   <h2>App</h2>
   <ul class="link-list">
-    <li><a href="{{ url_for('settings.settings') }}">Backup, restore, and about</a></li>
-    <li><a href="{{ url_for('dashboard.landing') }}">How it works</a></li>
+    <li>{{ icon('archive') }}<a href="{{ url_for('settings.settings') }}">Backup, restore, and about</a></li>
+    <li>{{ icon('trend') }}<a href="{{ url_for('dashboard.landing') }}">How it works</a></li>
   </ul>
 </section>
 {% endblock %}

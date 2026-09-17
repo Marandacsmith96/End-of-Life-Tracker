@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Quick check-in · {{ animal.name }}{% endblock %}
 {% block content %}
 <h1>Quick check-in</h1>
@@ -13,6 +14,7 @@
         {% for value, label in day_statuses %}
           <label class="day-option {{ value }}">
             <input type="radio" name="day_status" value="{{ value }}" {% if values.get('day_status') == value %}checked{% endif %} required>
+            {{ icon({'good': 'sun', 'mixed': 'cloud-sun', 'bad': 'cloud'}[value], 'icon day-icon') }}
             <span>{{ label }}</span>
           </label>
         {% endfor %}

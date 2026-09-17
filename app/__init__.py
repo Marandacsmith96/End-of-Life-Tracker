@@ -47,9 +47,13 @@ def create_app(test_config: dict | None = None) -> Flask:
         if request.endpoint in ("static", "animals.serve_photo"):
             g.current_animal = None
             return
-        animal_id = session.get("current_animal_id")
+        # A page about a specific pet makes that pet current, so the navigation
+        # always matches the page even when it was reached by a direct link.
+        animal_id = (request.view_args or {}).get("animal_id") or session.get("current_animal_id")
         g.current_animal = models.get_animal(animal_id) if animal_id else None
-        if animal_id and g.current_animal is None:
+        if g.current_animal is not None:
+            session["current_animal_id"] = g.current_animal.id
+        elif animal_id:
             session.pop("current_animal_id", None)
         g.today_logged = None
         g.checkin_prompt = False

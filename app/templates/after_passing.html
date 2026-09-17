@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }}{% endblock %}
 {% block content %}
 <section class="gentle">
+  {{ icon('leaf', 'icon mark') }}
   <h1>In memory of {{ animal.name }}</h1>
   <p class="lede">Take whatever time you need. Here is what you can do with {{ animal.name }}'s history, now or later.</p>
   <div class="option-list">

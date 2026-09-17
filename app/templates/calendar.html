@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }} · Calendar{% endblock %}
 {% block content %}
 <h1>Good and bad days</h1>
@@ -6,9 +7,9 @@
 <section class="card block">
   <h2>Last 30 days</h2>
   <div class="day-counts">
-    <div class="count good"><span class="n">{{ last30.good }}</span><span class="l">good</span></div>
-    <div class="count mixed"><span class="n">{{ last30.mixed }}</span><span class="l">mixed</span></div>
-    <div class="count bad"><span class="n">{{ last30.bad }}</span><span class="l">bad</span></div>
+    <div class="count good">{{ icon('sun') }}<span class="n">{{ last30.good }}</span><span class="l">good</span></div>
+    <div class="count mixed">{{ icon('cloud-sun') }}<span class="n">{{ last30.mixed }}</span><span class="l">mixed</span></div>
+    <div class="count bad">{{ icon('cloud') }}<span class="n">{{ last30.bad }}</span><span class="l">bad</span></div>
     <div class="count none"><span class="n">{{ last30.not_logged }}</span><span class="l">not logged</span></div>
   </div>
   {% if prev30.logged %}

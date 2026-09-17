@@ -322,3 +322,48 @@ input[type="range"].unset + output { background: var(--surface-2); color: var(--
   .hero-landing h1 { font-size: 1.9rem; }
   .sticky-actions { bottom: 60px; }
 }
+
+/* ---- Icons and graphics ---- */
+.icon { width: 1.15em; height: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.2em; flex: none; }
+.day-pill .icon { width: 1em; height: 1em; }
+.day-pill::before { display: none; }
+.day-icon { width: 30px; height: 30px; stroke-width: 1.6; margin-right: 10px; opacity: .85; }
+.day-option.mixed .day-icon { width: 24px; height: 24px; }
+.count .icon { width: 22px; height: 22px; margin-bottom: 4px; opacity: .8; }
+.count.good .icon { color: var(--good); } .count.mixed .icon { color: var(--mixed); } .count.bad .icon { color: var(--bad); }
+.placeholder.portrait { background: linear-gradient(160deg, #e6edfb, #f4f6fb); color: var(--accent-dark); }
+.portrait .species { width: 58%; height: 58%; stroke-width: 1.5; }
+.link-list .icon { color: var(--muted); margin-right: 4px; }
+.step-card { position: relative; padding-top: 22px; }
+.step-icon { width: 34px; height: 34px; color: var(--accent); stroke-width: 1.6; margin-bottom: 10px; display: block; }
+.mark { width: 44px; height: 44px; color: var(--accent); stroke-width: 1.5; display: block; margin-bottom: 8px; }
+.hero-landing { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 32px; align-items: center; max-width: none; }
+.hero-art { margin: 0; }
+.hero-art svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 12px 28px rgba(46, 78, 159, .12)); }
+
+/* ---- Readability pass ---- */
+body { font-size: 17px; line-height: 1.6; }
+.content { padding-top: 32px; }
+.card.block { padding: 24px 26px; margin-bottom: 20px; }
+.card.block h2 { font-size: 1.15rem; margin-bottom: 12px; }
+.section-head.tight { margin-bottom: 12px; }
+.chart-summary { font-size: 1rem; }
+.insight { padding: 12px 16px; line-height: 1.5; }
+.insight-list { gap: 10px; }
+.marker-list { gap: 14px; }
+.entry-list li, .event-list li { padding: 10px 0; }
+.today-status { font-size: 1.12rem; }
+.count .n { font-size: 2rem; }
+.count .l { font-size: 0.9rem; }
+.lede { font-size: 1.1rem; }
+.hint { font-size: 0.95rem; }
+.small { font-size: 0.92rem; }
+.table th { font-size: 0.8rem; }
+.day-option { min-height: 84px; font-size: 1.2rem; }
+.form label.day-option.mixed, .day-option.mixed { min-height: 60px; font-size: 1.05rem; }
+@media (max-width: 700px) {
+  body { font-size: 16px; }
+  .hero-landing { grid-template-columns: 1fr; gap: 20px; }
+  .hero-art { order: -1; max-width: 300px; margin: 0 auto; }
+  .card.block { padding: 18px; }
+}

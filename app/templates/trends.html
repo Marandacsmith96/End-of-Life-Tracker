@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }} · Trends{% endblock %}
 {% block content_class %}wide{% endblock %}
 {% block content %}
@@ -105,7 +106,7 @@
       {% for e in rows %}
         <tr>
           <td class="nowrap"><a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
-          <td>{% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ day_labels[e.day_status] }}</span>{% endif %}</td>
+          <td>{% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ icon({"good": "sun", "mixed": "cloud-sun", "bad": "cloud"}[e.day_status]) }}{{ day_labels[e.day_status] }}</span>{% endif %}</td>
           <td>{% if e.mean is not none %}{{ '%.1f'|format(e.mean) }}{% endif %}</td>
           {% for c in categories %}<td>{{ e.scores[c.key] if e.scores[c.key] is not none else '' }}</td>{% endfor %}
           <td class="nowrap">{% if e.weight is not none %}{{ '%g'|format(e.weight) }} {{ e.weight_unit }}{% endif %}</td>

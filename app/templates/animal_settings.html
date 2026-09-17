@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }} · Settings{% endblock %}
 {% block content %}
 <h1>{{ animal.name }}</h1>
@@ -7,7 +8,7 @@
   <h2>Profile</h2>
   <div class="hero compact">
     <div class="hero-photo small">
-      {% if animal.photo_path %}<img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">{% else %}<span class="placeholder" aria-hidden="true">{{ animal.initials }}</span>{% endif %}
+      {% if animal.photo_path %}<img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">{% else %}<span class="placeholder portrait" aria-hidden="true">{{ icon(animal.species, 'icon species') }}</span>{% endif %}
     </div>
     <div>
       <p>{{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}{% if animal.sex and animal.sex != 'unknown' %} · {{ animal.sex }}{% endif %}</p>
