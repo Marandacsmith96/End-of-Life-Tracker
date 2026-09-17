@@ -55,8 +55,11 @@
         {% if not animal.archived %}
           <div class="actions compact">
             <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">{{ 'Edit today' if today_entry else 'Log today' }}</a>
+            <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
             <a class="link" href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a>
           </div>
+        {% else %}
+          <a class="link" href="{{ url_for('history.history', animal_id=animal.id) }}">History &amp; charts</a>
         {% endif %}
       </div>
       {% if recent %}
@@ -74,7 +77,7 @@
           {% endfor %}
           </tbody>
         </table>
-        {% if recent|length == 14 %}<p class="muted small">Showing the last 14 entries. Full history and charts come in the next milestone.</p>{% endif %}
+        {% if recent|length == 14 %}<p class="muted small">Showing the last 14 entries. <a href="{{ url_for('history.history', animal_id=animal.id) }}">See full history and charts</a>.</p>{% endif %}
       {% elif not animal.archived %}
         <p class="muted">No entries yet. Logging takes about a minute a day.</p>
       {% else %}

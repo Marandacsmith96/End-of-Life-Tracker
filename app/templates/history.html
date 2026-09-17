@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ animal.name }}'s history · Pet Quality-of-Life Tracker{% endblock %}
+{% block content_class %}wide{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>{{ animal.name }}'s history</h1>
+  {% if not animal.archived %}
+    <a class="button" href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a>
+  {% endif %}
+</div>
+
+<form method="get" class="range-bar" aria-label="Date range">
+  <div class="presets">
+    {% for key in presets %}
+      <a class="chip {{ 'active' if preset == key }}" href="{{ url_for('history.history', animal_id=animal.id, range=key) }}">
+        {{ 'All time' if key == 'all' else 'Last ' + key + ' days' }}
+      </a>
+    {% endfor %}
+  </div>
+  <div class="custom-range">
+    <label>From <input type="date" name="start" value="{{ start.isoformat() if start else '' }}"></label>
+    <label>To <input type="date" name="end" value="{{ end.isoformat() }}"></label>
+    <button class="button small secondary" type="submit">Apply</button>
+  </div>
+</form>
+
+{% if rows %}
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-label">Latest total</span>
+      <span class="stat-value {{ 'low' if summary.latest_total <= threshold else 'ok' }}">{{ summary.latest_total }}<span class="muted"> / {{ max_total }}</span></span>
+      <span class="muted small">{{ summary.latest_date.strftime('%b') }} {{ summary.latest_date.day }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Average</span>
+      <span class="stat-value">{{ summary.average }}</span>
+      <span class="muted small">over {{ summary.count }} {{ 'day' if summary.count == 1 else 'days' }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Range</span>
+      <span class="stat-value">{{ summary.lowest }}–{{ summary.highest }}</span>
+      <span class="muted small">lowest to highest</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Trend</span>
+      <span class="stat-value">{{ '+' if summary.trend > 0 }}{{ summary.trend }}</span>
+      <span class="muted small">last week vs first week</span>
+    </div>
+  </div>
+  <p class="reading">{{ describe_total(summary.latest_total) }}</p>
+
+  <section class="chart-block">
+    <h2>Total score</h2>
+    <p class="muted small">Out of {{ max_total }}. The dashed line marks {{ threshold }}, the threshold the HHHHHMM scale usually cites.</p>
+    <div class="chart-wrap tall"><canvas id="chart-total" role="img" aria-label="Line chart of total quality-of-life score by day"></canvas></div>
+  </section>
+
+  <section class="chart-block">
+    <h2>By category</h2>
+    <p class="muted small">Each area scored 0 to 10.</p>
+    <div class="multiples">
+      {% for cat in series.categories %}
+        <div class="multiple">
+          <h3>{{ cat.label }}</h3>
+          <div class="chart-wrap short"><canvas id="chart-{{ cat.key }}" role="img" aria-label="Line chart of {{ cat.label }} score by day"></canvas></div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if series.weight.unit %}
+  <section class="chart-block">
+    <h2>Weight</h2>
+    <p class="muted small">In {{ series.weight.unit }}. Days without a weight are skipped.</p>
+    <div class="chart-wrap"><canvas id="chart-weight" role="img" aria-label="Line chart of weight by day"></canvas></div>
+  </section>
+  {% endif %}
+
+  <section class="chart-block">
+    <h2>All entries</h2>
+    <div class="table-scroll">
+      <table class="table entries wide">
+        <thead>
+          <tr>
+            <th>Date</th><th>Total</th>
+            {% for key, label, _ in categories %}<th title="{{ label }}">{{ label[:3] if key != 'good_days' else 'Good' }}</th>{% endfor %}
+            <th>Weight</th><th>Appetite</th><th>Meds given</th><th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for e in rows %}
+          <tr>
+            <td><a href="{{ url_for('entries.log_entry', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
+            <td><span class="total {{ 'low' if e.total <= threshold else 'ok' }}">{{ e.total }}</span></td>
+            {% for key, _, _ in categories %}<td>{{ e.scores[key] }}</td>{% endfor %}
+            <td class="nowrap">{% if e.weight is not none %}{{ '%g'|format(e.weight) }} {{ e.weight_unit }}{% endif %}</td>
+            <td>{{ {'none': 'Not eating', 'low': 'Less', 'normal': 'Normal', 'high': 'More'}.get(e.appetite, '') }}</td>
+            <td>{{ med_names[e.id]|join(', ') }}</td>
+            <td class="notes-cell">{{ e.notes or '' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script id="series-data" type="application/json">{{ series|tojson }}</script>
+  <script>window.QOL = { threshold: {{ threshold }}, maxTotal: {{ max_total }} };</script>
+  <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='charts.js') }}"></script>
+{% else %}
+  <p class="muted">No entries in this range.{% if not animal.archived %} <a href="{{ url_for('entries.log_entry', animal_id=animal.id) }}">Log today</a> to get started.{% endif %}</p>
+{% endif %}
+{% endblock %}

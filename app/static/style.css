@@ -6,6 +6,8 @@
   --accent: #4a7c59;
   --accent-dark: #3b6347;
   --border: #e0ddd5;
+  --series-1: #2a78d6;   /* chart line */
+  --threshold: #8a8a8a;  /* dashed threshold line */
 }
 
 * { box-sizing: border-box; }
@@ -41,6 +43,7 @@ a { color: var(--accent-dark); }
 .current { font-size: 0.9rem; color: var(--muted); }
 
 .content { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.content.wide { max-width: 1140px; }
 
 /* Flash messages */
 .flash {
@@ -200,3 +203,30 @@ button.link {
 .section-head h2 { margin: 24px 0 8px; }
 .actions.compact { margin-top: 0; }
 .entries-section { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+/* History page */
+.range-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 20px; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); text-decoration: none; color: var(--text); font-size: 0.9rem; }
+.chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.custom-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.custom-range label { font-size: 0.9rem; color: var(--muted); }
+.custom-range input { margin-left: 4px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); display: flex; flex-direction: column; }
+.stat-label { font-size: 0.85rem; color: var(--muted); }
+.stat-value { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat-value.low { color: #a33; }
+.stat-value.ok { color: var(--accent-dark); }
+.reading { margin: 12px 0 0; }
+.chart-block { margin-top: 28px; }
+.chart-block h2 { margin-bottom: 2px; }
+.chart-wrap { position: relative; height: 220px; padding: 8px 4px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.chart-wrap.tall { height: 280px; }
+.chart-wrap.short { height: 140px; }
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.multiple h3 { font-size: 0.95rem; margin: 0 0 4px; }
+.table-scroll { overflow-x: auto; }
+.table.wide td, .table.wide th { padding: 6px 7px; font-size: 0.92rem; }
+.table.wide td:first-child, .table.wide td.nowrap { white-space: nowrap; }
+.table.wide td.notes-cell { min-width: 160px; }
