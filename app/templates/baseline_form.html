@@ -34,7 +34,7 @@
         <div class="slider">
           <input type="range" id="base-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key) if values.get(key) not in ('', None) else 7 }}" data-optional="1">
           <output for="base-{{ key }}">{{ values.get(key) if values.get(key) not in ('', None) else 7 }}</output>
-          <label class="inline small"><input type="checkbox" class="unsure" data-for="base-{{ key }}" {% if values.get(key) in ('', None) and values %}checked{% endif %}> Unsure</label>
+          <label class="inline small"><input type="checkbox" class="unsure" data-for="base-{{ key }}" {% if has_baseline and values.get(key) in ('', None) %}checked{% endif %}> Unsure</label>
         </div>
       </div>
     {% endfor %}

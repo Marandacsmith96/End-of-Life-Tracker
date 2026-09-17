@@ -4,7 +4,7 @@ import secrets
 from datetime import date, timedelta
 from pathlib import Path
 
-from flask import Flask, g, session
+from flask import Flask, g, redirect, request, session, url_for
 
 from . import db, entries, models, safety, scoring
 
@@ -37,13 +37,16 @@ def create_app(test_config: dict | None = None) -> Flask:
                    caregiver, export, settings):
         app.register_blueprint(module.bp)
 
-    # Old URL kept so bookmarks keep working.
-    app.add_url_rule("/animals/<int:animal_id>/history", "history_redirect",
-                     lambda animal_id: __import__("flask").redirect(
-                         __import__("flask").url_for("trends.trends", animal_id=animal_id)))
+    @app.route("/animals/<int:animal_id>/history")
+    def history_redirect(animal_id: int):
+        """Old URL kept so bookmarks keep working."""
+        return redirect(url_for("trends.trends", animal_id=animal_id))
 
     @app.before_request
     def load_current_animal():
+        if request.endpoint in ("static", "animals.serve_photo"):
+            g.current_animal = None
+            return
         animal_id = session.get("current_animal_id")
         g.current_animal = models.get_animal(animal_id) if animal_id else None
         if animal_id and g.current_animal is None:

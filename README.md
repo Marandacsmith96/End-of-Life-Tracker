@@ -84,6 +84,14 @@ The suite covers the schema and migration, every page, the check-in flows, the
 analytics (smoothing, sufficiency, classification), the insight engine, the
 safety rules, the PDF's text, backup and restore, and the tone of the copy.
 
+There is also a browser walkthrough of every flow, from onboarding to the
+passing flow, that runs against a throwaway data folder:
+
+```bash
+pip install playwright && playwright install chromium
+python scripts/e2e_check.py
+```
+
 ## Documentation
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): architecture, schema, the

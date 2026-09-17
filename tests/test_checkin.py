@@ -16,8 +16,9 @@ def _pet(client, with_markers=True):
 
 
 def _full(**overrides):
-    data = {"entry_date": TODAY.isoformat(), "day_status": "mixed", "scores_included": "1",
-            **{k: 6 for k in KEYS}, "markers_included": "1", "meds_included": "1", "notes": "Slept a lot."}
+    data = {"entry_date": TODAY.isoformat(), "day_status": "mixed",
+            **{k: 6 for k in KEYS}, **{f"{k}_set": "1" for k in KEYS},
+            "markers_included": "1", "meds_included": "1", "notes": "Slept a lot."}
     data.update(overrides)
     return data
 
@@ -59,12 +60,36 @@ def test_scores_can_be_skipped_and_added_later_without_losing_status(client, app
     with app.app_context():
         e = entries.get_entry_for_date(1, TODAY)
         assert e.day_status == "mixed" and not e.has_scores
-    # Later: add scores through the full form without re-sending the status.
-    client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "scores_included": "1", **{k: 7 for k in KEYS}})
+    # Later: add scores through the full form, which re-sends the status and note as shown.
+    client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "mixed", "notes": "Slept a lot.",
+                                            **{k: 7 for k in KEYS}, **{f"{k}_set": "1" for k in KEYS}})
     with app.app_context():
         e = entries.get_entry_for_date(1, TODAY)
         assert e.day_status == "mixed" and e.has_scores and e.mean == 7.0
-        assert e.notes == "Slept a lot."  # untouched
+        assert e.notes == "Slept a lot."
+
+
+def test_untouched_sliders_are_not_recorded(client, app):
+    """The slider's default position is not data. Only categories the owner set are saved."""
+    _pet(client)
+    client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                            **{k: 5 for k in KEYS}, "mobility_set": "1", "mobility": "3"})
+    with app.app_context():
+        e = entries.get_entry_for_date(1, TODAY)
+        assert e.mobility == 3 and e.hurt is None and not e.has_scores
+        assert e.mean == 3.0  # mean of what was scored
+    page = client.get("/animals/1/checkin").data.decode()
+    assert 'name="mobility_set" id="set-mobility" value="1"' in page
+    assert 'name="hurt_set" id="set-hurt" value="0"' in page
+
+
+def test_full_form_can_clear_extras(client, app):
+    _pet(client)
+    client.post("/animals/1/checkin", data=_full(weight="24.5", appetite="low"))
+    client.post("/animals/1/checkin", data=_full(weight="", appetite="", notes=""))
+    with app.app_context():
+        e = entries.get_entry_for_date(1, TODAY)
+        assert e.weight is None and e.appetite is None and e.notes is None and e.has_scores
 
 
 def test_quick_checkin_does_not_wipe_earlier_scores(client, app):

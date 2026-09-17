@@ -4,11 +4,17 @@
     var pct = ((range.value - range.min) / (range.max - range.min)) * 100;
     range.style.setProperty("--pct", pct + "%");
     var out = range.parentElement.querySelector("output");
-    if (out) out.textContent = range.value;
+    if (out) out.textContent = range.classList.contains("unset") ? "\u2013" : range.value;
+  }
+  function markSet(range) {
+    range.classList.remove("unset");
+    var flag = range.dataset.setFlag && document.getElementById(range.dataset.setFlag);
+    if (flag) flag.value = "1";
   }
   document.querySelectorAll("input[type=range]").forEach(function (r) {
     paint(r);
-    r.addEventListener("input", function () { paint(r); });
+    r.addEventListener("input", function () { markSet(r); paint(r); });
+    r.addEventListener("change", function () { markSet(r); paint(r); });
   });
 
   /* Baseline: "unsure" checkboxes blank the score. */
@@ -70,12 +76,14 @@
     var done = [], all = form.querySelectorAll("input[name=markers]");
     all.forEach(function (i) { if (i.checked) done.push(i.parentElement.textContent.trim()); });
     if (all.length) add("Behaviors", done.length ? done.join(", ") : "None today", true);
-    if (scoresIncluded.value === "1") {
-      var sum = 0, n = 0;
+    if (scoresIncluded.value !== "0") {
+      var sum = 0, n = 0, any = false;
       form.querySelectorAll(".score-step").forEach(function (s) {
-        var r = s.querySelector("input[type=range]"); add(s.dataset.title, r.value); sum += Number(r.value); n++;
+        var r = s.querySelector("input[type=range]"), set = !r.classList.contains("unset");
+        add(s.dataset.title, set ? r.value : "\u2013"); if (set) { sum += Number(r.value); n++; any = true; }
       });
-      if (n) add("Average", (sum / n).toFixed(1) + " / 10", true);
+      if (n) add("Average of scored", (sum / n).toFixed(1) + " / 10", true);
+      if (!any) add("Scores", "None set today", true);
     } else {
       add("Scores", "Skipped today", true);
     }
@@ -109,10 +117,6 @@
       form.querySelector(".step.review").hidden = true;
     }
   }
-  function enteringScores() {
-    var list = visibleSteps();
-    if (list[current] && list[current].classList.contains("score-step") && !skippingScores) scoresIncluded.value = "1";
-  }
   if (skip) skip.addEventListener("click", function () {
     skippingScores = true; scoresIncluded.value = "0";
     show(current); // re-index without the score steps
@@ -121,14 +125,11 @@
     r.addEventListener("input", function () { scoresIncluded.value = "1"; skippingScores = false; });
   });
   back.addEventListener("click", function () { show(current - 1); });
-  next.addEventListener("click", function () { show(current + 1); enteringScores(); });
+  next.addEventListener("click", function () { show(current + 1); });
   toggle.addEventListener("click", function () { var on = !form.classList.contains("guided"); setPref(on); guided(on); });
   form.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && form.classList.contains("guided") && e.target.tagName !== "TEXTAREA" && current < visibleSteps().length - 1) { e.preventDefault(); show(current + 1); enteringScores(); }
+    if (e.key === "Enter" && form.classList.contains("guided") && e.target.tagName !== "TEXTAREA" && current < visibleSteps().length - 1) { e.preventDefault(); show(current + 1); }
   });
-  // On the one-page form every score slider is visible, so treat them as included
-  // once anyone touches one; when the page loads with existing scores they stay included.
   guided(prefGuided());
-  enteringScores();
   if (document.querySelector(".flash") && form.classList.contains("guided")) show(visibleSteps().length - 1);
 })();

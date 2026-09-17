@@ -19,7 +19,7 @@ def _pet(client):
 def _log(client, days_ago, status="good", each=None, **extra):
     data = {"entry_date": (TODAY - timedelta(days=days_ago)).isoformat(), "day_status": status, **extra}
     if each is not None:
-        data.update(scores_included="1", **{k: each for k in KEYS})
+        data.update(**{k: each for k in KEYS}, **{f"{k}_set": "1" for k in KEYS})
     client.post("/animals/1/checkin", data=data)
 
 
@@ -37,6 +37,12 @@ def test_marker_setup_limits(client, app):
     with app.app_context():
         assert [m.label for m in markers.list_markers(1)] == ["Greets me", "Dinner", "Naps in the sun"]
         assert [m.label for m in markers.list_markers(1, active_only=False) if not m.active] == ["Walk"]
+
+
+def test_baseline_form_does_not_start_with_everything_unsure(client):
+    _pet(client)
+    page = client.get("/animals/1/baseline").data.decode()
+    assert 'class="unsure" data-for="base-hurt" checked' not in page and "checked> Unsure" not in page
 
 
 def test_baseline_save_skip_and_display(client, app):

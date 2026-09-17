@@ -60,6 +60,7 @@ def edit(animal_id: int):
 def _render(animal, values, onboarding):
     return render_template(
         "baseline_form.html", animal=animal, values=values, onboarding=onboarding,
+        has_baseline=bl.get_baseline(animal.id) is not None,
         categories=scoring.CATEGORIES, patterns=bl.GOOD_DAY_PATTERNS, frequencies=bl.MARKER_FREQUENCIES,
     )
 

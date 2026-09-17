@@ -2,6 +2,7 @@
 {% block title %}Quick check-in · {{ animal.name }}{% endblock %}
 {% block content %}
 <h1>Quick check-in</h1>
+<p class="muted">{{ (values.get('entry_date', today)|string) }}{% if entry %} · already recorded, saving updates it{% endif %}</p>
 <form method="post" class="form entry-form quick" id="quick-form">
   <input type="hidden" name="entry_date" value="{{ values.get('entry_date', today) }}">
   <input type="hidden" name="markers_included" value="1">

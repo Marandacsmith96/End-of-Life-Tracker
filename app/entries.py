@@ -109,38 +109,33 @@ def list_entries(
     return [_row_to_entry(r) for r in get_db().execute(sql, params).fetchall()]
 
 
+KEEP = object()  # sentinel: leave the stored value as it is
+
+
 def save_entry(
     animal_id: int,
     entry_date: date,
-    day_status: str | None = None,
+    day_status=KEEP,
     scores: dict[str, int | None] | None = None,
-    weight: float | None = None,
-    weight_unit: str | None = None,
-    appetite: str | None = None,
-    notes: str | None = None,
-    keep_missing: bool = True,
+    weight=KEEP,
+    weight_unit=KEEP,
+    appetite=KEEP,
+    notes=KEEP,
 ) -> int:
     """Insert the day's entry, or update it if one already exists. Returns its id.
 
-    With ``keep_missing`` (the default) a quick check-in that omits scores does
-    not wipe scores recorded earlier the same day.
+    Fields left as ``KEEP`` are untouched on an existing entry, so a quick
+    check-in never wipes scores recorded earlier the same day. ``scores`` only
+    replaces the categories it contains; pass ``None`` for a category to clear it.
     """
     db = get_db()
     scores = scores or {}
     existing = get_entry_for_date(animal_id, entry_date)
     if existing:
-        merged = {
-            key: scores.get(key, getattr(existing, key) if keep_missing else None)
-            for key in CATEGORY_KEYS
-        }
-        fields = {
-            "day_status": day_status if day_status is not None or not keep_missing else existing.day_status,
-            **merged,
-            "weight": weight if weight is not None or not keep_missing else existing.weight,
-            "weight_unit": weight_unit if weight is not None or not keep_missing else existing.weight_unit,
-            "appetite": appetite if appetite is not None or not keep_missing else existing.appetite,
-            "notes": notes if notes is not None or not keep_missing else existing.notes,
-        }
+        fields = {key: scores.get(key, getattr(existing, key)) for key in CATEGORY_KEYS}
+        for name, value in (("day_status", day_status), ("weight", weight), ("weight_unit", weight_unit),
+                            ("appetite", appetite), ("notes", notes)):
+            fields[name] = getattr(existing, name) if value is KEEP else value
         assignments = ", ".join(f"{k} = ?" for k in fields)
         db.execute(
             f"UPDATE entries SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
@@ -148,12 +143,13 @@ def save_entry(
         )
         db.commit()
         return existing.id
-    values = [scores.get(key) for key in CATEGORY_KEYS]
+    plain = lambda v: None if v is KEEP else v  # noqa: E731
     cur = db.execute(
         """INSERT INTO entries (animal_id, entry_date, day_status, hurt, hunger, hydration,
                hygiene, happiness, mobility, good_days, weight, weight_unit, appetite, notes)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        [animal_id, entry_date, day_status, *values, weight, weight_unit, appetite, notes],
+        [animal_id, entry_date, plain(day_status), *[scores.get(key) for key in CATEGORY_KEYS],
+         plain(weight), plain(weight_unit), plain(appetite), plain(notes)],
     )
     db.commit()
     return cur.lastrowid

@@ -30,12 +30,20 @@ def _parse_common(form) -> tuple[dict, list[str]]:
 
 
 def _parse_scores(form) -> tuple[dict, list[str]]:
-    """Scores are optional as a block: either all seven are given, or none."""
+    """Only categories the owner actually set are recorded.
+
+    Each slider posts a companion ``<key>_set`` flag that the page flips to 1
+    on first interaction (or when editing a day that already had a score), so
+    an untouched slider's default position is never saved as data. Sending
+    ``scores_included=0`` skips the whole block.
+    """
     errors: list[str] = []
-    if form.get("scores_included") != "1":
+    if form.get("scores_included") == "0":
         return {}, errors
     scores: dict[str, int | None] = {}
     for key in scoring.CATEGORY_KEYS:
+        if form.get(f"{key}_set") != "1":
+            continue
         raw = form.get(key)
         if not scoring.is_valid_score(raw):
             errors.append(f"{scoring.CATEGORY_LABELS[key]} must be a whole number from 0 to 10.")
@@ -98,6 +106,7 @@ def _save_photos(entry_id: int, files) -> int:
 
 def _form_values(entry: entries.Entry | None, entry_date: date) -> dict:
     values = {key: 5 for key in scoring.CATEGORY_KEYS}
+    values.update({f"{key}_set": "0" for key in scoring.CATEGORY_KEYS})
     values.update(entry_date=entry_date.isoformat(), day_status="", weight="", weight_unit="kg",
                   appetite="", notes="")
     if entry is None:
@@ -105,6 +114,7 @@ def _form_values(entry: entries.Entry | None, entry_date: date) -> dict:
     for key, v in entry.scores.items():
         if v is not None:
             values[key] = v
+            values[f"{key}_set"] = "1"
     values.update(
         day_status=entry.day_status or "",
         weight="" if entry.weight is None else f"{entry.weight:g}",

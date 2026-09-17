@@ -68,7 +68,7 @@ def test_export_routes(client):
     client.post("/animals/new", data={"name": "Mochi", "species": "cat"})
     for i in range(3):
         client.post("/animals/1/checkin", data={"entry_date": (date.today() - timedelta(days=i)).isoformat(),
-                                                "day_status": "good", "scores_included": "1", **{k: 6 for k in KEYS}})
+                                                "day_status": "good", **{k: 6 for k in KEYS}, **{f"{k}_set": "1" for k in KEYS}})
     response = client.get("/animals/1/export.pdf?range=30&download=1")
     assert response.status_code == 200 and response.mimetype == "application/pdf"
     assert "attachment" in response.headers["Content-Disposition"] and "Mochi-quality-of-life-" in response.headers["Content-Disposition"]

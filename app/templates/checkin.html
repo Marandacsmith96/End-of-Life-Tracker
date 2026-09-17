@@ -13,12 +13,10 @@
     <span class="progress-label" id="progress-label"></span>
   </div>
 
-  <div class="card panel always compact-panel">
-    <div class="date-row">
-      <label for="entry_date">Date</label>
-      <input type="date" id="entry_date" name="entry_date" value="{{ values.get('entry_date', today) }}" max="{{ today }}" required>
-      {% if entry %}<span class="note muted">Already recorded. Saving updates it.</span>{% endif %}
-    </div>
+  <div class="date-row always">
+    <label for="entry_date" class="muted small">Date</label>
+    <input type="date" id="entry_date" name="entry_date" value="{{ values.get('entry_date', today) }}" max="{{ today }}" required>
+    {% if entry %}<span class="note muted small">Already recorded. Saving updates it.</span>{% endif %}
   </div>
 
   {# Step 1: good / bad / mixed #}
@@ -61,19 +59,21 @@
   {# Steps 3-9: HHHHHMM #}
   <fieldset class="scores">
     <legend class="visually-hidden">Quality-of-life scores</legend>
-    <input type="hidden" name="scores_included" id="scores-included" value="{{ '1' if (entry and has_scores) or request.form.get('scores_included') == '1' else '0' }}">
+    <input type="hidden" name="scores_included" id="scores-included" value="{{ request.form.get('scores_included', '1') }}">
     {% for key, label, guidance, low, high in categories %}
+      {% set is_set = values.get(key ~ '_set') == '1' %}
       <div class="card panel step score-step" data-step="{{ key }}" data-title="{{ label }}">
         <div class="score-row">
-          <p class="question">{{ questions[key].replace('{name}', animal.name) }}</p>
-          <label for="score-{{ key }}"><span>{{ label }}<span class="help">{{ guidance }}</span></span></label>
+          <span class="tag">{{ label }}</span>
+          <label class="question" for="score-{{ key }}">{{ questions[key].replace('{name}', animal.name) }}</label>
+          <input type="hidden" name="{{ key }}_set" id="set-{{ key }}" value="{{ '1' if is_set else '0' }}">
           <div class="slider">
-            <input type="range" id="score-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key, 5) }}" aria-describedby="anchors-{{ key }}">
-            <output for="score-{{ key }}">{{ values.get(key, 5) }}</output>
+            <input type="range" class="{{ '' if is_set else 'unset' }}" id="score-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key, 5) }}" aria-describedby="anchors-{{ key }}" data-set-flag="set-{{ key }}">
+            <output for="score-{{ key }}">{{ values.get(key, 5) if is_set else '–' }}</output>
           </div>
-          <div class="anchors" id="anchors-{{ key }}"><span>0 = {{ low }}</span><span>10 = {{ high }}</span></div>
+          <div class="anchors" id="anchors-{{ key }}"><span>0 · {{ low }}</span><span>10 · {{ high }}</span></div>
           {% if loop.first %}
-            <p class="hint skip-hint">Scores are optional. <button class="link" type="button" id="skip-scores">Skip the scores today</button></p>
+            <p class="hint skip-hint">Move the slider to score this, or leave it. <button class="link" type="button" id="skip-scores">Skip all the scores today</button></p>
           {% endif %}
         </div>
       </div>
