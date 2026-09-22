@@ -5,14 +5,11 @@
 #   FLY_API_TOKEN     an org-level token from https://fly.io/dashboard -> Tokens
 #   PET_QOL_PASSCODE  the passcode you want the app to ask for
 #
-# Then run it from the Actions tab ("Run workflow") or push to the deploy branch.
+# Then run it from the Actions tab ("Run workflow").
 name: Deploy to Fly.io
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main, claude/animal-qol-tracker-planning-yavwqv]
-    paths-ignore: ["docs/**", "*.md"]
+  workflow_dispatch:   # manual only until hosting is wanted; add a push trigger then
 
 concurrency:
   group: fly-deploy
@@ -31,7 +28,6 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'claude/animal-qol-tracker-planning-yavwqv' }}
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       FLY_APP: ${{ vars.FLY_APP || 'pet-qol-tracker-9uwy' }}

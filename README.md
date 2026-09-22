@@ -83,7 +83,7 @@ The repo deploys itself to Fly.io from GitHub Actions. One-time setup:
    and add two repository secrets: `FLY_API_TOKEN` (the token) and
    `PET_QOL_PASSCODE` (the passcode the app will ask for).
 3. Open the **Actions** tab, choose **Deploy to Fly.io**, and click
-   **Run workflow**. Every later push to the deploy branch redeploys.
+   **Run workflow**. Run it again whenever you want to publish changes.
 
 The app then lives at `https://pet-qol-tracker-9uwy.fly.dev` (change the
 name with a `FLY_APP` repository variable). Entries are kept on a persistent
