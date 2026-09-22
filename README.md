@@ -2,11 +2,9 @@
 
 **See the pattern, not just the day.**
 
-**[Try the demo](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** · a read-only
-snapshot with sample data for two dogs: Maggie (stable, then declining after a
-treatment bump) and Bruno (a steady decline). Click through Today, Trends,
-Calendar, and Vet; saving is switched off there. To track a real pet, run the
-app on your computer (instructions below).
+> **Get the app:** [Download for your computer (ZIP)](https://github.com/Marandacsmith96/End-of-Life-Tracker/archive/refs/heads/claude/animal-qol-tracker-planning-yavwqv.zip)
+> then double-click `start.bat` (Windows) or `start.command` (Mac). Needs [Python](https://www.python.org/downloads/).
+> [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, two sample dogs)
 
 A gentle quality-of-life tracker for aging and seriously ill pets. Record
 daily observations in seconds, see changes over time, and bring clearer
