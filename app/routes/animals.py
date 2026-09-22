@@ -6,7 +6,7 @@ from flask import (
     send_from_directory, session, url_for,
 )
 
-from .. import baseline, models, photos
+from .. import baseline, entries, models, photos
 from ..helpers import animal_or_404, parse_date
 
 bp = Blueprint("animals", __name__)
@@ -165,6 +165,10 @@ def remove_animal(animal_id: int):
             flash("To remove the profile, type the name exactly as it appears.")
             return render_template("remove.html", animal=animal), 400
         photos.delete_photo_file(animal.photo_path)
+        for entry in entries.list_entries(animal_id):
+            for photo in entries.list_entry_photos(entry.id):
+                photos.delete_photo_file(photo.file_path)
+            photos.remove_entry_folder(entry.id)
         models.delete_animal(animal_id)
         if session.get("current_animal_id") == animal_id:
             session.pop("current_animal_id")

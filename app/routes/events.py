@@ -5,6 +5,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 
 from .. import events
 from ..helpers import animal_or_404, parse_date
+from .auth import safe_next
 
 bp = Blueprint("events", __name__)
 
@@ -46,7 +47,7 @@ def new(animal_id: int):
                                    types=events.EVENT_TYPES, today=date.today().isoformat()), 400
         events.create_event(animal_id, **values)
         flash("Event added.")
-        return redirect(request.form.get("next") or url_for("events.timeline", animal_id=animal_id))
+        return redirect(safe_next(request.form.get("next")) or url_for("events.timeline", animal_id=animal_id))
     values = {"event_date": (parse_date(request.args.get("date")) or date.today()).isoformat(),
               "type": request.args.get("type", "vet_visit")}
     return render_template("event_form.html", animal=animal, event=None, values=values,

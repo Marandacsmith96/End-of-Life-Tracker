@@ -40,7 +40,7 @@ def trends(animal_id: int):
         weekly=charts.weekly_day_counts(rows, start or (rows[-1].entry_date if rows else end), end),
         classification=classification, trend_text=trend_text, categories=cat_summaries,
         counts=counts, rates=rates, event_list=event_list, baseline=base,
-        med_names={e.id: entries.medications_given_names(e.id) for e in rows[:200]},
+        med_names=entries.medications_given_names_for_animal(animal_id),
         rows=rows, day_labels=entries.DAY_STATUS_LABELS, appetite_labels=scoring.APPETITE_LABELS,
     )
 

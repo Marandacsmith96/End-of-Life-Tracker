@@ -38,6 +38,15 @@
     mform.addEventListener("input", count); mform.addEventListener("change", count); count();
   }
 
+  /* Confirm dialogs: the text lives in a data attribute so pet names with
+     apostrophes can't break an inline script. */
+  document.querySelectorAll("form[data-confirm]").forEach(function (f) {
+    f.addEventListener("submit", function (e) { if (!confirm(f.dataset.confirm)) e.preventDefault(); });
+  });
+  document.querySelectorAll("button[data-confirm]").forEach(function (b) {
+    b.addEventListener("click", function (e) { if (!confirm(b.dataset.confirm)) e.preventDefault(); });
+  });
+
   /* Share button (Web Share API when available). */
   var share = document.getElementById("share-button");
   if (share && navigator.share) {

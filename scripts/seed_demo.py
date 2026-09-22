@@ -42,7 +42,7 @@ def clamp(x, lo=0, hi=10):
 
 
 def seed_maggie(rng: random.Random, today: date) -> None:
-    if True:
+    if True:  # noqa: keeps the original block indentation
         animal_id = models.create_animal(
             "Maggie", "dog", "Golden Retriever", today - timedelta(days=365 * 13 + 61), "female",
             "Osteoarthritis (hips, elbows); early kidney disease")

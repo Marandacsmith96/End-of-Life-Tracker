@@ -174,6 +174,7 @@ def main() -> int:
             page.click("button:has-text('Continue')")
             check("In memory of Pepper" in page.content(), "after-passing options")
             page.click("button:has-text('Keep')")
+            page.wait_for_load_state("networkidle")
             body = page.inner_text("body")
             check("In memory of Pepper" in body and "No check-in recorded" not in body, "kept profile, no prompts")
             check("Check in" not in page.inner_text(".topbar"), "no check-in button for a remembered pet")
@@ -185,7 +186,10 @@ def main() -> int:
             check("type the name exactly" in page.content(), "remove rejects wrong name")
             page.fill("input[name=confirm_name]", "pepper")
             page.click("button:has-text('Remove permanently')")
+            page.wait_for_load_state("networkidle")
             check("have been removed" in page.content() and "See the pattern" in page.content(), "removed, back to landing")
+            if "have been removed" not in page.content():
+                print("    url:", page.url, "| text:", page.inner_text("main")[:300].replace("\n", " | "))
 
             print("Second pet, mobile")
             page.goto(BASE + "/animals/new")

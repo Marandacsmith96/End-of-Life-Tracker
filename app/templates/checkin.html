@@ -151,8 +151,7 @@
     <button class="button" type="submit">{{ 'Save changes' if entry else 'Save check-in' }}</button>
     <a class="link" href="{{ url_for('dashboard.today', animal_id=animal.id) }}">Cancel</a>
     {% if entry %}
-      <button class="link danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate
-              onclick="return confirm('Remove this day\'s check-in? This cannot be undone.')">Remove this check-in</button>
+      <button class="link danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate data-confirm="Remove this day's check-in? This cannot be undone.">Remove this check-in</button>
     {% endif %}
   </div>
 </form>

@@ -10,8 +10,7 @@
 <section class="card block">
   <h2>Restore from a backup</h2>
   <p class="danger-text">This replaces everything currently in the app with the contents of the backup. It cannot be undone, so download a fresh backup first if you're unsure.</p>
-  <form method="post" action="{{ url_for('settings.restore') }}" enctype="multipart/form-data" class="form"
-        onsubmit="return confirm('Replace all current data with this backup? This cannot be undone.')">
+  <form method="post" action="{{ url_for('settings.restore') }}" enctype="multipart/form-data" class="form" data-confirm="Replace all current data with this backup? This cannot be undone.">
     <label>Backup file <input type="file" name="backup" accept=".zip,application/zip" required></label>
     <label class="inline"><input type="checkbox" name="confirm" value="yes"> I understand my current data will be replaced</label>
     <div class="actions"><button class="button danger-button" type="submit">Restore</button></div>

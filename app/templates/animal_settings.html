@@ -78,7 +78,7 @@
     <h2>If things change</h2>
     <ul class="link-list">
       <li><a href="{{ url_for('animals.passed', animal_id=animal.id) }}">My pet has passed away</a></li>
-      <li><form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}" onsubmit="return confirm('Archive {{ animal.name }}\'s profile? Everything is kept and you can restore it later.')"><button class="link" type="submit">Archive this profile</button></form> <span class="muted small">pause tracking, keep everything</span></li>
+      <li><form method="post" action="{{ url_for('animals.archive_animal', animal_id=animal.id) }}" data-confirm="Archive {{ animal.name }}'s profile? Everything is kept and you can restore it later."><button class="link" type="submit">Archive this profile</button></form> <span class="muted small">pause tracking, keep everything</span></li>
     </ul>
   {% endif %}
 </section>

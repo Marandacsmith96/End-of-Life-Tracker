@@ -6,7 +6,10 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.dates as mdates  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib import rcParams  # noqa: E402
+from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
+from matplotlib.patches import Rectangle  # noqa: E402
 from matplotlib.ticker import FuncFormatter  # noqa: E402
 
 SERIES = "#3d64c4"
@@ -17,7 +20,7 @@ INK = "#1d2637"
 MUTED = "#5c6b84"
 GOOD, MIXED, BAD = "#2f7d5b", "#8a6d1f", "#b6485f"
 
-plt.rcParams.update({
+rcParams.update({
     "font.family": "DejaVu Sans", "font.size": 8, "axes.edgecolor": GRID, "axes.labelcolor": MUTED,
     "xtick.color": MUTED, "ytick.color": MUTED, "axes.titlecolor": INK, "axes.titlesize": 9,
     "axes.titleweight": "bold", "axes.titlelocation": "left",
@@ -38,10 +41,17 @@ def _style(ax, start: date, end: date, max_ticks: int = 8):
     ax.xaxis.set_major_formatter(fmt)
 
 
-def _png(fig) -> bytes:
+def _figure(**kwargs) -> Figure:
+    """A standalone figure: no pyplot global state, so PDFs can be built in
+    parallel threads without mixing up each other's axes."""
+    fig = Figure(**kwargs)
+    FigureCanvasAgg(fig)
+    return fig
+
+
+def _png(fig: Figure) -> bytes:
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=200, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
     return buf.getvalue()
 
 
@@ -49,7 +59,8 @@ def trend_chart(series: dict, start: date, end: date) -> bytes:
     """Raw daily scores as dots, the 7-day windowed mean as a line, baseline dashed, events as ticks."""
     o = series["overall"]
     dates = [date.fromisoformat(x) for x in o["dates"]]
-    fig, ax = plt.subplots(figsize=(7.2, 1.95))
+    fig = _figure(figsize=(7.2, 1.95))
+    ax = fig.subplots()
     ax.scatter(dates, o["values"], s=9, color=POINT, alpha=0.45, linewidths=0, label="Daily score", zorder=3)
     limited = o.get("sufficiency") != "adequate"
     # Draw the smoothed line only across consecutive non-None values.
@@ -82,8 +93,8 @@ def trend_chart(series: dict, start: date, end: date) -> bytes:
 def category_charts(series: dict, start: date, end: date) -> bytes:
     cats = series["categories"]
     rows = (len(cats) + 3) // 4
-    fig, axes = plt.subplots(rows, 4, figsize=(7.2, 1.25 * rows), sharex=True)
-    axes = axes.flatten()
+    fig = _figure(figsize=(7.2, 1.25 * rows))
+    axes = fig.subplots(rows, 4, sharex=True).flatten()
     for ax, cat in zip(axes, cats):
         dates = [date.fromisoformat(x) for x in cat["dates"]]
         ax.scatter(dates, cat["values"], s=4, color=POINT, alpha=0.4, linewidths=0, zorder=3)
@@ -112,11 +123,12 @@ def category_charts(series: dict, start: date, end: date) -> bytes:
 def days_strip(entries_by_date: dict, start: date, end: date) -> bytes:
     """One small square per day: good / mixed / bad / not logged."""
     days = (end - start).days + 1
-    fig, ax = plt.subplots(figsize=(7.2, 0.4))
+    fig = _figure(figsize=(7.2, 0.4))
+    ax = fig.subplots()
     colors = {"good": GOOD, "mixed": MIXED, "bad": BAD}
     for i in range(days):
         day = start + timedelta(days=i)
         status = entries_by_date.get(day)
-        ax.add_patch(plt.Rectangle((i, 0), 0.85, 1, color=colors.get(status, "#eef2f9"), linewidth=0))
+        ax.add_patch(Rectangle((i, 0), 0.85, 1, color=colors.get(status, "#eef2f9"), linewidth=0))
     ax.set_xlim(0, days); ax.set_ylim(0, 1); ax.axis("off")
     return _png(fig)

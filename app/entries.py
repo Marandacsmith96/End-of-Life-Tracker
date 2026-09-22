@@ -259,6 +259,22 @@ def medications_given_names(entry_id: int) -> list[str]:
     return [r["name"] for r in rows]
 
 
+def medications_given_names_for_animal(animal_id: int) -> dict[int, list[str]]:
+    """{entry_id: [medication names given]} for every entry of the animal, in one query."""
+    rows = get_db().execute(
+        """SELECT em.entry_id, m.name FROM entry_medications em
+           JOIN medications m ON m.id = em.medication_id
+           JOIN entries e ON e.id = em.entry_id
+           WHERE e.animal_id = ? AND em.given = 1
+           ORDER BY em.entry_id, m.name COLLATE NOCASE""",
+        (animal_id,),
+    ).fetchall()
+    out: dict[int, list[str]] = {}
+    for r in rows:
+        out.setdefault(r["entry_id"], []).append(r["name"])
+    return out
+
+
 # --- photos ------------------------------------------------------------------
 
 @dataclass

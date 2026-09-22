@@ -71,5 +71,8 @@ def delete_photo_file(relative_path: str | None) -> None:
         target.unlink()
 
 
-# Kept for the animal routes' existing import name.
-delete_animal_photo = delete_photo_file
+def remove_entry_folder(entry_id: int) -> None:
+    """Remove an entry's (now empty) photo folder, if any."""
+    folder = Path(current_app.config["PHOTO_DIR"]) / "entries" / str(entry_id)
+    if folder.is_dir() and not any(folder.iterdir()):
+        folder.rmdir()

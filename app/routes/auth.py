@@ -8,6 +8,13 @@ bp = Blueprint("auth", __name__)
 OPEN_ENDPOINTS = {"static", "auth.login", "auth.logout"}
 
 
+def safe_next(target: str | None) -> str | None:
+    """Only follow redirects to a path on this site, never to another host."""
+    if target and target.startswith("/") and not target.startswith("//") and "\\" not in target:
+        return target
+    return None
+
+
 def passcode_required() -> bool:
     return bool(current_app.config.get("PASSCODE"))
 
@@ -22,10 +29,10 @@ def login():
         return redirect(url_for("dashboard.home"))
     if request.method == "POST":
         given = request.form.get("passcode", "")
-        if hmac.compare_digest(given, current_app.config["PASSCODE"]):
+        if hmac.compare_digest(given.encode("utf-8"), current_app.config["PASSCODE"].encode("utf-8")):
             session["unlocked"] = True
             session.permanent = True
-            return redirect(request.args.get("next") or url_for("dashboard.home"))
+            return redirect(safe_next(request.args.get("next")) or url_for("dashboard.home"))
         flash("That passcode isn't right.")
         return render_template("unlock.html"), 401
     return render_template("unlock.html")

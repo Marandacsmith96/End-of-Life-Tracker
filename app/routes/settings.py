@@ -30,6 +30,7 @@ def restore():
     except backup.InvalidBackup as exc:
         flash(str(exc))
         return redirect(url_for("settings.settings"))
+    db.init_db()  # a backup from an older version is upgraded in place
     session.pop("current_animal_id", None)
     flash(f"Backup restored. {count} {'pet' if count == 1 else 'pets'} loaded.")
     return redirect(url_for("dashboard.home"))

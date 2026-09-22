@@ -1,4 +1,5 @@
 """Daily check-in (full and quick), medications, and entry photos."""
+import math
 from datetime import date
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
@@ -63,8 +64,9 @@ def _parse_extras(form) -> tuple[dict, list[str]]:
         except ValueError:
             errors.append("Weight must be a number.")
         else:
-            if weight <= 0 or weight > 500:
+            if not math.isfinite(weight) or weight <= 0 or weight > 500:
                 errors.append("Weight looks wrong. Please check it.")
+                weight = None
         if weight_unit not in scoring.WEIGHT_UNITS:
             errors.append("Weight unit must be kg or lb.")
     else:

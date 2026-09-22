@@ -16,7 +16,7 @@
           {% if ev.note %}<p class="muted">{{ ev.note }}</p>{% endif %}
           <div class="row-actions">
             <a class="link small" href="{{ url_for('events.edit', event_id=ev.id) }}">Edit</a>
-            <form method="post" action="{{ url_for('events.delete', event_id=ev.id) }}" onsubmit="return confirm('Remove this event?')"><button class="link small" type="submit">Remove</button></form>
+            <form method="post" action="{{ url_for('events.delete', event_id=ev.id) }}" data-confirm="Remove this event?"><button class="link small" type="submit">Remove</button></form>
           </div>
         </div>
       </li>

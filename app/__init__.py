@@ -4,7 +4,7 @@ import secrets
 from datetime import date, timedelta
 from pathlib import Path
 
-from flask import Flask, g, redirect, request, session, url_for
+from flask import Flask, abort, g, redirect, request, session, url_for
 
 from . import db, entries, models, safety, scoring
 
@@ -37,6 +37,22 @@ def create_app(test_config: dict | None = None) -> Flask:
     for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
                    caregiver, export, settings):
         app.register_blueprint(module.bp)
+
+    @app.before_request
+    def block_cross_site_posts():
+        """Another website open in the same browser must not be able to post
+        to the tracker (which would let it wipe or alter the data). Modern
+        browsers label every request with Sec-Fetch-Site; older ones send
+        Origin. Requests with neither (command-line tools, tests) are allowed."""
+        if request.method not in ("POST", "PUT", "PATCH", "DELETE"):
+            return None
+        site = request.headers.get("Sec-Fetch-Site")
+        if site and site not in ("same-origin", "none"):
+            abort(403)
+        origin = request.headers.get("Origin")
+        if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
+            abort(403)
+        return None
 
     @app.before_request
     def require_passcode():
@@ -89,7 +105,13 @@ def _load_or_create_secret(data_dir: Path) -> str:
 
 
 def _write_secret(path: Path) -> str:
+    """Create the key file atomically; if another process got there first
+    (two server workers starting together), use its key so sessions agree."""
     key = secrets.token_hex(32)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(key, encoding="utf-8")
-    return key
+    try:
+        with open(path, "x", encoding="utf-8") as fh:
+            fh.write(key)
+        return key
+    except FileExistsError:
+        return path.read_text(encoding="utf-8").strip() or key
