@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install -r requirements.txt pyinstaller
+      - run: pip install -r requirements.txt -r requirements-dev.txt pyinstaller
       - run: pytest -q
       - run: pyinstaller --noconfirm --log-level WARN pet_qol.spec
       - name: Add a readme and zip it up (Windows)

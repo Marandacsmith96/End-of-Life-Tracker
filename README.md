@@ -136,6 +136,7 @@ standalone build in `dist/`.
 ## Tests
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
 
