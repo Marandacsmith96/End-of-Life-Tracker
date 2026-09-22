@@ -160,6 +160,8 @@ python scripts/e2e_check.py
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): architecture, schema, the
   trend and smoothing algorithm, safety rules, limitations, next steps.
 - [docs/DESIGN.md](docs/DESIGN.md): design decisions and what was hard.
+- [docs/BUILD-LOG.md](docs/BUILD-LOG.md): dated notes on what actually
+  happened while building, including what went wrong.
 - [PLAN.md](PLAN.md): the original semester plan.
 
 ## A note on what this app is not
