@@ -45,4 +45,9 @@ if __name__ == "__main__":
     if getattr(sys, "frozen", False):
         # Packaged build: keep data next to the executable, not in a temp folder.
         os.environ.setdefault("PET_QOL_DATA_DIR", str(Path(sys.executable).resolve().parent / "data"))
+    if "--seed-demo" in sys.argv:
+        from scripts.seed_demo import seed
+        seed(reset=False)
+        print("Demo pets added. Start the app normally to see them.")
+        sys.exit(0)
     main()

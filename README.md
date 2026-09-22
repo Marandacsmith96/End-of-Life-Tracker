@@ -2,8 +2,10 @@
 
 **See the pattern, not just the day.**
 
-> **Get the app:** [Download for your computer (ZIP)](https://github.com/Marandacsmith96/End-of-Life-Tracker/archive/refs/heads/claude/animal-qol-tracker-planning-yavwqv.zip)
-> then double-click `start.bat` (Windows) or `start.command` (Mac). Needs [Python](https://www.python.org/downloads/).
+> **Get the app, nothing to install:**
+> [Download for Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip) ·
+> [Download for Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip)
+> Unzip, then double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). Python is included.
 > [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, two sample dogs)
 
 A gentle quality-of-life tracker for aging and seriously ill pets. Record
@@ -57,7 +59,24 @@ observations, and it is not a validated medical device.
 The app keeps your entries on the computer that runs it, so there are two
 ways to have it:
 
-**1. On your own computer (no commands needed)**
+**1. On your own computer, nothing to install**
+
+1. Download the ZIP for [Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip)
+   or [Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip)
+   and unzip it somewhere you'll find again.
+2. Double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). A
+   small window opens and your browser opens on the app. Leave the small
+   window open while you use it.
+3. Windows may show "Windows protected your PC": click "More info", then
+   "Run anyway". A Mac may say the developer can't be verified: open System
+   Settings > Privacy & Security and click "Open Anyway", then start it again.
+
+These builds are made by GitHub Actions from this repo (see
+`.github/workflows/build-app.yml`). They aren't signed with a store account,
+which is why the warnings appear. `READ-ME-FIRST.txt` inside the ZIP has the
+same notes.
+
+**1b. With Python installed (smaller download)**
 
 1. Install Python 3.11 or newer from <https://www.python.org/downloads/>.
    On Windows, tick "Add python.exe to PATH" in the installer.

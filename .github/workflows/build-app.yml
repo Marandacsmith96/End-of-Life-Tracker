@@ -1,0 +1,66 @@
+# Builds double-click versions of the app for Windows and Mac (Python included)
+# and attaches them to a GitHub release called "latest".
+name: Build packaged app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, claude/animal-qol-tracker-planning-yavwqv]
+    paths-ignore: ["docs/**", "*.md", ".github/workflows/deploy-fly.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: macos-latest
+            label: Mac
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pytest -q
+      - run: pyinstaller --noconfirm --log-level WARN pet_qol.spec
+      - name: Add a readme and zip it up (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Copy-Item packaging/README-Windows.txt dist/PetQoLTracker/READ-ME-FIRST.txt
+          Compress-Archive -Path dist/PetQoLTracker/* -DestinationPath QualityOfLifeTracker-Windows.zip
+      - name: Add a readme and zip it up (Mac)
+        if: runner.os == 'macOS'
+        run: |
+          cp packaging/README-Mac.txt dist/PetQoLTracker/READ-ME-FIRST.txt
+          cp packaging/Start.command dist/PetQoLTracker/Start.command
+          chmod +x dist/PetQoLTracker/Start.command dist/PetQoLTracker/PetQoLTracker
+          cd dist && ditto -c -k --keepParent PetQoLTracker ../QualityOfLifeTracker-Mac.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QualityOfLifeTracker-${{ matrix.label }}
+          path: QualityOfLifeTracker-${{ matrix.label }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: out, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          prerelease: true
+          body: |
+            Double-click versions of the Quality-of-Life Tracker with Python included.
+            Download the ZIP for your computer, unzip it, and read READ-ME-FIRST.txt inside.
+          files: |
+            out/QualityOfLifeTracker-Windows.zip
+            out/QualityOfLifeTracker-Mac.zip
