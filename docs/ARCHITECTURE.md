@@ -44,7 +44,7 @@ app/
   routes/                   dashboard, animals, entries, markers, baseline,
                             trends, events, caregiver, export, settings
   templates/, static/       pages, stylesheet, scripts, vendored Chart.js and font
-scripts/seed_demo.py        Maggie, 90 days
+scripts/seed_demo.py        demo pets: Maggie (90 days, stable), Bruno (declining), Juniper (improving)
 tests/                      pytest suite
 ```
 

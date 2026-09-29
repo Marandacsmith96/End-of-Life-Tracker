@@ -180,6 +180,28 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 - The walkthrough script itself had a flaky step (read the page before the
   browser finished navigating). Not an app bug; fixed with an explicit wait.
 
+### Sep 29 — a third demo pet who gets better
+
+- You asked for an example animal that starts low and improves. Juniper, a
+  12-year-old cat with hyperthyroidism and dental disease, was added: sixty
+  days from a rough start, through a dental extraction (a visible dip), to
+  good days on medication. Her weight climbs from 3.1 to 4.3 kg and three of
+  her four good-day behaviors return.
+- **Looked right, was wrong.** The first version used a curve that gains fast
+  early and flattens at the end. The chart looked like a recovery, but the
+  app's own summary said "stable", because the classifier compares the last
+  7 days with the 21 before, and by then Juniper had plateaued. The seed data
+  was wrong, not the analytics; the curve was changed so she is still
+  climbing at the end, and the summary now reads "Scores have generally
+  trended higher over the past few weeks." Caught in about a minute by
+  printing each pet's classification before taking screenshots. Lesson:
+  check what the software concludes, not just what the picture shows.
+- The honest side effect: the Today page also notes that mobility is still
+  below her owner-estimated baseline on 10 of the last 12 days, which is true
+  (the baseline was set at 9, she is at about 8). The app does not hide a
+  less flattering fact inside a good-news story.
+- Browser demo republished with all three pets; 106 tests still pass.
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -233,6 +255,7 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | YAML colon-space | GitHub, instantly | one push |
 | Missing test dependency | CI | one push |
 | Ten code-review findings | reading the code, then reproducing three | some since day one |
+| Juniper "recovery" that the app called stable | printing each pet's classification | about a minute |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

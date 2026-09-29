@@ -22,15 +22,16 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "demo"
-PETS = {1: "", 2: "bruno-"}   # animal id -> file prefix (the first pet owns the plain names)
-MAX_PAGES = 220
+PETS = {1: "", 2: "bruno-", 3: "juniper-"}   # animal id -> file prefix (the first pet owns the plain names)
+MAX_PAGES = 320
 
 BANNER = (
     '<aside class="notice demo-notice" aria-label="Demo">'
-    '<span><strong>Read-only demo</strong> with sample data for two fictional dogs. Saving is switched off here; '
+    '<span><strong>Read-only demo</strong> with sample data for three fictional pets. Saving is switched off here; '
     'run the app on your own computer to track a real pet.</span>'
     '<span class="presets"><a class="chip" href="index.html">Maggie · stable, then declining</a>'
     '<a class="chip" href="bruno-index.html">Bruno · steady decline</a>'
+    '<a class="chip" href="juniper-index.html">Juniper · low, then improving</a>'
     '<a class="chip quiet" href="how-it-works.html">How it works</a></span></aside>'
 )
 DEMO_SCRIPT = """<script>

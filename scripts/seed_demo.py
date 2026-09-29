@@ -1,6 +1,6 @@
 """Seed realistic demo pets so the trend view means something immediately.
 
-    python scripts/seed_demo.py                 # adds Maggie and Bruno
+    python scripts/seed_demo.py                 # adds Maggie, Bruno, and Juniper
     python scripts/seed_demo.py --reset         # wipes the data folder first
     python scripts/seed_demo.py --pet maggie    # just one of them
 
@@ -11,8 +11,14 @@ then a slower decline.
 
 Bruno is a 14-year-old Labrador: a steady decline over about two months with
 no recovery, mobility falling fastest, appetite holding until late, good days
-becoming rare. Both include noise, the odd good day in bad stretches, and
-missing entries. Nothing here is real.
+becoming rare.
+
+Juniper is a 12-year-old cat who starts low after a diagnosis of an overactive
+thyroid and dental disease, dips again around a dental procedure, then climbs
+steadily as treatment takes hold and levels off near her old self.
+
+All three include noise, the odd off day, and missing entries. Nothing here is
+real.
 """
 import argparse
 import random
@@ -210,6 +216,95 @@ def seed_bruno(rng: random.Random, today: date) -> None:
         caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 1), status, note)
 
 
+JUNIPER_MARKERS = ["Comes to greet me", "Finishes dinner", "Jumps onto the windowsill", "Grooms herself"]
+JUNIPER_NOTES = {
+    "good": [None, "Chased the string toy for a whole minute.", "Sat in the sun on the windowsill all afternoon.",
+             "Asked for breakfast before I was up."],
+    "mixed": [None, "Ate slowly but finished eventually.", "Quiet day, but came for a cuddle.", "Only groomed her face."],
+    "bad": [None, "Hid under the bed most of the day.", "Refused food; drooling a little.", "Coat looks unkempt; didn't groom.",
+            "Vomited once in the morning."],
+}
+
+
+def seed_juniper(rng: random.Random, today: date) -> None:
+    """Starts low, improves with treatment, levels off near her old self."""
+    animal_id = models.create_animal(
+        "Juniper", "cat", "Domestic shorthair", today - timedelta(days=365 * 12 + 200), "female",
+        "Hyperthyroidism (diagnosed this summer); dental disease")
+    marker_ids = [markers.create_marker(animal_id, m) for m in JUNIPER_MARKERS]
+    baseline.save_baseline(animal_id, today - timedelta(days=182),
+                           {"hurt": 8, "hunger": 8, "hydration": 8, "hygiene": 9, "happiness": 8,
+                            "mobility": 9, "good_days": 8}, "mostly_good", "most_days",
+                           "Normal for her before the weight loss started.")
+    methimazole = entries.create_medication(animal_id, "Methimazole", "2.5 mg", "twice a day", today - timedelta(days=58))
+    pain = entries.create_medication(animal_id, "Buprenorphine", "0.1 ml", "twice a day for 5 days", today - timedelta(days=47))
+    entries.set_medication_active(pain, False, on=today - timedelta(days=42))
+    d0 = today - timedelta(days=59)
+    events.create_event(animal_id, d0 + timedelta(days=1), "vet_visit", "Bloodwork: overactive thyroid confirmed",
+                        "Had lost a lot of weight. Started methimazole.")
+    events.create_event(animal_id, d0 + timedelta(days=1), "new_medication", "Started methimazole 2.5 mg", None)
+    events.create_event(animal_id, d0 + timedelta(days=12), "procedure", "Dental: three teeth removed",
+                        "Home the same evening, sore for a few days.")
+    events.create_event(animal_id, d0 + timedelta(days=35), "vet_visit", "Recheck bloodwork",
+                        "Thyroid levels back in range. Gained weight.")
+
+    weight = 3.1
+    for i in range(60):
+        day = d0 + timedelta(days=i)
+        if rng.random() < 0.08:
+            continue
+        t = i / 59
+        noise = lambda s=0.9: rng.gauss(0, s)  # noqa: E731
+        # Recovery curve: a slow start, a dental dip, then steady gains that continue to the end.
+        recovery = 0.6 * t + 0.4 * t ** 2   # slow at first, still climbing at the end
+        dental_dip = 2.2 * max(0, 1 - abs(i - 13) / 4) if 10 <= i <= 17 else 0
+        comfort = 4.0 + 4.0 * recovery - dental_dip
+        hunger = 3.5 + 4.5 * recovery - dental_dip * 1.2
+        hydration = 5.0 + 3.0 * recovery
+        hygiene = 3.8 + 4.6 * recovery - dental_dip * 0.5
+        happiness = 3.5 + 4.6 * recovery - dental_dip
+        mobility = 6.0 + 2.5 * recovery - dental_dip * 0.4
+        good_days = 3.0 + 5.2 * recovery - dental_dip
+        scores = {
+            "hurt": clamp(round(comfort + noise())), "hunger": clamp(round(hunger + noise())),
+            "hydration": clamp(round(hydration + noise(0.7))), "hygiene": clamp(round(hygiene + noise(0.8))),
+            "happiness": clamp(round(happiness + noise())), "mobility": clamp(round(mobility + noise(0.7))),
+            "good_days": clamp(round(good_days + noise(0.8))),
+        }
+        if rng.random() < 0.06:   # an off day even while improving
+            scores = {k: clamp(v - 2) for k, v in scores.items()}
+        mean = sum(scores.values()) / 7
+        if mean >= 6.8:
+            status = "good"
+        elif mean <= 4.8:
+            status = "bad"
+        else:
+            status = "mixed" if rng.random() < 0.7 else ("good" if rng.random() < 0.5 else "bad")
+        include_scores = rng.random() > 0.15
+        weight = min(4.3, weight + rng.uniform(0.0, 0.05) * (1 if i > 14 else 0.2))
+        log_weight = round(weight, 2) if rng.random() < 0.3 else None
+        appetite = rng.choices(["none", "low", "normal", "high"],
+                               weights=[0.3 - 0.28 * recovery, 0.5 - 0.35 * recovery, 0.2 + 0.55 * recovery, 0.05 * recovery])[0]
+        entry_id = entries.save_entry(
+            animal_id, day, status, scores if include_scores else {}, log_weight, "kg" if log_weight else None,
+            appetite if include_scores else None, rng.choice(JUNIPER_NOTES[status]))
+        probs = {
+            marker_ids[0]: 0.2 + 0.7 * recovery,                      # greets: returns steadily
+            marker_ids[1]: 0.15 + 0.75 * recovery - (0.4 if 10 <= i <= 16 else 0),  # dinner: dips with the dental
+            marker_ids[2]: 0.3 + 0.55 * recovery,                     # windowsill
+            marker_ids[3]: 0.1 + 0.8 * recovery,                      # grooming: the clearest sign she feels better
+        }
+        done = {m for m, pr in probs.items() if rng.random() < clamp(pr, 0, 1)}
+        markers.set_responses(entry_id, done, set(marker_ids))
+        given = {methimazole} if rng.random() < 0.95 else set()
+        if 12 <= i <= 17:
+            given.add(pain)
+        entries.set_entry_medications(entry_id, given, {methimazole, pain})
+    for weeks_ago, status, note in ((7, "overwhelmed", "Didn't know if she'd recover."), (4, "harder", None),
+                                    (1, "okay", "Feels like I have her back.")):
+        caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 2), status, note)
+
+
 def seed(reset: bool, pet: str = "all") -> None:
     app = create_app()
     if reset:
@@ -223,13 +318,15 @@ def seed(reset: bool, pet: str = "all") -> None:
             seed_maggie(random.Random(13), today)
         if pet in ("bruno", "all"):
             seed_bruno(random.Random(29), today)
-    names = {"maggie": "Maggie", "bruno": "Bruno", "all": "Maggie and Bruno"}[pet]
+        if pet in ("juniper", "all"):
+            seed_juniper(random.Random(41), today)
+    names = {"maggie": "Maggie", "bruno": "Bruno", "juniper": "Juniper", "all": "Maggie, Bruno, and Juniper"}[pet]
     print(f"Added {names} with demo entries. Start the app and choose a pet.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--reset", action="store_true", help="delete existing data first")
-    parser.add_argument("--pet", choices=("maggie", "bruno", "all"), default="all", help="which demo pet to add")
+    parser.add_argument("--pet", choices=("maggie", "bruno", "juniper", "all"), default="all", help="which demo pet to add")
     args = parser.parse_args()
     seed(args.reset, args.pet)

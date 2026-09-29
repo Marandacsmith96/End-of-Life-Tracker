@@ -6,7 +6,7 @@
 > [Download for Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip) ·
 > [Download for Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip)
 > Unzip, then double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). Python is included.
-> [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, two sample dogs)
+> [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, three sample pets)
 
 A gentle quality-of-life tracker for aging and seriously ill pets. Record
 daily observations in seconds, see changes over time, and bring clearer
@@ -115,7 +115,7 @@ You need Python 3.11 or newer.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/seed_demo.py --reset   # optional: two demo dogs, Maggie and Bruno
+python scripts/seed_demo.py --reset   # optional: three demo pets, Maggie, Bruno, and Juniper
 python run.py
 ```
 
