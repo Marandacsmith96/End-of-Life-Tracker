@@ -31,7 +31,8 @@ def _prep(animal, since: date | None):
         pts = an.category_points(all_entries, key)
         recent, rn = an.window_mean(pts, since, end)
         previous, pn = an.window_mean(pts, prev_start, prev_end)
-        delta = round(recent - previous, 1) if recent is not None and previous is not None else None
+        # Compare the one-decimal values the page shows, so text and table agree.
+        delta = round(round(recent, 1) - round(previous, 1), 1) if recent is not None and previous is not None else None
         if delta is None or rn < 3 or pn < 3:
             verdict = "Not enough entries to compare."
         elif abs(delta) < 0.5:
@@ -62,6 +63,8 @@ def _prep(animal, since: date | None):
 def vet(animal_id: int):
     animal = animal_or_404(animal_id)
     since = parse_date(request.args.get("since"))
+    if since and since > (animal.passed_date or date.today()):
+        since = None
     prep = _prep(animal, since)
     start, end, preset = resolve_range(request.args.get("range"), None, None,
                                        today=animal.passed_date or date.today(), default="90")

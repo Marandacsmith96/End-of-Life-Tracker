@@ -28,8 +28,12 @@
     <h2>Good and bad days</h2>
     <a class="link small" href="{{ url_for('trends.calendar', animal_id=animal.id) }}">Calendar</a>
   </div>
-  <p class="muted small">{{ counts.good }} good, {{ counts.mixed }} mixed, {{ counts.bad }} bad, {{ counts.not_logged }} not logged in this range.</p>
-  {% if weekly %}
+  {% if rows %}
+    <p class="muted small">{{ counts.good }} good, {{ counts.mixed }} mixed, {{ counts.bad }} bad, {{ counts.not_logged }} not logged in this range.</p>
+  {% else %}
+    <p class="muted small">No check-ins in this range.</p>
+  {% endif %}
+  {% if weekly and rows %}
     <div class="chart-wrap short" data-chart="weeks" data-series="{{ weekly|tojson|forceescape }}">
       <canvas id="chart-weeks" role="img" aria-label="Good, mixed, and bad days per week"></canvas>
     </div>

@@ -7,7 +7,7 @@ from flask import Blueprint, abort, render_template, request
 from .. import analytics as an
 from .. import baseline as bl
 from .. import charts, entries, events, insights, markers, scoring
-from ..helpers import animal_or_404, parse_date, resolve_range
+from ..helpers import MAX_YEAR, MIN_YEAR, animal_or_404, parse_date, resolve_range
 
 bp = Blueprint("trends", __name__)
 
@@ -60,7 +60,7 @@ def category(animal_id: int, key: str):
     classification = an.classify(all_pts, end)
     text = insights.TREND_TEXT[classification.kind].replace("Scores", f"{scoring.CATEGORY_LABELS[key]} scores")
     baseline_value = getattr(base, key) if base else None
-    below = an.below_baseline(all_pts, baseline_value) if baseline_value is not None else None
+    below = an.below_baseline(all_pts, baseline_value, end=end) if baseline_value is not None else None
     idx = scoring.CATEGORY_KEYS.index(key)
     return render_template(
         "category.html", animal=animal, key=key, label=scoring.CATEGORY_LABELS[key],
@@ -86,6 +86,8 @@ def calendar(animal_id: int):
     month_raw = request.args.get("month")
     try:
         year, month = (int(x) for x in month_raw.split("-")) if month_raw else (today.year, today.month)
+        if not MIN_YEAR <= year <= MAX_YEAR:
+            raise ValueError("year out of range")
         first = date(year, month, 1)
     except (ValueError, AttributeError):
         first = date(today.year, today.month, 1)

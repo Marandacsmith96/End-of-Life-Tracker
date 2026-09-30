@@ -1,4 +1,5 @@
 """Pets: add, edit, photo, choose, settings, archive, and the passing flow."""
+import re
 from datetime import date
 
 from flask import (
@@ -12,9 +13,13 @@ from ..helpers import animal_or_404, parse_date
 bp = Blueprint("animals", __name__)
 
 
+# Zero-width and other invisible characters would let a "blank" name through.
+_INVISIBLE = re.compile(r"[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]")
+
+
 def _parse_form(form) -> tuple[dict, list[str]]:
     errors: list[str] = []
-    name = form.get("name", "").strip()
+    name = _INVISIBLE.sub("", form.get("name", "")).strip()
     species = form.get("species", "").strip().lower()
     breed = form.get("breed", "").strip() or None
     sex = form.get("sex", "").strip() or None
@@ -138,6 +143,8 @@ def passed(animal_id: int):
         passed_date = parse_date(request.form.get("passed_date")) or date.today()
         if passed_date > date.today():
             passed_date = date.today()
+        if animal.birth_date and passed_date < animal.birth_date:
+            passed_date = animal.birth_date
         models.set_status(animal_id, "passed", passed_date)
         return redirect(url_for("animals.after_passing", animal_id=animal_id))
     return render_template("passed.html", animal=animal, today=date.today().isoformat())

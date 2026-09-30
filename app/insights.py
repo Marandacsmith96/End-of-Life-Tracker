@@ -116,11 +116,12 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
             if base_value is None:
                 continue
             pts = an.category_points(entries, key)
-            below, n = an.below_baseline(pts, base_value)
+            below, n = an.below_baseline(pts, base_value, end=end)
             if n >= 8 and below / n >= 0.7:
                 out.append(Insight(
                     guard(f"{CATEGORY_LABELS[key]} has been below {name}'s earlier baseline "
-                          f"({base_value}/10, owner estimate) on {below} of the last {n} logged days."),
+                          f"({base_value}/10, owner estimate) on {below} of the last {n} logged days.",
+                          owner_text=(name,)),
                     "baseline", "attention", {"key": key, "below": below, "n": n, "baseline": base_value}))
                 break  # one baseline sentence is enough
 
@@ -129,7 +130,7 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
         done, total = an.markers_today(today_entry.id if today_entry else None, responses, markers)
         if today_entry and today_entry.id in responses:
             out.append(Insight(
-                guard(f"{name} did {done} of {total} of their usual good-day behaviors today."),
+                guard(f"{name} did {done} of {total} of their usual good-day behaviors today.", owner_text=(name,)),
                 "marker", "info", {"done": done, "total": total}))
         recent_rates = an.marker_rates(entries, responses, markers, end - timedelta(days=29), end)
         earlier_rates = an.marker_rates(entries, responses, markers, end - timedelta(days=59), end - timedelta(days=30))
@@ -144,12 +145,12 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
                 if prev.pct - r.pct >= 25:
                     out.append(Insight(
                         guard(f"“{r.label}” decreased from {prev.pct}% of logged days last month "
-                              f"to {r.pct}% this month."),
+                              f"to {r.pct}% this month.", owner_text=(r.label,)),
                         "marker", "attention", {"marker": r.label, "recent": r.pct, "previous": prev.pct}))
                 elif r.pct - prev.pct >= 25:
                     out.append(Insight(
                         guard(f"“{r.label}” increased from {prev.pct}% of logged days last month "
-                              f"to {r.pct}% this month."),
+                              f"to {r.pct}% this month.", owner_text=(r.label,)),
                         "marker", "info", {"marker": r.label, "recent": r.pct, "previous": prev.pct}))
 
     # 6. Before/after a treatment event (comfort = Hurt score).
@@ -163,7 +164,7 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
             out.append(Insight(
                 guard(f"Comfort scores {direction} in the two weeks after “{ev.title}” "
                       f"recorded on {_fmt(ev.event_date)}: average {eff.after_mean:.1f} compared with "
-                      f"{eff.before_mean:.1f} before."),
+                      f"{eff.before_mean:.1f} before.", owner_text=(ev.title,)),
                 "event", "info", {"event": ev.title, "before": eff.before_mean, "after": eff.after_mean}))
             break
 
@@ -177,6 +178,6 @@ def discussion_points(entries: list[Entry], end: date, name: str, markers=(), re
                       baseline=None, events=()) -> list[str]:
     """Short bullets for 'Things you may want to discuss with your veterinarian'."""
     items = generate(entries, end, name, markers, responses, baseline, events)
-    bullets = [i.text for i in items if i.kind in ("trend", "category", "days", "marker", "baseline", "event")
-               and (i.level == "attention" or i.kind in ("event",))]
-    return [guard(b) for b in bullets]
+    # Every Insight text was already guarded when it was generated.
+    return [i.text for i in items if i.kind in ("trend", "category", "days", "marker", "baseline", "event")
+            and (i.level == "attention" or i.kind in ("event",))]

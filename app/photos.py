@@ -29,7 +29,7 @@ def _open_and_shrink(file_storage) -> Image.Image:
     try:
         image = Image.open(file_storage.stream)
         image.load()
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
         raise InvalidImage("That file does not look like an image.") from exc
     image = ImageOps.exif_transpose(image)  # respect phone rotation
     image.thumbnail((MAX_SIDE, MAX_SIDE))

@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-deploy.txt
 COPY . .
 ENV PET_QOL_DATA_DIR=/data PORT=8000
 EXPOSE 8000
-CMD gunicorn --bind 0.0.0.0:${PORT} --workers 2 --threads 4 --timeout 120 "app:create_app()"
+CMD gunicorn --bind 0.0.0.0:${PORT} --workers 2 --threads 4 --timeout 120 --forwarded-allow-ips="*" "app:create_app()"

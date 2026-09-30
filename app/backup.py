@@ -4,10 +4,13 @@ import shutil
 import sqlite3
 import tempfile
 import zipfile
+import zlib
 from datetime import datetime
 from pathlib import Path
 
 from flask import current_app
+
+from . import db
 
 DB_NAME = "tracker.sqlite"
 MAX_RESTORE_BYTES = 500 * 1024 * 1024
@@ -43,6 +46,33 @@ def make_backup() -> tuple[bytes, str]:
     return buf.getvalue(), f"pet-qol-backup-{stamp}.zip"
 
 
+def _validate_staged_db(path: Path) -> int:
+    """Upgrade the staged database in place and return its animal count."""
+    try:
+        conn = db.connect(path)
+    except sqlite3.DatabaseError as exc:
+        raise InvalidBackup("The database inside that backup is not readable.") from exc
+    try:
+        try:
+            db.upgrade(conn)
+        except sqlite3.DatabaseError as exc:
+            raise InvalidBackup("That file is not a tracker database, or it is damaged.") from exc
+        problems = db.check_schema(conn)
+        if problems:
+            raise InvalidBackup("That file is not a tracker database (" + "; ".join(problems) + ").")
+        count = conn.execute("SELECT COUNT(*) FROM animals").fetchone()[0]
+        # Touch every table the app reads so a damaged one fails here, not later.
+        for table in db.expected_columns():
+            conn.execute(f"SELECT * FROM {table} LIMIT 1").fetchall()
+    except db.UnsupportedDatabase as exc:
+        raise InvalidBackup(str(exc)) from exc
+    except sqlite3.DatabaseError as exc:
+        raise InvalidBackup("The database inside that backup is not readable.") from exc
+    finally:
+        conn.close()
+    return count
+
+
 def restore_backup(file_storage) -> int:
     """Replace the data folder with the contents of an uploaded backup zip.
 
@@ -72,14 +102,13 @@ def restore_backup(file_storage) -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         staged = Path(tmp)
-        zf.extractall(staged)
-        # Sanity-check the database before touching anything.
         try:
-            conn = sqlite3.connect(staged / DB_NAME)
-            count = conn.execute("SELECT COUNT(*) FROM animals").fetchone()[0]
-            conn.close()
-        except sqlite3.DatabaseError as exc:
-            raise InvalidBackup("The database inside that backup is not readable.") from exc
+            zf.extractall(staged)
+        except (zipfile.BadZipFile, zlib.error, EOFError, RuntimeError, OSError) as exc:
+            raise InvalidBackup("That backup is damaged and could not be unpacked.") from exc
+        # Check and upgrade the staged copy before touching the real data, so a
+        # bad file can never leave the app with no database.
+        count = _validate_staged_db(staged / DB_NAME)
 
         if photo_dir.exists():
             shutil.rmtree(photo_dir)

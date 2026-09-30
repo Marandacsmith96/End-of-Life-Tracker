@@ -74,6 +74,14 @@ def _table(rows, widths, st, header=True) -> Table:
     return t
 
 
+NOTE_CHARS = 500  # a table row cannot split across pages, so keep appendix notes short
+
+
+def _clip(text: str | None, limit: int) -> str:
+    text = text or ""
+    return text if len(text) <= limit else text[:limit].rstrip() + "…"
+
+
 def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], medications: list[Medication],
               markers, responses: dict, baseline, events, start: date | None, end: date,
               include_appendix: bool = False, generated: date | None = None) -> bytes:
@@ -178,6 +186,8 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     story.append(Paragraph("Notable changes in the recorded observations", st["h2"]))
     if bullets:
         rows = [[Paragraph("• " + _esc(b), st["body"])] for b in bullets[:6]]
+        if len(bullets) > 6:
+            rows.append([Paragraph(f"… and {len(bullets) - 6} more in the app.", st["small"])])
         t = Table(rows, colWidths=[width])
         t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), WARN_BG), ("BOX", (0, 0), (-1, -1), 0.5, WARN_BORDER),
                                ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
@@ -190,6 +200,8 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     if events:
         rows = [[f"{e.event_date:%b} {e.event_date.day}", Paragraph(f"{_esc(e.title)} <font color='#5c6b84'>({_esc(e.type_label)})</font>", st["cell"])]
                 for e in sorted(events, key=lambda e: e.event_date, reverse=True)[:8]]
+        if len(events) > 8:
+            rows.append(["", Paragraph(f"… and {len(events) - 8} more in the app.", st["small"])])
         left_items.append(_table(rows, [0.6 * inch, 2.8 * inch], st, header=False))
     else:
         left_items.append(Paragraph("None recorded in this range.", st["small"]))
@@ -197,6 +209,8 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     if medications:
         rows = [[Paragraph(f"{_esc(m.name)}{(' · ' + _esc(m.dose)) if m.dose else ''}{(' · ' + _esc(m.schedule)) if m.schedule else ''}", st["cell"]),
                  "Active" if m.active else "Stopped"] for m in medications[:8]]
+        if len(medications) > 8:
+            rows.append([Paragraph(f"… and {len(medications) - 8} more in the app.", st["small"]), ""])
         right_items.append(_table(rows, [2.7 * inch, 0.7 * inch], st, header=False))
     else:
         right_items.append(Paragraph("None entered.", st["small"]))
@@ -225,7 +239,7 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
                          f"{e.mean:.1f}" if e.mean is not None else "",
                          *["" if e.scores[k] is None else str(e.scores[k]) for k, *_ in CATEGORIES],
                          f"{e.weight:g} {e.weight_unit}" if e.weight is not None else "",
-                         Paragraph(_esc(e.notes), st["cell"])])
+                         Paragraph(_esc(_clip(e.notes, NOTE_CHARS)), st["cell"])])
         widths = [0.55, 0.45, 0.4] + [0.38] * 7 + [0.6]
         story.append(_table(rows, [w * inch for w in widths] + [width - sum(widths) * inch], st))
         notes = [c for c in [] ]  # caregiver notes are deliberately not included

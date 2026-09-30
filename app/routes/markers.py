@@ -51,7 +51,8 @@ def setup(animal_id: int):
 @bp.route("/animals/<int:animal_id>/behaviors")
 def behaviors(animal_id: int):
     animal = animal_or_404(animal_id)
-    start, end, preset = resolve_range(request.args.get("range"), None, None, default="30")
+    start, end, preset = resolve_range(request.args.get("range"), None, None,
+                                       today=animal.passed_date or date.today(), default="30")
     all_markers = markers.list_markers(animal_id, active_only=False)
     active = [m for m in all_markers if m.active]
     rows = entries.list_entries(animal_id)

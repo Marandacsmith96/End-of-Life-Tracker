@@ -67,6 +67,11 @@ def save_checkin(animal_id: int, checkin_date: date, status: str, note: str | No
     return cur.lastrowid
 
 
+def get_checkin(checkin_id: int) -> CaregiverCheckIn | None:
+    row = get_db().execute("SELECT * FROM caregiver_checkins WHERE id = ?", (checkin_id,)).fetchone()
+    return _row(row) if row else None
+
+
 def delete_checkin(checkin_id: int) -> None:
     db = get_db()
     db.execute("DELETE FROM caregiver_checkins WHERE id = ?", (checkin_id,))

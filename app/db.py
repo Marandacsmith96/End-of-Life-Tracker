@@ -14,6 +14,10 @@ from flask import Flask, current_app, g
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 SCHEMA_VERSION = 2
 
+
+class UnsupportedDatabase(RuntimeError):
+    """The database was written by a newer app, or is not a tracker database."""
+
 # Store dates as ISO text and turn DATE / TIMESTAMP columns back into objects.
 sqlite3.register_adapter(date, date.isoformat)
 sqlite3.register_adapter(datetime, datetime.isoformat)
@@ -64,9 +68,11 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
             conn.execute("UPDATE animals SET status = 'archived' WHERE archived = 1")
     entry_cols = _columns(conn, "entries")
     if "day_status" not in entry_cols or entry_cols["hurt"]["notnull"]:
-        # Rebuild entries with nullable scores and the day_status column.
+        # Rebuild entries with nullable scores and the day_status column. A
+        # leftover entries_new from an interrupted earlier attempt is dropped first.
         conn.executescript(
             """
+            DROP TABLE IF EXISTS entries_new;
             CREATE TABLE entries_new (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 animal_id   INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
@@ -111,25 +117,59 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
 MIGRATIONS = {1: _migrate_v1_to_v2}
 
 
-def init_db() -> None:
-    """Create the data folders and tables, then apply any pending migrations."""
-    Path(current_app.config["DATA_DIR"]).mkdir(parents=True, exist_ok=True)
-    Path(current_app.config["PHOTO_DIR"]).mkdir(parents=True, exist_ok=True)
-    conn = get_db()
+def upgrade(conn: sqlite3.Connection) -> None:
+    """Bring any tracker database (or an empty file) up to the current schema."""
     fresh = conn.execute(
         "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'animals'"
     ).fetchone()[0] == 0
     version = conn.execute("PRAGMA user_version").fetchone()[0]
+    if version > SCHEMA_VERSION:
+        raise UnsupportedDatabase(
+            f"This data was saved by a newer version of the app (format {version}; "
+            f"this version understands {SCHEMA_VERSION}). Please update the app."
+        )
     if not fresh and version < SCHEMA_VERSION:
         # Dropping/rebuilding tables must not cascade-delete children.
         conn.execute("PRAGMA foreign_keys = OFF")
-        for from_version in range(max(version, 1), SCHEMA_VERSION):
-            MIGRATIONS[from_version](conn)
-        conn.commit()
-        conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            for from_version in range(max(version, 1), SCHEMA_VERSION):
+                MIGRATIONS[from_version](conn)
+            conn.commit()
+        finally:
+            conn.execute("PRAGMA foreign_keys = ON")
     conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
     conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     conn.commit()
+
+
+def expected_columns() -> dict[str, set[str]]:
+    """Table -> column names, as schema.sql defines them."""
+    conn = sqlite3.connect(":memory:")
+    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    tables = [r[0] for r in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")]
+    result = {t: {r[1] for r in conn.execute(f"PRAGMA table_info({t})")} for t in tables}
+    conn.close()
+    return result
+
+
+def check_schema(conn: sqlite3.Connection) -> list[str]:
+    """Return what is missing from ``conn`` compared with the app's schema."""
+    problems = []
+    for table, columns in expected_columns().items():
+        have = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if not have:
+            problems.append(f"table {table} is missing")
+        elif columns - have:
+            problems.append(f"table {table} is missing columns: {', '.join(sorted(columns - have))}")
+    return problems
+
+
+def init_db() -> None:
+    """Create the data folders and tables, then apply any pending migrations."""
+    Path(current_app.config["DATA_DIR"]).mkdir(parents=True, exist_ok=True)
+    Path(current_app.config["PHOTO_DIR"]).mkdir(parents=True, exist_ok=True)
+    upgrade(get_db())
 
 
 @click.command("init-db")

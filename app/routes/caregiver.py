@@ -29,9 +29,9 @@ def checkin(animal_id: int):
 
 @bp.post("/caregiver/<int:checkin_id>/delete")
 def delete(checkin_id: int):
-    animal_id = request.form.get("animal_id")
+    checkin = caregiver.get_checkin(checkin_id)
+    if checkin is None:
+        abort(404)
     caregiver.delete_checkin(checkin_id)
     flash("Removed.")
-    if animal_id and animal_id.isdigit():
-        return redirect(url_for("caregiver.checkin", animal_id=int(animal_id)))
-    abort(404)
+    return redirect(url_for("caregiver.checkin", animal_id=checkin.animal_id))

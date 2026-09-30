@@ -3,16 +3,30 @@ import os
 import secrets
 from datetime import date, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flask import Flask, abort, g, redirect, request, session, url_for
+from werkzeug.routing import IntegerConverter, ValidationError
 
 from . import db, entries, models, safety, scoring
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+MAX_ID = 2**63 - 1  # largest SQLite INTEGER
+
+
+class IdConverter(IntegerConverter):
+    """An <int:...> that cannot exceed what SQLite can store (else 404, not 500)."""
+
+    def to_python(self, value: str) -> int:
+        number = super().to_python(value)
+        if number > MAX_ID:
+            raise ValidationError()
+        return number
 
 
 def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
+    app.url_map.converters["int"] = IdConverter
 
     data_dir = Path(os.environ.get("PET_QOL_DATA_DIR", PROJECT_ROOT / "data"))
     app.config.from_mapping(
@@ -50,14 +64,16 @@ def create_app(test_config: dict | None = None) -> Flask:
         if site and site not in ("same-origin", "none"):
             abort(403)
         origin = request.headers.get("Origin")
-        if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
+        # Compare hosts only: behind a hosting provider's HTTPS proxy the app
+        # itself may see plain http, and the scheme would never match.
+        if origin and urlsplit(origin).netloc.lower() != request.host.lower():
             abort(403)
         return None
 
     @app.before_request
     def require_passcode():
         if auth.passcode_required() and request.endpoint not in auth.OPEN_ENDPOINTS and not auth.is_unlocked():
-            return redirect(url_for("auth.login", next=request.path if request.method == "GET" else None))
+            return redirect(url_for("auth.login", next=request.full_path.rstrip("?") if request.method == "GET" else None))
 
     @app.route("/animals/<int:animal_id>/history")
     def history_redirect(animal_id: int):

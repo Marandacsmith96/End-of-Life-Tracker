@@ -51,22 +51,33 @@ class SafetyViolation(ValueError):
     """Raised when generated text matches a forbidden pattern."""
 
 
-def violations(text: str) -> list[str]:
+def _mask(text: str, owner_text) -> str:
+    """Blank out strings the owner typed (a pet's name, an event title, a
+    behavior label) so the rules judge only the words the app itself wrote."""
+    for piece in sorted((p for p in owner_text if p), key=len, reverse=True):
+        text = text.replace(piece, "…")
+    return text
+
+
+def violations(text: str, owner_text=()) -> list[str]:
     """Return the forbidden patterns that ``text`` matches (empty when clean)."""
-    return [p.pattern for p in _COMPILED if p.search(text)]
+    masked = _mask(text, owner_text)
+    return [p.pattern for p in _COMPILED if p.search(masked)]
 
 
-def is_safe(text: str) -> bool:
-    return not violations(text)
+def is_safe(text: str, owner_text=()) -> bool:
+    return not violations(text, owner_text)
 
 
-def guard(text: str) -> str:
+def guard(text: str, owner_text=()) -> str:
     """Return ``text`` unchanged, or raise if it breaks the rules.
 
     Raising (rather than silently dropping the sentence) is deliberate: a
     violation is a bug in the insight engine and should fail loudly in tests.
+    ``owner_text`` lists substrings the owner entered; they are not the app's
+    words, so they are masked before the rules are applied.
     """
-    found = violations(text)
+    found = violations(text, owner_text)
     if found:
         raise SafetyViolation(f"Generated text breaks safety rules {found}: {text!r}")
     return text

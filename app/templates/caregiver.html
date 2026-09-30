@@ -26,7 +26,7 @@
   <ul class="entry-list">
     {% for c in history %}
       <li><span>{{ c.checkin_date.strftime('%b') }} {{ c.checkin_date.day }}, {{ c.checkin_date.year }}</span> <strong>{{ c.label }}</strong>{% if c.note %} <span class="muted small note">{{ c.note }}</span>{% endif %}
-        <form method="post" action="{{ url_for('caregiver.delete', checkin_id=c.id) }}" class="inline-form"><input type="hidden" name="animal_id" value="{{ animal.id }}"><button class="link small" type="submit">Remove</button></form></li>
+        <form method="post" action="{{ url_for('caregiver.delete', checkin_id=c.id) }}" class="inline-form"><button class="link small" type="submit">Remove</button></form></li>
     {% endfor %}
   </ul>
 </section>

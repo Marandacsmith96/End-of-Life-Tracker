@@ -8,13 +8,19 @@ from . import models
 RANGE_PRESETS = {"7": 7, "30": 30, "90": 90, "all": None}
 
 
+MIN_YEAR, MAX_YEAR = 1900, 2100
+
+
 def parse_date(raw: str | None) -> date | None:
+    """ISO date within 1900..2100, else None (dates near the calendar's edges
+    overflow the date arithmetic used all over the app)."""
     if not raw:
         return None
     try:
-        return date.fromisoformat(raw.strip())
+        parsed = date.fromisoformat(raw.strip())
     except ValueError:
         return None
+    return parsed if MIN_YEAR <= parsed.year <= MAX_YEAR else None
 
 
 def animal_or_404(animal_id: int) -> models.Animal:

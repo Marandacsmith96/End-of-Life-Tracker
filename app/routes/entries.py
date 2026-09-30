@@ -83,11 +83,11 @@ def _parse_extras(form) -> tuple[dict, list[str]]:
 def _save_markers_and_meds(animal_id: int, entry_id: int, form) -> None:
     offered_markers = {m.id for m in markers.list_markers(animal_id)}
     if form.get("markers_included") == "1":
-        done = {int(x) for x in form.getlist("markers") if x.isdigit()} & offered_markers
+        done = {int(x) for x in form.getlist("markers") if x.isdecimal()} & offered_markers
         markers.set_responses(entry_id, done, offered_markers)
     if form.get("meds_included") == "1":
         offered = {m.id for m in entries.list_medications(animal_id, active_only=True)}
-        given = {int(x) for x in form.getlist("given") if x.isdigit()} & offered
+        given = {int(x) for x in form.getlist("given") if x.isdecimal()} & offered
         entries.set_entry_medications(entry_id, given, offered)
 
 
@@ -161,12 +161,18 @@ def checkin(animal_id: int):
         scores, score_errors = _parse_scores(request.form)
         extras, extra_errors = _parse_extras(request.form)
         errors += score_errors + extra_errors
+        if not errors and not (common["day_status"] or scores or any(extras.values())
+                               or any(f.filename for f in request.files.getlist("photos"))):
+            errors.append("Nothing to save yet. Choose good, bad, or mixed, rate a category, or add a note.")
         if errors:
             for message in errors:
                 flash(message)
             existing = entries.get_entry_for_date(animal_id, common["entry_date"]) if common["entry_date"] else None
             return _render_checkin(animal, existing, request.form, quick=False, status=400)
-        entry_id = entries.save_entry(animal_id, common["entry_date"], common["day_status"], scores, **extras)
+        # A form without the day-status field at all (older page, crafted post)
+        # leaves an existing status alone rather than clearing it.
+        day_status = common["day_status"] if "day_status" in request.form else entries.KEEP
+        entry_id = entries.save_entry(animal_id, common["entry_date"], day_status, scores, **extras)
         _save_markers_and_meds(animal_id, entry_id, request.form)
         saved_photos = _save_photos(entry_id, request.files.getlist("photos"))
         session["current_animal_id"] = animal_id
@@ -213,6 +219,7 @@ def delete_entry(entry_id: int):
     entry = _entry_or_404(entry_id)
     for photo in entries.list_entry_photos(entry_id):
         photos.delete_photo_file(photo.file_path)
+    photos.remove_entry_folder(entry_id)
     entries.delete_entry(entry_id)
     flash("Check-in removed.")
     return redirect(url_for("dashboard.today", animal_id=entry.animal_id))

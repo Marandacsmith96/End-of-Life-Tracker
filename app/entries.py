@@ -1,4 +1,5 @@
 """Data access for daily entries, medications, and entry photos."""
+import sqlite3
 from dataclasses import dataclass
 from datetime import date
 
@@ -144,13 +145,21 @@ def save_entry(
         db.commit()
         return existing.id
     plain = lambda v: None if v is KEEP else v  # noqa: E731
-    cur = db.execute(
-        """INSERT INTO entries (animal_id, entry_date, day_status, hurt, hunger, hydration,
-               hygiene, happiness, mobility, good_days, weight, weight_unit, appetite, notes)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        [animal_id, entry_date, plain(day_status), *[scores.get(key) for key in CATEGORY_KEYS],
-         plain(weight), plain(weight_unit), plain(appetite), plain(notes)],
-    )
+    try:
+        cur = db.execute(
+            """INSERT INTO entries (animal_id, entry_date, day_status, hurt, hunger, hydration,
+                   hygiene, happiness, mobility, good_days, weight, weight_unit, appetite, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [animal_id, entry_date, plain(day_status), *[scores.get(key) for key in CATEGORY_KEYS],
+             plain(weight), plain(weight_unit), plain(appetite), plain(notes)],
+        )
+    except sqlite3.IntegrityError:
+        # Two check-ins for the same day arrived at once (double submit); the
+        # other one won the insert, so apply this one as an update.
+        db.rollback()
+        if get_entry_for_date(animal_id, entry_date) is None:
+            raise
+        return save_entry(animal_id, entry_date, day_status, scores, weight, weight_unit, appetite, notes)
     db.commit()
     return cur.lastrowid
 

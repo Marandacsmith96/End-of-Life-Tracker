@@ -290,8 +290,11 @@ def markers_today(entry_id: int | None, responses: dict[int, dict[int, bool]],
 
 # --- baseline & events ------------------------------------------------------
 
-def below_baseline(points: list[Point], baseline_value: float, last_n: int = 12) -> tuple[int, int]:
-    """How many of the last ``last_n`` logged points sit below the baseline."""
+def below_baseline(points: list[Point], baseline_value: float, last_n: int = 12,
+                   end: date | None = None) -> tuple[int, int]:
+    """How many of the last ``last_n`` logged points (up to ``end``) sit below the baseline."""
+    if end is not None:
+        points = [p for p in points if p.day <= end]
     recent = points[-last_n:]
     return sum(1 for p in recent if p.value < baseline_value), len(recent)
 
