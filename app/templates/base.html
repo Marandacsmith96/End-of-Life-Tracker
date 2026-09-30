@@ -23,7 +23,7 @@
         <a class="nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('trends.trends') or request.endpoint == 'trends.category' or request.endpoint == 'markers.behaviors' }}" href="{{ url_for('trends.trends', animal_id=a.id) }}">Trends</a>
         <a class="nav-item {{ 'active' if request.endpoint == 'trends.calendar' }}" href="{{ url_for('trends.calendar', animal_id=a.id) }}">Calendar</a>
         <a class="nav-item {{ 'active' if request.endpoint in ('export.vet',) }}" href="{{ url_for('export.vet', animal_id=a.id) }}">Vet</a>
-        <a class="nav-item {{ 'active' if request.endpoint in ('dashboard.more', 'settings.settings', 'animals.settings', 'events.timeline', 'entries.medications', 'caregiver.checkin') }}" href="{{ url_for('dashboard.more') }}">More</a>
+        <a class="nav-item {{ 'active' if request.endpoint in ('dashboard.more', 'settings.settings', 'entries.medications', 'caregiver.checkin', 'baseline.edit', 'markers.setup') or (request.endpoint or '').startswith(('events.', 'animals.')) }}" href="{{ url_for('dashboard.more') }}">More</a>
       </nav>
     {% else %}
       <nav class="nav" aria-label="Main">

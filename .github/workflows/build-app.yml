@@ -19,8 +19,10 @@ jobs:
         include:
           - os: windows-latest
             label: Windows
-          - os: macos-latest
+          - os: macos-latest        # Apple silicon
             label: Mac
+          - os: macos-15-intel      # Intel Macs need their own build
+            label: Mac-Intel
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +43,7 @@ jobs:
           cp packaging/README-Mac.txt dist/PetQoLTracker/READ-ME-FIRST.txt
           cp packaging/Start.command dist/PetQoLTracker/Start.command
           chmod +x dist/PetQoLTracker/Start.command dist/PetQoLTracker/PetQoLTracker
-          cd dist && ditto -c -k --keepParent PetQoLTracker ../QualityOfLifeTracker-Mac.zip
+          cd dist && ditto -c -k --keepParent PetQoLTracker ../QualityOfLifeTracker-${{ matrix.label }}.zip
       - uses: actions/upload-artifact@v4
         with:
           name: QualityOfLifeTracker-${{ matrix.label }}
@@ -49,6 +51,7 @@ jobs:
 
   release:
     needs: build
+    if: ${{ !cancelled() }}   # publish whatever built, even if one platform failed
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -64,3 +67,4 @@ jobs:
           files: |
             out/QualityOfLifeTracker-Windows.zip
             out/QualityOfLifeTracker-Mac.zip
+            out/QualityOfLifeTracker-Mac-Intel.zip

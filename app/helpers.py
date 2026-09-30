@@ -61,5 +61,5 @@ def current_or_choose():
 def redirect_to_pet(endpoint: str, **kwargs):
     animal = current_or_choose()
     if animal is None:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("dashboard.home"))
     return redirect(url_for(endpoint, animal_id=animal.id, **kwargs))

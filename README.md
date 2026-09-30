@@ -4,7 +4,8 @@
 
 > **Get the app, nothing to install:**
 > [Download for Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip) ·
-> [Download for Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip)
+> [Download for Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip) (Apple silicon) ·
+> [Mac with an Intel chip](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac-Intel.zip)
 > Unzip, then double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). Python is included.
 > [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, three sample pets)
 
@@ -63,6 +64,8 @@ ways to have it:
 
 1. Download the ZIP for [Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip)
    or [Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip)
+   (Macs from 2020 or later; older Intel Macs use
+   [this one](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac-Intel.zip))
    and unzip it somewhere you'll find again.
 2. Double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). A
    small window opens and your browser opens on the app. Leave the small

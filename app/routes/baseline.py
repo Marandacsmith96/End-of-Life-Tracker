@@ -23,12 +23,14 @@ def edit(animal_id: int):
         scores = {}
         for key in scoring.CATEGORY_KEYS:
             raw = request.form.get(key, "").strip()
-            if raw == "":
-                scores[key] = None
-            elif scoring.is_valid_score(raw):
-                scores[key] = int(raw)
-            else:
+            # An untouched slider posts its default position; only sliders the
+            # owner moved (or a stored value) carry the <key>_set flag.
+            if raw != "" and not scoring.is_valid_score(raw):
                 errors.append(f"{scoring.CATEGORY_LABELS[key]} must be a whole number from 0 to 10.")
+            elif raw == "" or request.form.get(f"{key}_set") != "1":
+                scores[key] = None
+            else:
+                scores[key] = int(raw)
         approx = parse_date(request.form.get("approximate_date"))
         pattern = request.form.get("good_day_pattern") or None
         freq = request.form.get("marker_frequency") or None

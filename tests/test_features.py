@@ -51,6 +51,7 @@ def test_baseline_save_skip_and_display(client, app):
     assert b"You're ready." in response.data
     client.post("/animals/1/baseline", data={"approximate_date": "2026-03-01", "hurt": 8, "hunger": "", "hydration": 9,
                                               "hygiene": 9, "happiness": 9, "mobility": 8, "good_days": 9,
+                                              **{f"{k}_set": "1" for k in KEYS if k != "hunger"},
                                               "good_day_pattern": "mostly_good", "marker_frequency": "most_days"})
     with app.app_context():
         b = baseline.get_baseline(1)

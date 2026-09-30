@@ -202,6 +202,41 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   less flattering fact inside a good-news story.
 - Browser demo republished with all three pets; 106 tests still pass.
 
+### Sep 30 — second bug hunt
+
+- You asked for another bug check. The unit suite (106 tests), the browser
+  walkthrough, and a crawl of 599 pages all passed first, which is exactly
+  why they were not enough: three reviewers then read the code area by area
+  and reproduced every suspicion before reporting it. Twenty-three real bugs
+  came back, all fixed, with 29 new regression tests (135 total).
+- **Worst one: restoring a backup that was not a tracker database.** The
+  restore only checked that a table called "animals" existed, then deleted
+  the photo folder, replaced the database, and crashed part-way through the
+  upgrade. After that the app could not even start. Now the backup is
+  checked and upgraded on a staged copy before anything real is touched.
+- **Looked right, was wrong, again.** The baseline form said "leave any
+  you're unsure about blank", but every untouched slider quietly saved a 7.
+  The same mistake as the check-in sliders from the first design pass,
+  fixed the same way, and missed the first time because the fix was applied
+  to one form and not the other.
+- **The safety layer bit its own copy.** The rules that forbid words like
+  "diagnosed" or "terminal" in app-written text were also applied to text
+  the owner typed. An event titled "Diagnosed with arthritis" or a pet named
+  Terminal crashed the dashboard, the vet page, and the PDF. Owner text is
+  now masked before the rules run; the app's own words are still checked.
+- Others: the four shortcut routes crashed when there was more than one
+  pet (a misspelled endpoint name that no test covered); the one-page
+  check-in's "skip the scores" button hid the Save button; form posts would
+  have been refused on a hosted copy behind HTTPS; ids too big for SQLite,
+  superscript "digits", dates in year 1 or 9999, a 20000-pixel image, and a
+  corrupted zip all produced crash pages; a double-submitted check-in
+  crashed on the unique-day rule; the behaviors page ignored the passing
+  date; the PDF fell over on a 4000-character note and silently dropped
+  medications past eight; the vet page could say "higher by 0.5" next to
+  numbers that differed by 0.4.
+- Also from the review: Intel Macs need their own build (the Mac ZIP was
+  Apple-silicon only), so the workflow now builds both.
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -233,6 +268,8 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   data-loss-prone.
 - Deploying to Fly.io from the sandbox: the API host was unreachable.
 - The first GitHub Actions workflow: YAML parse error, zero jobs.
+- Passing tests, a passing walkthrough, and a clean crawl before the second
+  bug hunt: they proved nothing about the 23 bugs the readers then found.
 - The first packaged build: missing test dependency.
 - Installing Python on your machine from a remote session: impossible by
   design.
@@ -256,6 +293,9 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Missing test dependency | CI | one push |
 | Ten code-review findings | reading the code, then reproducing three | some since day one |
 | Juniper "recovery" that the app called stable | printing each pet's classification | about a minute |
+| Baseline sliders saving 7 for "blank" | reviewer reading the template against its own hint text | since the baseline form was built |
+| Safety rules applied to the owner's own words | reviewer trying a realistic event title | since the safety layer was built |
+| Restore trusting any file with an "animals" table | reviewer feeding it a foreign database | since backup/restore was built |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

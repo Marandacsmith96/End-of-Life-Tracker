@@ -373,3 +373,37 @@ def test_vet_since_in_the_future_is_ignored(client):
     html = client.get("/animals/1/vet?since=2099-01-01").get_data(as_text=True)
     assert "2099" not in html
     assert client.get("/animals/1/vet?since=2099-01-01").status_code == 200
+
+
+# --- front end ------------------------------------------------------------------
+
+def test_shortcut_routes_with_several_pets_go_home(client):
+    _pet(client)
+    _pet(client, name="Second")
+    with client.session_transaction() as s:
+        s.pop("current_animal_id", None)
+    for path in ("/today", "/trends", "/calendar", "/vet"):
+        r = client.get(path)
+        assert r.status_code == 302, path
+        assert r.headers["Location"].endswith("/"), path
+
+
+def test_baseline_saves_only_the_sliders_that_were_moved(client, app):
+    from app import baseline as bl
+    _pet(client)
+    data = {k: "7" for k in KEYS}
+    data.update({"mobility": "8", "mobility_set": "1", "good_day_pattern": "mostly_good"})
+    r = client.post("/animals/1/baseline", data=data)
+    assert r.status_code == 302
+    with app.app_context():
+        base = bl.get_baseline(1)
+    assert base.mobility == 8
+    assert all(getattr(base, k) is None for k in KEYS if k != "mobility")
+
+
+def test_more_tab_is_highlighted_on_its_sub_pages(client):
+    _pet(client)
+    for path in ("/animals/1/baseline", "/animals/1/markers", "/animals/1/events/new", "/animals/1/edit",
+                 "/animals/1/passed", "/animals/1/remove", "/animals/1/settings"):
+        html = client.get(path).get_data(as_text=True)
+        assert 'nav-item active" href="/more"' in html, path

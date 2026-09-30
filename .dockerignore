@@ -1,0 +1,10 @@
+.git
+.venv
+venv
+data
+dist
+build
+docs/screenshots
+__pycache__
+*.pyc
+.pytest_cache

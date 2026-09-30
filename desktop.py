@@ -34,7 +34,8 @@ def main() -> None:
         import webbrowser
         print("pywebview is not installed; opening in your browser instead.")
         print("Install it with: pip install pywebview")
-        webbrowser.open(url)
+        # Give the server a moment to start listening before the tab opens.
+        threading.Timer(1.0, webbrowser.open, args=(url,)).start()
         server.join()
         return
     webview.create_window("Pet Quality-of-Life Tracker", url, width=1100, height=800, min_size=(700, 500))

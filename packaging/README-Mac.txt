@@ -1,4 +1,8 @@
 Quality-of-Life Tracker (Mac)
+
+There are two Mac downloads: one for Apple silicon (M1 or newer, 2020 on)
+and one for Intel Macs. If the app says "Bad CPU type", you have the other
+kind; download the matching ZIP.
 =============================
 
 1. Double-click "Start.command".

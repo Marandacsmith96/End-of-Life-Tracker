@@ -27,13 +27,15 @@
   </fieldset>
   <fieldset class="scores">
     <legend>Estimated scores back then (0 to 10)</legend>
-    <p class="hint">Leave any you're unsure about blank.</p>
+    <p class="hint">Only move the sliders you feel sure about. Untouched ones stay blank.</p>
     {% for key, label, guidance, low, high in categories %}
       <div class="score-row">
         <label for="base-{{ key }}"><span>{{ label }}<span class="help">{{ guidance }}</span></span></label>
         <div class="slider">
-          <input type="range" id="base-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key) if values.get(key) not in ('', None) else 7 }}" data-optional="1">
-          <output for="base-{{ key }}">{{ values.get(key) if values.get(key) not in ('', None) else 7 }}</output>
+          {% set is_set = values.get(key) not in ('', None) %}
+          <input type="hidden" name="{{ key }}_set" id="base-set-{{ key }}" value="{{ '1' if is_set else '0' }}">
+          <input type="range" class="{{ '' if is_set else 'unset' }}" id="base-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key) if is_set else 7 }}" data-optional="1" data-set-flag="base-set-{{ key }}">
+          <output for="base-{{ key }}">{{ values.get(key) if is_set else '–' }}</output>
           <label class="inline small"><input type="checkbox" class="unsure" data-for="base-{{ key }}" {% if has_baseline and values.get(key) in ('', None) %}checked{% endif %}> Unsure</label>
         </div>
       </div>

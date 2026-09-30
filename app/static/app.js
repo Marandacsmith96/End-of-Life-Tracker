@@ -128,7 +128,8 @@
   }
   if (skip) skip.addEventListener("click", function () {
     skippingScores = true; scoresIncluded.value = "0";
-    show(current); // re-index without the score steps
+    if (form.classList.contains("guided")) show(current); // re-index without the score steps
+    else form.querySelectorAll(".score-step").forEach(function (s) { s.hidden = true; });
   });
   form.querySelectorAll(".score-step input[type=range]").forEach(function (r) {
     r.addEventListener("input", function () { scoresIncluded.value = "1"; skippingScores = false; });
