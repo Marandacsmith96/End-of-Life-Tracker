@@ -16,7 +16,7 @@ def home():
     active = models.list_animals()
     everyone = models.list_animals(include_archived=True)
     if not everyone:
-        return render_template("landing.html", attribution=scoring.ATTRIBUTION, **_examples())
+        return render_template("landing.html", attribution=scoring.ATTRIBUTION, pets=[], current=None, **_examples())
     animal = current_or_choose()
     if animal and animal.status == "active":
         return redirect(url_for("dashboard.today", animal_id=animal.id))
@@ -33,7 +33,9 @@ def pets():
 
 @bp.route("/how-it-works")
 def landing():
-    return render_template("landing.html", attribution=scoring.ATTRIBUTION, **_examples())
+    """The home page: what the app is, where to go next, and the example pets."""
+    return render_template("landing.html", attribution=scoring.ATTRIBUTION, pets=models.list_animals(),
+                           current=current_or_choose(), **_examples())
 
 
 def _examples() -> dict:

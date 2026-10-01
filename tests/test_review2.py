@@ -413,7 +413,7 @@ def test_more_tab_is_highlighted_on_its_sub_pages(client):
 
 def test_example_pets_can_be_added_and_removed(client, app):
     html = client.get("/how-it-works").get_data(as_text=True)
-    assert "Add the example pets" in html and "Maggie" in html and "Juniper" in html
+    assert "Add the example pets" in html
     r = client.post("/examples/add", follow_redirects=True)
     assert b"Added Maggie, Bruno, Juniper as example pets" in r.data
     assert b"Example pet" in r.data  # badge on the dashboard the add lands on
@@ -423,7 +423,7 @@ def test_example_pets_can_be_added_and_removed(client, app):
         assert all(a.demo for a in demo)
         assert len(entries.list_entries(demo[2].id)) > 40
     html = client.get("/how-it-works").get_data(as_text=True)
-    assert "Remove the example pets" in html and "Open Juniper" in html
+    assert "Remove the example pets" in html and ">Juniper</a>" in html
     # adding again is harmless
     r = client.post("/examples/add", follow_redirects=True)
     assert b"already here" in r.data
@@ -467,3 +467,12 @@ def test_pet_switcher_keeps_the_page_and_only_shows_with_several_pets(client):
     assert 'href="/animals/1/trends/mobility"' in html
     html = client.get("/more").get_data(as_text=True)   # not a pet page: chips go to Today
     assert 'href="/animals/1/today"' in html
+
+
+def test_home_tab_goes_to_the_home_page(client):
+    _pet(client)
+    html = client.get("/animals/1/trends").get_data(as_text=True)
+    assert '>Home</a>' in html and 'href="/how-it-works"' in html
+    html = client.get("/how-it-works").get_data(as_text=True)
+    assert 'nav-item active" href="/how-it-works">Home' in html
+    assert "Go to Maggie" in html

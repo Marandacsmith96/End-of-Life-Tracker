@@ -7,8 +7,16 @@
     <h1>See the pattern, not just the day.</h1>
     <p class="lede">A gentle quality-of-life tracker for aging and seriously ill pets. Record daily observations in seconds, see changes over time, and bring clearer information to conversations with your veterinarian.</p>
     <div class="actions">
-      <a class="button large" href="{{ url_for('animals.new_animal', onboarding=1) }}">Start tracking</a>
-      <a class="link" href="#examples">Look at the example pets</a>
+      {% if current %}
+        <a class="button large" href="{{ url_for('dashboard.today', animal_id=current.id) }}">Go to {{ current.name }}'s Today</a>
+        <a class="link" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+      {% elif pets %}
+        <a class="button large" href="{{ url_for('dashboard.pets') }}">Choose a pet</a>
+        <a class="link" href="{{ url_for('animals.new_animal') }}">Add a pet</a>
+      {% else %}
+        <a class="button large" href="{{ url_for('animals.new_animal', onboarding=1) }}">Start tracking</a>
+        <a class="link" href="#how">See how it works</a>
+      {% endif %}
     </div>
   </div>
   <figure class="hero-art" aria-hidden="true">
@@ -51,35 +59,18 @@
   </div>
 </section>
 
-<section class="card block" id="examples">
-  <div class="section-head tight">
-    <h2>Try it with example pets</h2>
-    {% if examples_present %}
-      <form method="post" action="{{ url_for('demo.remove') }}" class="inline-form" data-confirm="Remove the example pets and all their made-up entries?">
-        <button class="link small" type="submit">Remove the example pets</button>
-      </form>
-    {% endif %}
-  </div>
-  <p class="muted">Three fictional pets with weeks of entries already filled in, so you can click through every page and see what the trends, calendar, and vet summary look like before tracking your own pet. Your own pets are not affected, and you can remove the examples at any time.</p>
-  <div class="grid examples-grid">
-    {% for ex in examples %}
-      <article class="card example-card">
-        <span class="placeholder portrait" aria-hidden="true">{{ icon(ex.species, 'icon species') }}</span>
-        <div>
-          <h3>{{ ex.name }} <span class="chip quiet example-chip">Example</span></h3>
-          <p class="meta">{{ ex.story }}</p>
-          {% if ex.animal %}
-            <form method="post" action="{{ url_for('animals.select_animal', animal_id=ex.animal.id) }}" class="inline-form">
-              <button class="button small secondary" type="submit">Open {{ ex.name }}</button>
-            </form>
-          {% endif %}
-        </div>
-      </article>
-    {% endfor %}
-  </div>
-  {% if not examples_present %}
-    <form method="post" action="{{ url_for('demo.add') }}" class="actions">
-      <button class="button" type="submit">Add the example pets</button>
+<section class="card block examples-line" id="examples">
+  {% if examples_present %}
+    <p>Example pets are loaded:
+      {% for ex in examples if ex.animal %}<a href="{{ url_for('dashboard.today', animal_id=ex.animal.id) }}">{{ ex.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.
+      Everything about them is made up.</p>
+    <form method="post" action="{{ url_for('demo.remove') }}" class="inline-form" data-confirm="Remove the example pets and all their made-up entries?">
+      <button class="button small secondary" type="submit">Remove the example pets</button>
+    </form>
+  {% else %}
+    <p>Want to look around first? Three fictional pets with weeks of entries can be added and removed at any time.</p>
+    <form method="post" action="{{ url_for('demo.add') }}" class="inline-form">
+      <button class="button secondary" type="submit">Add the example pets</button>
     </form>
   {% endif %}
 </section>

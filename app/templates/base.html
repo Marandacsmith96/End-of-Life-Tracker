@@ -12,13 +12,14 @@
 <body class="{% block body_class %}{% endblock %}">
   <a class="skip" href="#main">Skip to content</a>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('dashboard.home') }}">
+    <a class="brand" href="{{ url_for('dashboard.landing') }}">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#3d64c4"/><polyline points="7,21 12,15 17,18 25,9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="9" r="2.2" fill="#fff"/></svg>
       <span>Quality-of-Life Tracker</span>
     </a>
     {% if g.current_animal %}
       {% set a = g.current_animal %}
       <nav class="nav" aria-label="Main">
+        <a class="nav-item {{ 'active' if request.endpoint == 'dashboard.landing' }}" href="{{ url_for('dashboard.landing') }}">Home</a>
         <a class="nav-item {{ 'active' if request.endpoint in ('dashboard.today', 'entries.checkin', 'entries.quick_checkin') }}" href="{{ url_for('dashboard.today', animal_id=a.id) }}">Today</a>
         <a class="nav-item {{ 'active' if request.endpoint and request.endpoint.startswith('trends.trends') or request.endpoint == 'trends.category' or request.endpoint == 'markers.behaviors' }}" href="{{ url_for('trends.trends', animal_id=a.id) }}">Trends</a>
         <a class="nav-item {{ 'active' if request.endpoint == 'trends.calendar' }}" href="{{ url_for('trends.calendar', animal_id=a.id) }}">Calendar</a>
@@ -27,7 +28,7 @@
       </nav>
     {% else %}
       <nav class="nav" aria-label="Main">
-        <a class="nav-item" href="{{ url_for('dashboard.landing') }}">How it works</a>
+        <a class="nav-item {{ 'active' if request.endpoint == 'dashboard.landing' }}" href="{{ url_for('dashboard.landing') }}">Home</a>
         <a class="nav-item" href="{{ url_for('dashboard.more') }}">More</a>
       </nav>
     {% endif %}

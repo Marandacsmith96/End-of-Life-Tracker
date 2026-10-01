@@ -261,6 +261,13 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   keeps you on the same page for the other pet (Bruno's Trends to
   Juniper's Trends). Before this, switching meant More, then Pets, then
   Open, and you landed on Today every time.
+- And: "add a home page that brings you back home; take the example pets
+  section out of the homepage, a button is plenty." A Home tab now leads
+  the navigation (the logo goes there too). The home page adapts: with a
+  pet it offers "Go to Maggie's Today" and "Add a pet"; with none, "Start
+  tracking". The three example-pet cards became one line with one button,
+  and a remove button once they are loaded. Two requests, two reversals
+  of my own earlier choices; the feedback loop is doing its job.
 
 ---
 
