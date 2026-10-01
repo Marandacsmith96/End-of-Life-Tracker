@@ -71,6 +71,17 @@ def delete_photo_file(relative_path: str | None) -> None:
         target.unlink()
 
 
+def remove_animal_files(animal) -> None:
+    """Delete the profile photo, every entry photo, and the entry folders of a pet."""
+    from . import entries  # local import: entries does not depend on photos
+
+    delete_photo_file(animal.photo_path)
+    for entry in entries.list_entries(animal.id):
+        for photo in entries.list_entry_photos(entry.id):
+            delete_photo_file(photo.file_path)
+        remove_entry_folder(entry.id)
+
+
 def remove_entry_folder(entry_id: int) -> None:
     """Remove an entry's (now empty) photo folder, if any."""
     folder = Path(current_app.config["PHOTO_DIR"]) / "entries" / str(entry_id)

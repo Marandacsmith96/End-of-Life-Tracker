@@ -24,12 +24,13 @@ import argparse
 import random
 import shutil
 import sys
+import threading
 from datetime import date, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import baseline, caregiver, create_app, entries, events, markers, models  # noqa: E402
+from app import baseline, caregiver, create_app, entries, events, markers, models, photos  # noqa: E402
 from app.scoring import CATEGORY_KEYS  # noqa: E402
 
 NOTES = {
@@ -319,25 +320,32 @@ EXAMPLES = (
 )
 
 
+_EXAMPLES_LOCK = threading.Lock()
+
+
 def add_examples(today: date | None = None) -> list[str]:
     """Seed any example pet that is not already present. Needs an app context.
-    Returns the names that were added."""
+    Returns the names that were added. Serialized, so a double-click on the
+    button cannot create two of each."""
     today = today or date.today()
-    present = {a.name for a in models.list_demo_animals()}
-    added = []
-    for ex in EXAMPLES:
-        if ex["name"] not in present:
-            ex["fn"](random.Random(ex["seed"]), today)
-            added.append(ex["name"])
-    return added
+    with _EXAMPLES_LOCK:
+        present = {a.name for a in models.list_demo_animals()}
+        added = []
+        for ex in EXAMPLES:
+            if ex["name"] not in present:
+                ex["fn"](random.Random(ex["seed"]), today)
+                added.append(ex["name"])
+        return added
 
 
 def remove_examples() -> int:
-    """Delete every example pet and all its data. Needs an app context."""
-    demo = models.list_demo_animals()
-    for animal in demo:
-        models.delete_animal(animal.id)
-    return len(demo)
+    """Delete every example pet, its records, and its photo files. Needs an app context."""
+    with _EXAMPLES_LOCK:
+        demo = models.list_demo_animals()
+        for animal in demo:
+            photos.remove_animal_files(animal)
+            models.delete_animal(animal.id)
+        return len(demo)
 
 
 def seed(reset: bool, pet: str = "all") -> None:
@@ -349,14 +357,19 @@ def seed(reset: bool, pet: str = "all") -> None:
         app = create_app()
     today = date.today()
     with app.app_context():
-        if pet in ("maggie", "all"):
-            seed_maggie(random.Random(13), today)
-        if pet in ("bruno", "all"):
-            seed_bruno(random.Random(29), today)
-        if pet in ("juniper", "all"):
-            seed_juniper(random.Random(41), today)
-    names = {"maggie": "Maggie", "bruno": "Bruno", "juniper": "Juniper", "all": "Maggie, Bruno, and Juniper"}[pet]
-    print(f"Added {names} with demo entries. Start the app and choose a pet.")
+        if pet == "all":
+            added = add_examples(today)  # only the ones not already there
+        else:
+            ex = next(e for e in EXAMPLES if e["key"] == pet)
+            if any(a.name == ex["name"] for a in models.list_demo_animals()):
+                added = []
+            else:
+                ex["fn"](random.Random(ex["seed"]), today)
+                added = [ex["name"]]
+    if added:
+        print(f"Added {', '.join(added)} with demo entries. Start the app and choose a pet.")
+    else:
+        print("The example pets are already there; nothing added.")
 
 
 if __name__ == "__main__":

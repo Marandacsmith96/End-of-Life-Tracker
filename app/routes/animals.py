@@ -1,6 +1,7 @@
 """Pets: add, edit, photo, choose, settings, archive, and the passing flow."""
 import re
 from datetime import date
+from urllib.parse import urlsplit
 
 from flask import (
     Blueprint, current_app, flash, redirect, render_template, request,
@@ -171,11 +172,7 @@ def remove_animal(animal_id: int):
         if request.form.get("confirm_name", "").strip().lower() != animal.name.strip().lower():
             flash("To remove the profile, type the name exactly as it appears.")
             return render_template("remove.html", animal=animal), 400
-        photos.delete_photo_file(animal.photo_path)
-        for entry in entries.list_entries(animal_id):
-            for photo in entries.list_entry_photos(entry.id):
-                photos.delete_photo_file(photo.file_path)
-            photos.remove_entry_folder(entry.id)
+        photos.remove_animal_files(animal)
         models.delete_animal(animal_id)
         if session.get("current_animal_id") == animal_id:
             session.pop("current_animal_id")
@@ -194,14 +191,25 @@ def select_animal(animal_id: int):
 @bp.post("/animals/<int:animal_id>/photo")
 def upload_photo(animal_id: int):
     animal_or_404(animal_id)
+    back = _same_site_referrer() or url_for("animals.settings", animal_id=animal_id)
     try:
         relative = photos.save_animal_photo(request.files.get("photo"), animal_id)
     except photos.InvalidImage as exc:
         flash(str(exc))
-        return redirect(request.referrer or url_for("animals.settings", animal_id=animal_id))
+        return redirect(back)
     models.set_photo_path(animal_id, relative)
     flash("Photo updated.")
-    return redirect(request.referrer or url_for("animals.settings", animal_id=animal_id))
+    return redirect(back)
+
+
+def _same_site_referrer() -> str | None:
+    """The page the form was on, as a path on this site; None for anything else."""
+    parts = urlsplit(request.referrer or "")
+    if parts.netloc and parts.netloc.lower() != request.host.lower():
+        return None
+    if not parts.path.startswith("/"):
+        return None
+    return parts.path + (f"?{parts.query}" if parts.query else "")
 
 
 @bp.post("/animals/<int:animal_id>/photo/delete")

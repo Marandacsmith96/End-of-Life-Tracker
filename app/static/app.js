@@ -47,6 +47,15 @@
     b.addEventListener("click", function (e) { if (!confirm(b.dataset.confirm)) e.preventDefault(); });
   });
 
+  /* One click per form: once a submit goes through, its buttons are disabled
+     so a double-click cannot send the same request twice. */
+  document.querySelectorAll("form").forEach(function (f) {
+    f.addEventListener("submit", function (e) {
+      if (e.defaultPrevented) return;
+      setTimeout(function () { f.querySelectorAll("button[type=submit], input[type=submit]").forEach(function (b) { b.disabled = true; }); }, 0);
+    });
+  });
+
   /* Share button (Web Share API when available). */
   var share = document.getElementById("share-button");
   if (share && navigator.share) {

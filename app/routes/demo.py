@@ -12,11 +12,13 @@ def add():
 
     added = add_examples()
     if added:
-        flash(f"Meet {', '.join(added)}: three example pets. Everything you see for them is made up.")
+        word = "an example pet" if len(added) == 1 else "example pets"
+        flash(f"Meet {', '.join(added)}: {word}. Everything you see for them is made up.")
     else:
         flash("The example pets are already here.")
-    first = models.list_demo_animals()
-    return redirect(url_for("dashboard.today", animal_id=first[0].id) if first else url_for("dashboard.pets"))
+    demo = models.list_demo_animals()
+    landing = next((a for a in demo if a.name in added), demo[0] if demo else None)
+    return redirect(url_for("dashboard.today", animal_id=landing.id) if landing else url_for("dashboard.pets"))
 
 
 @bp.post("/examples/remove")

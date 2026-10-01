@@ -7,9 +7,10 @@ window instead of a browser tab:
 
     pip install pywebview
 """
+import contextlib
+import io
 import logging
 import os
-import socket
 import subprocess
 import sys
 import threading
@@ -24,27 +25,32 @@ HOST = "127.0.0.1"
 PREFERRED_PORT = int(os.environ.get("PET_QOL_PORT", "5000"))
 
 
-def _free_port(start: int) -> int:
-    """The preferred port, or the next free one if something else is using it."""
+def _bind_server(app, start: int):
+    """Bind the web server to the preferred port, or the next free one.
+
+    Binding here, before any thread starts, means a port taken by another
+    program simply moves us along instead of failing later in the background.
+    """
+    from werkzeug.serving import make_server
+
     for port in range(start, start + 20):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-            try:
-                probe.bind((HOST, port))
-                return port
-            except OSError:
-                continue
-    return start
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):  # werkzeug prints, then exits, on a busy port
+                return port, make_server(HOST, port, app, threaded=True)
+        except (OSError, SystemExit):
+            continue
+    return None, None
 
 
-def _wait_until_listening(port: int, seconds: float = 15.0) -> bool:
-    deadline = time.monotonic() + seconds
-    while time.monotonic() < deadline:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-            probe.settimeout(0.5)
-            if probe.connect_ex((HOST, port)) == 0:
-                return True
-        time.sleep(0.2)
-    return False
+def _write_shortcut(url: str) -> None:
+    """Keep the "Open the app" shortcut next to the executable pointing at the real address."""
+    if not getattr(sys, "frozen", False):
+        return
+    try:
+        target = Path(sys.executable).resolve().parent / "Open the app.url"
+        target.write_text(f"[InternetShortcut]\r\nURL={url}\r\n", encoding="utf-8")
+    except OSError:
+        pass
 
 
 def _open_browser(url: str) -> bool:
@@ -80,18 +86,17 @@ def main() -> None:
     except Exception:  # noqa: BLE001
         pass
     app = create_app()
-    port = _free_port(PREFERRED_PORT)
-    url = f"http://{HOST}:{port}/"
-    server = threading.Thread(
-        target=lambda: app.run(host=HOST, port=port, debug=False, use_reloader=False),
-        daemon=True,
-    )
-    server.start()
     from app.version import build_label
     _say("", f"Quality-of-Life Tracker ({build_label()}) is starting...")
-    if not _wait_until_listening(port):
-        _say("The app did not start. Please send the text in this window to whoever set it up.")
-        return
+    port, httpd = _bind_server(app, PREFERRED_PORT)
+    if httpd is None:
+        _say(f"No free network port between {PREFERRED_PORT} and {PREFERRED_PORT + 19}. "
+             "Close other copies of the app (or other programs) and try again.")
+        return False
+    url = f"http://{HOST}:{port}/"
+    server = threading.Thread(target=httpd.serve_forever, daemon=True)
+    server.start()
+    _write_shortcut(url)
     _say(
         "",
         "  The app is running. Open this address in your web browser:",
@@ -109,9 +114,20 @@ def main() -> None:
         if not _open_browser(url):
             _say("  (Your browser did not open by itself; please open the address above yourself.)")
         server.join()
-        return
+        return True
     webview.create_window("Pet Quality-of-Life Tracker", url, width=1100, height=800, min_size=(700, 500))
     webview.start()
+    return True
+
+
+def _pause_if_frozen() -> None:
+    """Keep the console window open so an error can be read before it closes."""
+    if getattr(sys, "frozen", False):
+        _say("", "Something went wrong. The details are above.")
+        try:
+            input("Press Enter to close this window.")
+        except EOFError:
+            pass
 
 
 if __name__ == "__main__":
@@ -120,19 +136,18 @@ if __name__ == "__main__":
         # Packaged build: keep data next to the executable, not in a temp folder.
         os.environ.setdefault("PET_QOL_DATA_DIR", str(Path(sys.executable).resolve().parent / "data"))
     if "--seed-demo" in sys.argv:
-        from scripts.seed_demo import seed
-        seed(reset=False)
-        print("Demo pets added. Start the app normally to see them.")
+        from scripts.seed_demo import add_examples
+        with create_app().app_context():
+            added = add_examples()
+        print(f"Added {', '.join(added)}. Start the app normally to see them." if added
+              else "The example pets are already there.")
         sys.exit(0)
     try:
-        main()
+        ok = main()
     except Exception:  # noqa: BLE001
         traceback.print_exc()
-        if frozen:
-            # Keep the window open so the error can be read (it would close instantly otherwise).
-            _say("", "Something went wrong. The details are above.")
-            try:
-                input("Press Enter to close this window.")
-            except EOFError:
-                pass
+        _pause_if_frozen()
         raise
+    if not ok:
+        _pause_if_frozen()
+        sys.exit(1)

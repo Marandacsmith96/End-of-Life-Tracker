@@ -490,3 +490,57 @@ def test_update_photo_sits_under_the_portrait_on_today(client, app):
     assert r.headers["Location"].endswith("/animals/1/today")
     html = client.get("/animals/1/today").get_data(as_text=True)
     assert "Update photo" in html and "<img src=" in html
+
+
+# --- second hunt over the example-pet and photo changes --------------------------
+
+def test_removing_examples_deletes_their_photo_files(client, app):
+    from scripts.seed_demo import remove_examples
+    client.post("/examples/add")
+    with app.app_context():
+        maggie = models.list_demo_animals()[0]
+    img = io.BytesIO()
+    Image.new("RGB", (40, 40)).save(img, format="JPEG")
+    img.seek(0)
+    client.post(f"/animals/{maggie.id}/photo", data={"photo": (img, "a.jpg")}, content_type="multipart/form-data")
+    assert list(app.config["PHOTO_DIR"].rglob("*.jpg"))
+    with app.app_context():
+        remove_examples()
+    assert not list(app.config["PHOTO_DIR"].rglob("*.jpg"))
+
+
+def test_adding_examples_twice_at_once_makes_one_set(app):
+    from scripts.seed_demo import add_examples
+    results = []
+
+    def worker():
+        with app.app_context():
+            results.append(add_examples())
+
+    threads = [threading.Thread(target=worker) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    with app.app_context():
+        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie"]
+    assert sorted(len(r) for r in results) == [0, 3]
+
+
+def test_photo_upload_only_returns_to_this_site(client):
+    _pet(client)
+    img = io.BytesIO()
+    Image.new("RGB", (40, 40)).save(img, format="JPEG")
+    img.seek(0)
+    r = client.post("/animals/1/photo", data={"photo": (img, "a.jpg")}, content_type="multipart/form-data",
+                    headers={"Referer": "https://evil.example/phish"})
+    assert r.headers["Location"].endswith("/animals/1/settings")
+
+
+def test_seed_cli_does_not_duplicate_examples(app, monkeypatch):
+    from scripts import seed_demo
+    monkeypatch.setattr(seed_demo, "create_app", lambda: app)
+    seed_demo.seed(reset=False)
+    seed_demo.seed(reset=False)
+    with app.app_context():
+        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie"]
