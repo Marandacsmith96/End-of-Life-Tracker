@@ -68,7 +68,8 @@ ways to have it:
    [this one](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac-Intel.zip))
    and unzip it somewhere you'll find again.
 2. Double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). A
-   small window opens and your browser opens on the app. Leave the small
+   small window opens showing an address like <http://127.0.0.1:5000/>, and your
+   browser opens on it (if it doesn't, type that address into your browser). Leave the small
    window open while you use it.
 3. Windows may show "Windows protected your PC": click "More info", then
    "Run anyway". A Mac may say the developer can't be verified: open System
