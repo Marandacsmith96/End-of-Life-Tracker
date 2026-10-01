@@ -41,6 +41,12 @@ QUESTIONS = {
     "good_days": "Looking at the recent pattern, are {name}'s good days still outweighing bad days?",
 }
 
+# Icon name (see templates/_icons.html) shown beside each question.
+CATEGORY_ICONS = {
+    "hurt": "paw", "hunger": "bowl", "hydration": "drop", "hygiene": "sparkles",
+    "happiness": "smile", "mobility": "stairs", "good_days": "balance",
+}
+
 CATEGORY_KEYS = tuple(c[0] for c in CATEGORIES)
 CATEGORY_LABELS = {c[0]: c[1] for c in CATEGORIES}
 CATEGORY_GUIDANCE = {c[0]: c[2] for c in CATEGORIES}

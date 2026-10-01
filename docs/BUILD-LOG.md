@@ -268,6 +268,16 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   tracking". The three example-pet cards became one line with one button,
   and a remove button once they are loaded. Two requests, two reversals
   of my own earlier choices; the feedback loop is doing its job.
+- "Make the design look better, and add some images next to the
+  questions." Each check-in question now has its own icon in a coloured
+  badge: a paw for comfort, a bowl for appetite, a drop for hydration,
+  sparkles for hygiene, a smile for happiness, stairs for mobility, a
+  balance for good days versus bad. The good/bad day choices got icon
+  tiles, the slider got a bolder track and thumb, buttons gained a soft
+  gradient and lift, cards a softer shadow, and the page a faint blue
+  wash at the top. The same badges appear on the Trends category grid and
+  each category page, so the colours mean the same thing everywhere. All
+  icons are hand-drawn inline SVG, so the app stays offline and small.
 
 ---
 

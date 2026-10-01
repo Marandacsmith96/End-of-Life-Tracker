@@ -23,7 +23,7 @@
   {# Step 1: good / bad / mixed #}
   <div class="card panel step" data-step="status" data-title="Today">
     <fieldset>
-      <legend class="question">Was today a good day or a bad day for {{ animal.name }}?</legend>
+      <legend class="q-head"><span class="q-badge cat-day">{{ icon('calendar', 'icon') }}</span><span class="question">Was today a good day or a bad day for {{ animal.name }}?</span></legend>
       <div class="day-choice">
         {% for value, label in day_statuses %}
           <label class="day-option {{ value }}">
@@ -41,7 +41,7 @@
   <div class="card panel step" data-step="markers" data-title="Behaviors">
     <input type="hidden" name="markers_included" value="1">
     <fieldset>
-      <legend class="question">What did {{ animal.name }} do today?</legend>
+      <legend class="q-head"><span class="q-badge cat-markers">{{ icon('checklist', 'icon') }}</span><span class="question">What did {{ animal.name }} do today?</span></legend>
       {% if markers %}
         <div class="choice-grid">
           {% for m in markers %}
@@ -66,8 +66,11 @@
       {% set is_set = values.get(key ~ '_set') == '1' %}
       <div class="card panel step score-step" data-step="{{ key }}" data-title="{{ label }}">
         <div class="score-row">
-          <span class="tag">{{ label }}</span>
-          <label class="question" for="score-{{ key }}">{{ questions[key].replace('{name}', animal.name) }}</label>
+          <div class="q-head">
+            <span class="q-badge cat-{{ key }}">{{ icon(category_icons[key], 'icon') }}</span>
+            <div><span class="tag cat-{{ key }}">{{ label }}</span>
+            <label class="question" for="score-{{ key }}">{{ questions[key].replace('{name}', animal.name) }}</label></div>
+          </div>
           <input type="hidden" name="{{ key }}_set" id="set-{{ key }}" value="{{ '1' if is_set else '0' }}">
           <div class="slider">
             <input type="range" class="{{ '' if is_set else 'unset' }}" id="score-{{ key }}" name="{{ key }}" min="0" max="10" step="1" value="{{ values.get(key, 5) }}" aria-describedby="anchors-{{ key }}" data-set-flag="set-{{ key }}">
@@ -84,7 +87,7 @@
 
   {# Step 10: anything different? #}
   <div class="card panel step" data-step="note" data-title="Anything different?">
-    <label for="notes" class="question">Anything different today?</label>
+    <div class="q-head"><span class="q-badge cat-note">{{ icon('pencil', 'icon') }}</span><label for="notes" class="question">Anything different today?</label></div>
     <textarea id="notes" name="notes" rows="3" maxlength="5000" placeholder="Medication change, vet visit, didn't finish breakfast, slept more than usual…">{{ values.get('notes', '') }}</textarea>
     <p class="hint">Optional.</p>
     <details class="extras">

@@ -48,7 +48,7 @@
       {% set s = series.categories[loop.index0] %}
       <a class="multiple card-link" href="{{ url_for('trends.category', animal_id=animal.id, key=c.key, range=preset) }}">
         <div class="multiple-head">
-          <h3>{{ c.label }}</h3>
+          <h3><span class="q-badge small cat-{{ c.key }}">{{ icon(category_icons[c.key], 'icon') }}</span>{{ c.label }}</h3>
           {% if c.comparison.usable and c.comparison.delta is not none %}
             <span class="delta {{ 'down' if c.comparison.delta <= -0.5 else 'up' if c.comparison.delta >= 0.5 else '' }}">{{ '%.1f'|format(c.comparison.recent_mean) }} <span class="muted small">vs {{ '%.1f'|format(c.comparison.previous_mean) }}</span></span>
           {% elif c.latest is not none %}

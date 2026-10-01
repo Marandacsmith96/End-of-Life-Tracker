@@ -3,13 +3,13 @@
 {% block title %}Quick check-in · {{ animal.name }}{% endblock %}
 {% block content %}
 <h1>Quick check-in</h1>
-<p class="muted">{{ (values.get('entry_date', today)|string) }}{% if entry %} · already recorded, saving updates it{% endif %}</p>
+<p class="muted">{{ nice_date }}{% if entry %} · already recorded, saving updates it{% endif %}</p>
 <form method="post" class="form entry-form quick" id="quick-form">
   <input type="hidden" name="entry_date" value="{{ values.get('entry_date', today) }}">
   <input type="hidden" name="markers_included" value="1">
   <div class="card panel">
     <fieldset>
-      <legend class="question">Was today a good day or a bad day for {{ animal.name }}?</legend>
+      <legend class="q-head"><span class="q-badge cat-day">{{ icon('calendar', 'icon') }}</span><span class="question">Was today a good day or a bad day for {{ animal.name }}?</span></legend>
       <div class="day-choice">
         {% for value, label in day_statuses %}
           <label class="day-option {{ value }}">
@@ -24,7 +24,7 @@
   {% if markers %}
   <div class="card panel">
     <fieldset>
-      <legend class="question">What did {{ animal.name }} do today?</legend>
+      <legend class="q-head"><span class="q-badge cat-markers">{{ icon('checklist', 'icon') }}</span><span class="question">What did {{ animal.name }} do today?</span></legend>
       <div class="choice-grid">
         {% for m in markers %}
           <label class="choice big">

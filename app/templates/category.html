@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ label }} · {{ animal.name }}{% endblock %}
 {% block content %}
 <p class="eyebrow"><a href="{{ url_for('trends.trends', animal_id=animal.id, range=preset) }}">Trends</a> / {{ label }}</p>
 <div class="section-head">
-  <h1>{{ label }}</h1>
+  <h1 class="with-badge"><span class="q-badge cat-{{ key }}">{{ icon(category_icons[key], 'icon') }}</span>{{ label }}</h1>
   <div class="presets">
     {% for rk, plabel in [('30', '30 days'), ('90', '90 days'), ('all', 'All time')] %}
       <a class="chip {{ 'active' if preset == rk }}" href="{{ url_for('trends.category', animal_id=animal.id, key=key, range=rk) }}">{{ plabel }}</a>

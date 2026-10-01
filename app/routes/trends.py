@@ -42,6 +42,7 @@ def trends(animal_id: int):
         counts=counts, rates=rates, event_list=event_list, baseline=base,
         med_names=entries.medications_given_names_for_animal(animal_id),
         rows=rows, day_labels=entries.DAY_STATUS_LABELS, appetite_labels=scoring.APPETITE_LABELS,
+        category_icons=scoring.CATEGORY_ICONS,
     )
 
 
@@ -65,6 +66,7 @@ def category(animal_id: int, key: str):
     return render_template(
         "category.html", animal=animal, key=key, label=scoring.CATEGORY_LABELS[key],
         guidance=scoring.CATEGORY_GUIDANCE[key], anchors=scoring.CATEGORY_ANCHORS[key],
+        category_icons=scoring.CATEGORY_ICONS,
         start=start, end=end, preset=preset,
         series={"dates": [p.day.isoformat() for p in pts], "values": [p.value for p in pts],
                 "smoothed": an.rolling_mean(pts), "baseline": baseline_value,

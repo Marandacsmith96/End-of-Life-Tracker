@@ -130,6 +130,7 @@ def _form_values(entry: entries.Entry | None, entry_date: date) -> dict:
 def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=None):
     marker_list = markers.list_markers(animal.id)
     answers = markers.responses_for_entry(entry.id) if entry else {}
+    shown = parse_date(values.get("entry_date")) or date.today()
     return (
         render_template(
             "checkin_quick.html" if quick else "checkin.html",
@@ -142,6 +143,7 @@ def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=N
             photos=entries.list_entry_photos(entry.id) if entry else [],
             today=date.today().isoformat(), start_step=start_step,
             has_scores=entry.has_scores if entry else False,
+            category_icons=scoring.CATEGORY_ICONS, nice_date=f"{shown:%A, %B} {shown.day}",
         ),
         status,
     )

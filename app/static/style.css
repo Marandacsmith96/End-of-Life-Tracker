@@ -388,3 +388,80 @@ body { font-size: 17px; line-height: 1.6; }
 @media (max-width: 700px) {
   .pet-switcher { padding: 8px 14px; }
 }
+
+/* ---- Design pass: colour per question, badges, softer surfaces ---- */
+:root {
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(29, 38, 55, .04), 0 10px 28px rgba(46, 78, 159, .07);
+  --cat-hurt: #c2506a;      --cat-hurt-soft: #fbe7ec;
+  --cat-hunger: #b7791f;    --cat-hunger-soft: #fdf1dc;
+  --cat-hydration: #2b7fb8; --cat-hydration-soft: #e2f1fb;
+  --cat-hygiene: #2a8a7a;   --cat-hygiene-soft: #e0f4f0;
+  --cat-happiness: #d9623b; --cat-happiness-soft: #fde9e2;
+  --cat-mobility: #6a4fc4;  --cat-mobility-soft: #ece7fb;
+  --cat-good_days: #2f7d5b; --cat-good_days-soft: #e3f2ea;
+  --cat-day: #3d64c4;       --cat-day-soft: #e6edfb;
+  --cat-markers: #2f7d5b;   --cat-markers-soft: #e3f2ea;
+  --cat-note: #5c6b84;      --cat-note-soft: #eef2f9;
+}
+body { background: radial-gradient(1200px 420px at 50% -120px, #e6edfb 0%, var(--bg) 70%) no-repeat, var(--bg); }
+.card { border-color: #e4e9f3; }
+.button, button.button { background: linear-gradient(180deg, #4a72d2, var(--accent)); box-shadow: 0 2px 6px rgba(61, 100, 196, .28); transition: transform .12s, box-shadow .15s, background .15s; }
+.button:hover, button.button:hover { background: linear-gradient(180deg, #3f66c6, var(--accent-dark)); transform: translateY(-1px); box-shadow: 0 6px 14px rgba(61, 100, 196, .3); }
+.button.secondary, button.button.secondary { background: var(--surface); box-shadow: 0 1px 2px rgba(29, 38, 55, .06); }
+.button.secondary:hover { background: var(--accent-soft); box-shadow: 0 3px 10px rgba(29, 38, 55, .08); }
+.progress-bar { height: 8px; }
+.progress-bar span { background: linear-gradient(90deg, #6f90de, var(--accent)); }
+.entry-form .panel { padding: 22px 24px; }
+
+/* Question header: a round badge with the question's own icon and colour */
+.q-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; padding: 0; }
+.q-head .question, .q-head label.question { margin: 0; }
+.q-head > div { min-width: 0; }
+.q-head .tag { margin-bottom: 4px; }
+.q-badge { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 16px; background: var(--accent-soft); color: var(--accent-dark); box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); }
+.q-badge .icon { width: 28px; height: 28px; stroke-width: 1.7; }
+.q-badge.small { width: 30px; height: 30px; border-radius: 9px; margin-right: 8px; vertical-align: middle; }
+.q-badge.small .icon { width: 17px; height: 17px; stroke-width: 1.9; }
+h1.with-badge { display: flex; align-items: center; gap: 12px; }
+.q-badge.cat-hurt { background: var(--cat-hurt-soft); color: var(--cat-hurt); }
+.q-badge.cat-hunger { background: var(--cat-hunger-soft); color: var(--cat-hunger); }
+.q-badge.cat-hydration { background: var(--cat-hydration-soft); color: var(--cat-hydration); }
+.q-badge.cat-hygiene { background: var(--cat-hygiene-soft); color: var(--cat-hygiene); }
+.q-badge.cat-happiness { background: var(--cat-happiness-soft); color: var(--cat-happiness); }
+.q-badge.cat-mobility { background: var(--cat-mobility-soft); color: var(--cat-mobility); }
+.q-badge.cat-good_days { background: var(--cat-good_days-soft); color: var(--cat-good_days); }
+.q-badge.cat-day { background: var(--cat-day-soft); color: var(--cat-day); }
+.q-badge.cat-markers { background: var(--cat-markers-soft); color: var(--cat-markers); }
+.q-badge.cat-note { background: var(--cat-note-soft); color: var(--cat-note); }
+.tag.cat-hurt { background: var(--cat-hurt-soft); color: var(--cat-hurt); }
+.tag.cat-hunger { background: var(--cat-hunger-soft); color: var(--cat-hunger); }
+.tag.cat-hydration { background: var(--cat-hydration-soft); color: var(--cat-hydration); }
+.tag.cat-hygiene { background: var(--cat-hygiene-soft); color: var(--cat-hygiene); }
+.tag.cat-happiness { background: var(--cat-happiness-soft); color: var(--cat-happiness); }
+.tag.cat-mobility { background: var(--cat-mobility-soft); color: var(--cat-mobility); }
+.tag.cat-good_days { background: var(--cat-good_days-soft); color: var(--cat-good_days); }
+.multiple-head h3 { display: flex; align-items: center; }
+
+/* Good / bad day choices: icon in a coloured tile */
+.day-option { gap: 12px; padding: 10px 14px; }
+.day-icon { width: 46px; height: 46px; padding: 10px; border-radius: 50%; margin-right: 0; opacity: 1; stroke-width: 1.7; background: var(--surface-2); color: var(--muted); flex: none; }
+.day-option.good .day-icon { background: #fff4d6; color: #c98a0e; }
+.day-option.bad .day-icon { background: #e9eef7; color: #6b7a96; }
+.day-option.mixed .day-icon { width: 36px; height: 36px; padding: 7px; background: #f6efd9; color: var(--mixed); }
+.day-option.good:has(input:checked) .day-icon { background: #ffe9ad; }
+.day-option.bad:has(input:checked) .day-icon { background: #f3d6dd; color: var(--bad); }
+.day-option:hover { border-color: #c9d4ea; box-shadow: 0 4px 14px rgba(46, 78, 159, .08); }
+.choice:hover { border-color: #c9d4ea; }
+
+/* Slider: bolder track and thumb */
+input[type="range"] { height: 12px; }
+input[type="range"]::-webkit-slider-thumb { width: 32px; height: 32px; border-width: 3px; box-shadow: 0 2px 8px rgba(29, 38, 55, .22); }
+input[type="range"]::-moz-range-thumb { width: 30px; height: 30px; border-width: 3px; box-shadow: 0 2px 8px rgba(29, 38, 55, .22); }
+.slider output { font-size: 1.45rem; min-width: 2.8em; padding: 8px 10px; border-radius: 12px; }
+
+@media (max-width: 700px) {
+  .q-badge { width: 44px; height: 44px; border-radius: 13px; }
+  .q-badge .icon { width: 24px; height: 24px; }
+  .day-icon { width: 40px; height: 40px; padding: 8px; }
+}
