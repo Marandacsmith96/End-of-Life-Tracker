@@ -114,9 +114,13 @@ def create_app(test_config: dict | None = None) -> Flask:
 
 
 def _switcher_pets() -> list:
-    """Pets shown in the switcher bar: every active pet, when there is more than one."""
-    active = models.list_animals()
-    return active if len(active) > 1 else []
+    """Pets shown in the switcher bar: every active pet (plus the current one if
+    it is archived or remembered), when there is more than one."""
+    pets = models.list_animals()
+    current = getattr(g, "current_animal", None)
+    if current is not None and all(p.id != current.id for p in pets):
+        pets = [current, *pets]
+    return pets if len(pets) > 1 else []
 
 
 def _switch_url(animal) -> str:

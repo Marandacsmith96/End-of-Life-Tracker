@@ -306,6 +306,22 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   attempt at the Pillow heart was boxy: the SVG's curved sides were sampled
   at their control points instead of along the curve. Fixed by sampling the
   cubic curves properly; a screenshot caught it in seconds.
+- Third bug check, aimed at today's additions. The automated checks were
+  all green again (144 tests, the walkthrough, a crawl of 413 pages), and
+  two readers still found ten real problems. The launcher could tell you
+  the app was running on an address that belonged to another program, and
+  on a real failure the window closed before the error could be read; it
+  now binds its port before starting, and the "Open the app" shortcut is
+  rewritten with the real address on every start. Removing the example
+  pets left their photos on disk. A double-click on "See an example" made
+  six pets; adding is now serialized and buttons disable after one click.
+  The --seed-demo command duplicated the examples on every run. The photo
+  upload would follow a Referer header to another website. On the front
+  end: the pet switcher could scroll the current pet out of view with no
+  scrollbar to show it; the cozy footer and the coloured question tags
+  fell below the contrast guideline; and "Good day" wrapped onto two lines
+  on phones after the icon tile grew. Lesson repeated: each design pass
+  needs its own phone-width and contrast check, not just a look.
 
 ---
 

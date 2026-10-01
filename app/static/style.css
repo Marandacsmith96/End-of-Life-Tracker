@@ -643,3 +643,18 @@ h2 { font-weight: 750; }
 .brand-mark { width: 30px; height: 30px; border-radius: 9px; box-shadow: 0 2px 6px rgba(46, 78, 159, .25); }
 .hero-mark { width: 72px; height: 72px; border-radius: 20px; box-shadow: 0 8px 22px rgba(46, 78, 159, .22); margin-bottom: 14px; display: block; }
 @media (max-width: 700px) { .hero-mark { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 10px; } }
+
+/* ---- Fixes from the front-end review ---- */
+.footer { color: var(--muted); }
+.tag.cat-hurt { color: #a4405a; }
+.tag.cat-hunger { color: #8a5a12; }
+.tag.cat-hydration { color: #1f6690; }
+.tag.cat-hygiene { color: #1f6e60; }
+.tag.cat-happiness { color: #b04a26; }
+.tag.cat-mobility { color: #5a40b0; }
+.tag.cat-good_days { color: #276a4d; }
+@media (max-width: 700px) {
+  .day-option, .form label.day-option { padding: 10px 8px; gap: 8px; font-size: 1.08rem; }
+  .day-option span { white-space: nowrap; }
+  .day-icon { width: 36px; height: 36px; padding: 7px; }
+}

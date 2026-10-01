@@ -47,6 +47,12 @@
     b.addEventListener("click", function (e) { if (!confirm(b.dataset.confirm)) e.preventDefault(); });
   });
 
+  /* Pet switcher: keep the current pet's chip in view when the bar scrolls. */
+  var currentChip = document.querySelector(".pet-chip.current");
+  if (currentChip && currentChip.scrollIntoView) {
+    currentChip.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+  }
+
   /* One click per form: once a submit goes through, its buttons are disabled
      so a double-click cannot send the same request twice. */
   document.querySelectorAll("form").forEach(function (f) {
