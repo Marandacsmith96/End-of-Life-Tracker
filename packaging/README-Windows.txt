@@ -20,3 +20,7 @@ Keep this whole folder together. Back up from the More page now and then.
 
 To try it with sample pets first, the app has a demo: open a Command Prompt
 in this folder and run:  PetQoLTracker.exe --seed-demo
+
+Updating to a newer version: download the ZIP again, extract it to a new
+folder, then move your "data" folder from the old folder into the new one.
+That folder holds all your entries and photos.

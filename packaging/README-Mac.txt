@@ -23,3 +23,7 @@ Keep the whole folder together. Back up from the More page now and then.
 
 To try it with sample pets first, open Terminal in this folder and run:
   ./PetQoLTracker --seed-demo
+
+Updating to a newer version: download the ZIP again, unzip it, then move your
+"data" folder from the old folder into the new one. That folder holds all your
+entries and photos.
