@@ -4,7 +4,7 @@
   <ul class="insight-list">
     {% for i in observations %}
       <li class="insight {{ i.level }} {{ i.kind }}">
-        <span class="insight-mark" aria-hidden="true"></span>
+        <span class="insight-mark" aria-hidden="true">{{ '!' if i.level == 'attention' else '✓' if i.kind == 'note' else 'i' }}</span>
         <span>{{ i.text }}</span>
       </li>
     {% endfor %}

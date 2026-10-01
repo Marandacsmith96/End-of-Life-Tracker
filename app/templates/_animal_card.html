@@ -17,7 +17,7 @@
   </div>
   <div class="foot">
     <form method="post" action="{{ url_for('animals.select_animal', animal_id=animal.id) }}">
-      <button class="button small secondary" type="submit">{{ 'View' if animal.archived else 'Open' }}</button>
+      <button class="button small {{ 'secondary' if animal.archived }}" type="submit">{{ 'View' if animal.archived else 'Open' }}</button>
     </form>
   </div>
 </article>

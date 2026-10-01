@@ -278,6 +278,17 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   wash at the top. The same badges appear on the Trends category grid and
   each category page, so the colours mean the same thing everywhere. All
   icons are hand-drawn inline SVG, so the app stays offline and small.
+- "Can you make the site prettier?" A second pass over every page: the
+  pet's header on Today is a soft gradient card with a ringed portrait,
+  each section heading has a small icon tile, the count tiles got icon
+  circles, behaviour bars a gradient, observations an i/!/check mark, the
+  calendar rounded cells with gaps, the vet table zebra rows with red
+  and green verdicts, the events page a dotted timeline, the More page
+  tappable rows, pet cards that lift on hover, and the home page step
+  cards tinted to match their icons. One test caught a word: the CSS class
+  "q-badge" tripped the rule that no page may contain gamification words
+  like "badge" or "streak", so it became "q-tile". The rule is doing its
+  job even on things that are not copy.
 
 ---
 

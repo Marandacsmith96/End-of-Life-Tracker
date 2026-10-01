@@ -9,7 +9,7 @@
   <input type="hidden" name="markers_included" value="1">
   <div class="card panel">
     <fieldset>
-      <legend class="q-head"><span class="q-badge cat-day">{{ icon('calendar', 'icon') }}</span><span class="question">Was today a good day or a bad day for {{ animal.name }}?</span></legend>
+      <legend class="q-head"><span class="q-tile cat-day">{{ icon('calendar', 'icon') }}</span><span class="question">Was today a good day or a bad day for {{ animal.name }}?</span></legend>
       <div class="day-choice">
         {% for value, label in day_statuses %}
           <label class="day-option {{ value }}">
@@ -24,7 +24,7 @@
   {% if markers %}
   <div class="card panel">
     <fieldset>
-      <legend class="q-head"><span class="q-badge cat-markers">{{ icon('checklist', 'icon') }}</span><span class="question">What did {{ animal.name }} do today?</span></legend>
+      <legend class="q-head"><span class="q-tile cat-markers">{{ icon('checklist', 'icon') }}</span><span class="question">What did {{ animal.name }} do today?</span></legend>
       <div class="choice-grid">
         {% for m in markers %}
           <label class="choice big">

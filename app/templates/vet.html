@@ -19,7 +19,7 @@
           <td>{{ c.label }}</td>
           <td>{% if c.previous is not none %}{{ '%.1f'|format(c.previous) }} <span class="muted small">({{ c.previous_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
           <td>{% if c.recent is not none %}{{ '%.1f'|format(c.recent) }} <span class="muted small">({{ c.recent_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
-          <td class="muted small">{{ c.text }}</td>
+          <td class="small verdict {{ 'down' if c.text.startswith('Lower') else 'up' if c.text.startswith('Higher') else 'muted' }}">{{ c.text }}</td>
         </tr>
       {% endfor %}
     </tbody>

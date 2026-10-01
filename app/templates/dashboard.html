@@ -2,7 +2,7 @@
 {% from "_icons.html" import icon %}
 {% block title %}{{ animal.name }} · Today{% endblock %}
 {% block content %}
-<section class="hero">
+<section class="hero hero-card">
   <div class="hero-photo">
     {% if animal.photo_path %}
       <img src="{{ url_for('animals.serve_photo', filename=animal.photo_path) }}" alt="">
@@ -66,7 +66,7 @@
 
 <section class="card block" aria-label="Last 30 days">
   <div class="section-head tight">
-    <h2>Last 30 days</h2>
+    <h2>{{ icon('calendar', 'icon h-icon') }}Last 30 days</h2>
     <a class="link small" href="{{ url_for('trends.calendar', animal_id=animal.id) }}">Calendar</a>
   </div>
   <div class="day-counts">
@@ -82,7 +82,7 @@
 
 <section class="card block" aria-label="Trend">
   <div class="section-head tight">
-    <h2>Quality-of-life trend</h2>
+    <h2>{{ icon('trend', 'icon h-icon') }}Quality-of-life trend</h2>
     <div class="presets small">
       {% for key, label in [('30', '30 days'), ('90', '90 days'), ('all', 'All')] %}
         <a class="chip {{ 'active' if preset == key }}" href="{{ url_for('dashboard.today', animal_id=animal.id, range=key) }}">{{ label }}</a>
@@ -102,7 +102,7 @@
 {% if rates %}
 <section class="card block" aria-label="Good-day behaviors">
   <div class="section-head tight">
-    <h2>{{ animal.name }}'s good-day behaviors</h2>
+    <h2>{{ icon('check-circle', 'icon h-icon') }}{{ animal.name }}'s good-day behaviors</h2>
     <a class="link small" href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Over time</a>
   </div>
   <ul class="marker-list">
@@ -118,13 +118,13 @@
 {% endif %}
 
 <section class="card block" aria-label="Observations">
-  <h2>Observations</h2>
+  <h2>{{ icon('sparkles', 'icon h-icon') }}Observations</h2>
   {% include "_insights.html" %}
 </section>
 
 {% if caregiver_due %}
 <section class="card block caregiver-card" aria-label="Caregiver check-in">
-  <h2>How are you doing?</h2>
+  <h2>{{ icon('heart', 'icon h-icon') }}How are you doing?</h2>
   <p class="muted">This one is for you, and it's kept separate from {{ animal.name }}'s scores. Once a week, if you'd like.</p>
   <a class="button secondary" href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">Answer</a>
 </section>
@@ -132,7 +132,7 @@
 
 <section class="card block" aria-label="Recent">
   <div class="section-head tight">
-    <h2>Recent</h2>
+    <h2>{{ icon('flag', 'icon h-icon') }}Recent</h2>
     <div class="actions compact">
       <a class="link small" href="{{ url_for('events.new', animal_id=animal.id) }}">Add an event</a>
       <a class="link small" href="{{ url_for('trends.trends', animal_id=animal.id) }}#entries">All entries</a>
