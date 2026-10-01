@@ -87,7 +87,8 @@ def main() -> None:
         daemon=True,
     )
     server.start()
-    _say("", "Quality-of-Life Tracker is starting...")
+    from app.version import build_label
+    _say("", f"Quality-of-Life Tracker ({build_label()}) is starting...")
     if not _wait_until_listening(port):
         _say("The app did not start. Please send the text in this window to whoever set it up.")
         return

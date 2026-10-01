@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from flask import Flask, abort, g, redirect, request, session, url_for
 from werkzeug.routing import IntegerConverter, ValidationError
 
-from . import db, entries, models, safety, scoring
+from . import db, entries, models, safety, scoring, version
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MAX_ID = 2**63 - 1  # largest SQLite INTEGER
@@ -107,7 +107,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     @app.context_processor
     def inject_globals():
         return {"disclaimer": safety.DISCLAIMER, "attribution": scoring.ATTRIBUTION,
-                "emergency": safety.EMERGENCY, "switcher_pets": _switcher_pets, "switch_url": _switch_url}
+                "emergency": safety.EMERGENCY, "switcher_pets": _switcher_pets, "switch_url": _switch_url,
+                "build_label": version.build_label()}
 
     return app
 

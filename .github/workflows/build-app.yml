@@ -30,6 +30,9 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -r requirements.txt -r requirements-dev.txt pyinstaller
       - run: pytest -q
+      - name: Stamp the build with its date and commit
+        shell: bash
+        run: echo "$(date -u +%Y-%m-%d) ${GITHUB_SHA::7}" > app/BUILD
       - run: pyinstaller --noconfirm --log-level WARN pet_qol.spec
       - name: Add a readme and zip it up (Windows)
         if: runner.os == 'Windows'

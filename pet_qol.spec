@@ -14,7 +14,7 @@ a = Analysis(
         ("app/templates", "app/templates"),
         ("app/static", "app/static"),
         ("app/schema.sql", "app"),
-    ],
+    ] + ([("app/BUILD", "app")] if __import__("os").path.exists("app/BUILD") else []),
     hiddenimports=["matplotlib.backends.backend_agg", "scripts.seed_demo"] + collect_submodules("reportlab"),
     hookspath=[],
     runtime_hooks=[],
