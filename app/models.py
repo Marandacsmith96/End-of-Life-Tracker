@@ -29,6 +29,7 @@ class Animal:
     status: str
     passed_date: date | None
     reminder: str
+    demo: bool = False
 
     @property
     def archived(self) -> bool:
@@ -75,6 +76,7 @@ def _row_to_animal(row) -> Animal:
         status=row["status"],
         passed_date=row["passed_date"],
         reminder=row["reminder"],
+        demo=bool(row["demo"]) if "demo" in row.keys() else False,
     )
 
 
@@ -93,16 +95,21 @@ def get_animal(animal_id: int) -> Animal | None:
 
 def create_animal(
     name: str, species: str, breed: str | None = None, birth_date: date | None = None,
-    sex: str | None = None, diagnoses: str | None = None,
+    sex: str | None = None, diagnoses: str | None = None, demo: bool = False,
 ) -> int:
     db = get_db()
     cur = db.execute(
-        """INSERT INTO animals (name, species, breed, birth_date, sex, diagnoses)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (name, species, breed, birth_date, sex, diagnoses),
+        """INSERT INTO animals (name, species, breed, birth_date, sex, diagnoses, demo)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (name, species, breed, birth_date, sex, diagnoses, int(demo)),
     )
     db.commit()
     return cur.lastrowid
+
+
+def list_demo_animals() -> list[Animal]:
+    rows = get_db().execute("SELECT * FROM animals WHERE demo = 1 ORDER BY id").fetchall()
+    return [_row_to_animal(r) for r in rows]
 
 
 def update_animal(

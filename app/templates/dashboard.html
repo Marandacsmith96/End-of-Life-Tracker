@@ -13,6 +13,7 @@
   <div class="hero-body">
     <h1>{{ animal.name }}'s quality of life</h1>
     <div class="chips">
+      {% if animal.demo %}<span class="chip quiet example-chip">Example pet</span>{% endif %}
       <span class="chip quiet">{{ animal.species|capitalize }}</span>
       {% if animal.breed %}<span class="chip quiet">{{ animal.breed }}</span>{% endif %}
       {% if animal.age_text %}<span class="chip quiet">{{ animal.age_text }}</span>{% endif %}

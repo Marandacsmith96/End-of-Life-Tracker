@@ -50,6 +50,9 @@ observations, and it is not a validated medical device.
   pet's data.
 - **A gentle ending.** "My pet has passed away" keeps everything, stops
   prompts, and offers to keep, archive, export, or remove the profile.
+- **Example pets to explore.** The "How it works" page can add three fictional
+  pets with weeks of entries (steady, declining, and improving) so you can
+  click through every page first, then remove them with one button.
 
 | Check-in | Trends | Vet visit |
 | --- | --- | --- |
@@ -119,7 +122,7 @@ You need Python 3.11 or newer.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/seed_demo.py --reset   # optional: three demo pets, Maggie, Bruno, and Juniper
+python scripts/seed_demo.py --reset   # optional: the three example pets (or add them from "How it works" in the app)
 python run.py
 ```
 

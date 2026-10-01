@@ -1,4 +1,4 @@
--- Pet Quality-of-Life Tracker schema (version 2).
+-- Pet Quality-of-Life Tracker schema (version 3).
 -- Every statement uses IF NOT EXISTS so this file can run on every start.
 -- Existing databases are upgraded by the migrations in db.py.
 
@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS animals (
     status        TEXT    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived', 'passed')),
     passed_date   DATE,
     reminder      TEXT    NOT NULL DEFAULT 'daily' CHECK (reminder IN ('off', 'daily', 'every_other_day', 'weekly')),
+    demo          INTEGER NOT NULL DEFAULT 0,   -- 1 for the built-in example pets
     created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

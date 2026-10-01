@@ -16,7 +16,7 @@ def home():
     active = models.list_animals()
     everyone = models.list_animals(include_archived=True)
     if not everyone:
-        return render_template("landing.html", attribution=scoring.ATTRIBUTION)
+        return render_template("landing.html", attribution=scoring.ATTRIBUTION, **_examples())
     animal = current_or_choose()
     if animal and animal.status == "active":
         return redirect(url_for("dashboard.today", animal_id=animal.id))
@@ -33,7 +33,15 @@ def pets():
 
 @bp.route("/how-it-works")
 def landing():
-    return render_template("landing.html", attribution=scoring.ATTRIBUTION)
+    return render_template("landing.html", attribution=scoring.ATTRIBUTION, **_examples())
+
+
+def _examples() -> dict:
+    from scripts.seed_demo import EXAMPLES
+
+    present = {a.name: a for a in models.list_demo_animals()}
+    return {"examples": [{**ex, "animal": present.get(ex["name"])} for ex in EXAMPLES],
+            "examples_present": bool(present)}
 
 
 @bp.route("/animals/<int:animal_id>/today")

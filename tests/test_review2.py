@@ -407,3 +407,46 @@ def test_more_tab_is_highlighted_on_its_sub_pages(client):
                  "/animals/1/passed", "/animals/1/remove", "/animals/1/settings"):
         html = client.get(path).get_data(as_text=True)
         assert 'nav-item active" href="/more"' in html, path
+
+
+# --- example pets ---------------------------------------------------------------
+
+def test_example_pets_can_be_added_and_removed(client, app):
+    html = client.get("/how-it-works").get_data(as_text=True)
+    assert "Add the example pets" in html and "Maggie" in html and "Juniper" in html
+    r = client.post("/examples/add", follow_redirects=True)
+    assert b"Added Maggie, Bruno, Juniper as example pets" in r.data
+    assert b"Example pet" in r.data  # badge on the dashboard the add lands on
+    with app.app_context():
+        demo = models.list_demo_animals()
+        assert [a.name for a in demo] == ["Maggie", "Bruno", "Juniper"]
+        assert all(a.demo for a in demo)
+        assert len(entries.list_entries(demo[2].id)) > 40
+    html = client.get("/how-it-works").get_data(as_text=True)
+    assert "Remove the example pets" in html and "Open Juniper" in html
+    # adding again is harmless
+    r = client.post("/examples/add", follow_redirects=True)
+    assert b"already here" in r.data
+    # a real pet is untouched by removal
+    _pet(client, name="Mine")
+    r = client.post("/examples/remove", follow_redirects=True)
+    assert b"Example pets removed" in r.data
+    with app.app_context():
+        assert models.list_demo_animals() == []
+        assert [a.name for a in models.list_animals()] == ["Mine"]
+
+
+def test_version_2_database_gains_the_demo_column(tmp_path):
+    d = tmp_path / "data"
+    d.mkdir()
+    conn = sqlite3.connect(d / "t.sqlite")
+    conn.executescript(open("app/schema.sql").read().replace(
+        "    demo          INTEGER NOT NULL DEFAULT 0,   -- 1 for the built-in example pets\n", ""))
+    conn.execute("INSERT INTO animals (name, species) VALUES ('Old', 'dog')")
+    conn.execute("PRAGMA user_version = 2")
+    conn.commit()
+    conn.close()
+    app = create_app({"TESTING": True, "DATA_DIR": d, "DATABASE": d / "t.sqlite", "PHOTO_DIR": d / "p"})
+    with app.app_context():
+        assert models.get_animal(1).demo is False
+        assert models.list_demo_animals() == []

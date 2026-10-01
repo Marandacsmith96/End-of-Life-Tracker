@@ -367,3 +367,11 @@ body { font-size: 17px; line-height: 1.6; }
   .hero-art { order: -1; max-width: 300px; margin: 0 auto; }
   .card.block { padding: 18px; }
 }
+
+/* Example pets on the How it works page */
+.examples-grid { margin-top: 12px; }
+.example-card { display: flex; gap: 14px; align-items: flex-start; padding: 16px; }
+.example-card .placeholder.portrait { flex: 0 0 56px; width: 56px; height: 56px; }
+.example-card h3 { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.example-card .meta { margin: 0 0 10px; }
+.example-chip { min-height: 22px; padding: 0 8px; font-size: 0.74rem; letter-spacing: 0.02em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent-dark); }

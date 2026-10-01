@@ -21,6 +21,7 @@
   <ul class="link-list">
     {% for a in animals %}
       <li><form method="post" action="{{ url_for('animals.select_animal', animal_id=a.id) }}" class="inline-form"><button class="link" type="submit">{{ a.name }}</button></form>
+        {% if a.demo %}<span class="muted small">example</span>{% endif %}
         {% if a.passed %}<span class="muted small">in memory</span>{% elif a.archived %}<span class="muted small">archived</span>{% elif animal and a.id == animal.id %}<span class="muted small">current</span>{% endif %}</li>
     {% endfor %}
     <li><a href="{{ url_for('animals.new_animal') }}">Add a pet</a></li>
@@ -31,6 +32,7 @@
   <ul class="link-list">
     <li>{{ icon('archive') }}<a href="{{ url_for('settings.settings') }}">Backup, restore, and about</a></li>
     <li>{{ icon('trend') }}<a href="{{ url_for('dashboard.landing') }}">How it works</a></li>
+    <li>{{ icon('heart') }}<a href="{{ url_for('dashboard.landing') }}#examples">Example pets</a> <span class="muted small">add or remove the three sample pets</span></li>
   </ul>
 </section>
 {% endblock %}

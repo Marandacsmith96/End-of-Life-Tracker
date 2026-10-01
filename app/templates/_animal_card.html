@@ -9,7 +9,7 @@
       {% endif %}
     </a>
     <div>
-      <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a></h3>
+      <h3><a href="{{ url_for('animals.show_animal', animal_id=animal.id) }}">{{ animal.name }}</a>{% if animal.demo %} <span class="chip quiet example-chip">Example</span>{% endif %}</h3>
       <p class="meta">{{ animal.species|capitalize }}{% if animal.breed %} · {{ animal.breed }}{% endif %}{% if animal.age_text %} · {{ animal.age_text }}{% endif %}</p>
       {% if animal.passed %}<p class="meta">In memory of {{ animal.name }}{% if animal.passed_date %} · {{ animal.passed_date.strftime('%B') }} {{ animal.passed_date.day }}, {{ animal.passed_date.year }}{% endif %}</p>
       {% elif animal.archived %}<p class="meta">Archived</p>{% endif %}

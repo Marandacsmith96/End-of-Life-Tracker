@@ -51,7 +51,7 @@ def seed_maggie(rng: random.Random, today: date) -> None:
     if True:  # noqa: keeps the original block indentation
         animal_id = models.create_animal(
             "Maggie", "dog", "Golden Retriever", today - timedelta(days=365 * 13 + 61), "female",
-            "Osteoarthritis (hips, elbows); early kidney disease")
+            "Osteoarthritis (hips, elbows); early kidney disease", demo=True)
         marker_ids = [markers.create_marker(animal_id, m) for m in MARKERS]
         baseline.save_baseline(animal_id, today - timedelta(days=182),
                                {"hurt": 8, "hunger": 9, "hydration": 9, "hygiene": 9, "happiness": 9,
@@ -146,7 +146,7 @@ def seed_bruno(rng: random.Random, today: date) -> None:
     """A steady decline with no recovery, over about 60 days."""
     animal_id = models.create_animal(
         "Bruno", "dog", "Labrador Retriever", today - timedelta(days=365 * 14 + 120), "male",
-        "Severe osteoarthritis; degenerative myelopathy suspected; heart murmur")
+        "Severe osteoarthritis; degenerative myelopathy suspected; heart murmur", demo=True)
     marker_ids = [markers.create_marker(animal_id, m) for m in BRUNO_MARKERS]
     baseline.save_baseline(animal_id, today - timedelta(days=182),
                            {"hurt": 8, "hunger": 9, "hydration": 9, "hygiene": 9, "happiness": 9,
@@ -230,7 +230,7 @@ def seed_juniper(rng: random.Random, today: date) -> None:
     """Starts low, improves with treatment, levels off near her old self."""
     animal_id = models.create_animal(
         "Juniper", "cat", "Domestic shorthair", today - timedelta(days=365 * 12 + 200), "female",
-        "Hyperthyroidism (diagnosed this summer); dental disease")
+        "Hyperthyroidism (diagnosed this summer); dental disease", demo=True)
     marker_ids = [markers.create_marker(animal_id, m) for m in JUNIPER_MARKERS]
     baseline.save_baseline(animal_id, today - timedelta(days=182),
                            {"hurt": 8, "hunger": 8, "hydration": 8, "hygiene": 9, "happiness": 8,
@@ -303,6 +303,41 @@ def seed_juniper(rng: random.Random, today: date) -> None:
     for weeks_ago, status, note in ((7, "overwhelmed", "Didn't know if she'd recover."), (4, "harder", None),
                                     (1, "okay", "Feels like I have her back.")):
         caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 2), status, note)
+
+
+# What the "Try it with example pets" section shows. Order matters.
+EXAMPLES = (
+    {"key": "maggie", "name": "Maggie", "species": "dog", "seed": 13, "fn": seed_maggie,
+     "story": "13-year-old Golden Retriever, 90 days. Mostly steady, with mobility slipping and a "
+              "medication change that helped for a while."},
+    {"key": "bruno", "name": "Bruno", "species": "dog", "seed": 29, "fn": seed_bruno,
+     "story": "14-year-old Labrador, 60 days. A steady decline with no recovery; what the trend "
+              "pages look like when things are getting worse."},
+    {"key": "juniper", "name": "Juniper", "species": "cat", "seed": 41, "fn": seed_juniper,
+     "story": "12-year-old cat, 60 days. Starts low after a thyroid diagnosis and dental surgery, "
+              "then improves as treatment takes hold."},
+)
+
+
+def add_examples(today: date | None = None) -> list[str]:
+    """Seed any example pet that is not already present. Needs an app context.
+    Returns the names that were added."""
+    today = today or date.today()
+    present = {a.name for a in models.list_demo_animals()}
+    added = []
+    for ex in EXAMPLES:
+        if ex["name"] not in present:
+            ex["fn"](random.Random(ex["seed"]), today)
+            added.append(ex["name"])
+    return added
+
+
+def remove_examples() -> int:
+    """Delete every example pet and all its data. Needs an app context."""
+    demo = models.list_demo_animals()
+    for animal in demo:
+        models.delete_animal(animal.id)
+    return len(demo)
 
 
 def seed(reset: bool, pet: str = "all") -> None:

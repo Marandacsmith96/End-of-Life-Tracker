@@ -48,11 +48,11 @@ scripts/seed_demo.py        demo pets: Maggie (90 days, stable), Bruno (declinin
 tests/                      pytest suite
 ```
 
-## Schema (SQLite, version 2)
+## Schema (SQLite, version 3)
 
 | Table | Purpose |
 | --- | --- |
-| `animals` | name, species (cat/dog), breed, sex, birth date, photo, diagnoses (owner's words), status (active/archived/passed), passed_date, reminder |
+| `animals` | name, species (cat/dog), breed, sex, birth date, photo, diagnoses (owner's words), status (active/archived/passed), passed_date, reminder, demo (1 for the built-in example pets) |
 | `entries` | one row per animal per day: `day_status` (good/bad/mixed), seven optional 0–10 scores, weight, appetite, note |
 | `personal_markers` | 3–5 behaviors per animal; deactivated rather than deleted so history stays |
 | `marker_responses` | entry × marker → completed |
@@ -66,7 +66,7 @@ tests/                      pytest suite
 Foreign keys cascade on delete; `PRAGMA user_version` tracks the schema
 version and `db.py` upgrades older files in place (the first release had
 non-null scores and an `archived` flag; the migration rebuilds `entries` and
-maps `archived` to `status`).
+maps `archived` to `status`; version 3 added the `demo` flag).
 
 ## Trend and smoothing
 

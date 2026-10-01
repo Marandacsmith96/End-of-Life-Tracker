@@ -44,12 +44,12 @@ def create_app(test_config: dict | None = None) -> Flask:
     if not app.config["SECRET_KEY"]:
         app.config["SECRET_KEY"] = _load_or_create_secret(Path(app.config["DATA_DIR"]))
 
-    from .routes import animals, auth, baseline, caregiver, dashboard, export, markers, settings, trends
+    from .routes import animals, auth, baseline, caregiver, dashboard, demo, export, markers, settings, trends
     from .routes import entries as entry_routes
     from .routes import events as event_routes
 
     for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
-                   caregiver, export, settings):
+                   caregiver, export, settings, demo):
         app.register_blueprint(module.bp)
 
     @app.before_request

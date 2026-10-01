@@ -237,6 +237,25 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 - Also from the review: Intel Macs need their own build (the Mac ZIP was
   Apple-silicon only), so the workflow now builds both.
 
+### Oct 1 — "I can't open the app", and example pets in the app
+
+- You downloaded the Windows build and got the black window but no app
+  page. The server was running; the step that opens the browser had
+  failed silently, and the window gave no clue what to do. The launcher
+  now waits until the server is listening, prints the address in plain
+  words, tries the operating system's own opener if Python's fails, picks
+  the next free port if 5000 is busy, and keeps the window open to show any
+  error. The ZIP also gets an "Open the app" shortcut. Lesson: the first
+  thing a packaged app should print is what the person should do next.
+- You asked for the demos to live in the "How it works" tab so people can
+  look at examples and click through them. The three example pets are now
+  listed there with a one-line story each and an "Add the example pets"
+  button; they appear with an "Example" badge, and a "Remove the example
+  pets" button takes them away again without touching real pets. This took
+  a schema change (version 3, a `demo` flag on animals) so the app can tell
+  examples from real pets; the migration test for version 2 files came with
+  it. Before this, the examples existed only for people who ran a script.
+
 ---
 
 ## Answers to the assignment's questions (material)

@@ -12,7 +12,7 @@ import click
 from flask import Flask, current_app, g
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 class UnsupportedDatabase(RuntimeError):
@@ -114,7 +114,13 @@ def _migrate_v1_to_v2(conn: sqlite3.Connection) -> None:
         )
 
 
-MIGRATIONS = {1: _migrate_v1_to_v2}
+def _migrate_v2_to_v3(conn: sqlite3.Connection) -> None:
+    """Version 3 marks the built-in example pets so they can be removed together."""
+    if "demo" not in _columns(conn, "animals"):
+        conn.execute("ALTER TABLE animals ADD COLUMN demo INTEGER NOT NULL DEFAULT 0")
+
+
+MIGRATIONS = {1: _migrate_v1_to_v2, 2: _migrate_v2_to_v3}
 
 
 def upgrade(conn: sqlite3.Connection) -> None:
