@@ -12,7 +12,7 @@ def add():
 
     added = add_examples()
     if added:
-        flash(f"Added {', '.join(added)} as example pets. Everything you see for them is made up.")
+        flash(f"Meet {', '.join(added)}: three example pets. Everything you see for them is made up.")
     else:
         flash("The example pets are already here.")
     first = models.list_demo_animals()

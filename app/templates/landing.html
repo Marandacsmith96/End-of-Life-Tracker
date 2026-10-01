@@ -65,12 +65,12 @@
       {% for ex in examples if ex.animal %}<a href="{{ url_for('dashboard.today', animal_id=ex.animal.id) }}">{{ ex.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.
       Everything about them is made up.</p>
     <form method="post" action="{{ url_for('demo.remove') }}" class="inline-form" data-confirm="Remove the example pets and all their made-up entries?">
-      <button class="button small secondary" type="submit">Remove the example pets</button>
+      <button class="button small secondary" type="submit">Remove the examples</button>
     </form>
   {% else %}
-    <p>Want to look around first? Three fictional pets with weeks of entries can be added and removed at any time.</p>
+    <p>Want to look around first? See the app filled in for three fictional pets. You can remove them at any time.</p>
     <form method="post" action="{{ url_for('demo.add') }}" class="inline-form">
-      <button class="button secondary" type="submit">Add the example pets</button>
+      <button class="button secondary" type="submit">See an example</button>
     </form>
   {% endif %}
 </section>

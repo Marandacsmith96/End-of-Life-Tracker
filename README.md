@@ -52,9 +52,9 @@ observations, and it is not a validated medical device.
   prompts, and offers to keep, archive, export, or remove the profile.
 - **Several pets, one bar.** With more than one pet, a switcher under the
   header jumps between them and stays on the same page.
-- **Example pets to explore.** One button on the Home page adds three fictional
-  pets with weeks of entries (steady, declining, and improving) so you can
-  click through every page first; another removes them.
+- **See an example.** One button on the Home page fills the app with three
+  fictional pets and weeks of entries (steady, declining, and improving) so
+  you can click through every page first; another removes them.
 
 | Check-in | Trends | Vet visit |
 | --- | --- | --- |

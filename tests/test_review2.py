@@ -413,9 +413,9 @@ def test_more_tab_is_highlighted_on_its_sub_pages(client):
 
 def test_example_pets_can_be_added_and_removed(client, app):
     html = client.get("/how-it-works").get_data(as_text=True)
-    assert "Add the example pets" in html
+    assert "See an example" in html
     r = client.post("/examples/add", follow_redirects=True)
-    assert b"Added Maggie, Bruno, Juniper as example pets" in r.data
+    assert b"Meet Maggie, Bruno, Juniper" in r.data
     assert b"Example pet" in r.data  # badge on the dashboard the add lands on
     with app.app_context():
         demo = models.list_demo_animals()
@@ -423,7 +423,7 @@ def test_example_pets_can_be_added_and_removed(client, app):
         assert all(a.demo for a in demo)
         assert len(entries.list_entries(demo[2].id)) > 40
     html = client.get("/how-it-works").get_data(as_text=True)
-    assert "Remove the example pets" in html and ">Juniper</a>" in html
+    assert "Remove the examples" in html and ">Juniper</a>" in html
     # adding again is harmless
     r = client.post("/examples/add", follow_redirects=True)
     assert b"already here" in r.data
