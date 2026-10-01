@@ -289,6 +289,15 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   "q-badge" tripped the rule that no page may contain gamification words
   like "badge" or "streak", so it became "q-tile". The rule is doing its
   job even on things that are not copy.
+- "Cleaner, prettier, and more cozy." The palette was still cool blue on
+  grey-white, which reads as clinical. A cozy pass warmed everything
+  around the blue: cream page and card surfaces, warm grey text and
+  borders, rounder corners, warmer shadows, a peach glow beside the blue
+  one at the top of each page, and a very faint paw-print texture in the
+  background. The blue accent, buttons, and charts are unchanged so the
+  app still looks like itself. One real bug on the way: the page's top
+  glow repeated as a band at the bottom of short pages, because a
+  background on the body tiles to the body's height, not the window's.
 
 ---
 

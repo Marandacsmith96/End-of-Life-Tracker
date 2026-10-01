@@ -570,3 +570,71 @@ h1 { font-size: 2.05rem; }
 .photo-update { margin: 0; }
 .photo-update label { cursor: pointer; color: var(--accent-dark); font-weight: 700; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 2px; }
 .photo-update label:hover { color: var(--accent); }
+
+/* ---- Cozy pass: warm cream surfaces, softer shapes, a faint paw texture ---- */
+:root {
+  --bg: #f7f4ee;
+  --surface: #fffdf9;
+  --surface-2: #f3efe7;
+  --text: #2a2a33;
+  --muted: #6b6a74;
+  --faint: #a39f98;
+  --border: #e8e2d6;
+  --accent-soft: #e7edf9;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(60, 50, 30, .04), 0 10px 30px rgba(60, 50, 30, .07);
+}
+body {
+  background:
+    radial-gradient(900px 360px at 15% -80px, #e6edfb 0%, transparent 70%) no-repeat,
+    radial-gradient(700px 300px at 95% -60px, #fbeedd 0%, transparent 70%) no-repeat,
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><g fill='%233d64c4' fill-opacity='0.035'><ellipse cx='40' cy='52' rx='7' ry='9'/><circle cx='27' cy='40' r='3.5'/><circle cx='35' cy='32' r='3.5'/><circle cx='45' cy='32' r='3.5'/><circle cx='53' cy='40' r='3.5'/><ellipse cx='130' cy='132' rx='7' ry='9'/><circle cx='117' cy='120' r='3.5'/><circle cx='125' cy='112' r='3.5'/><circle cx='135' cy='112' r='3.5'/><circle cx='143' cy='120' r='3.5'/></g></svg>") repeat,
+    var(--bg);
+}
+.topbar { background: rgba(255, 253, 249, .94); box-shadow: 0 1px 0 var(--border), 0 6px 18px rgba(60, 50, 30, .05); }
+.pet-switcher { background: rgba(255, 253, 249, .9); }
+.card { border-color: var(--border); }
+.card.block { padding: 24px 26px; }
+.quiet-block { background: #f6f1e8; border-color: #ece5d8; }
+.count { border-radius: 16px; }
+.count.none { background: linear-gradient(180deg, #f6f2ea, #efe9de); border-color: #cfc6b6; }
+.insight { background: #f6f2ea; border-left-color: #cfc6b6; border-radius: 14px; }
+.insight.attention { background: #fbf2e2; }
+.insight.note { background: var(--accent-soft); }
+.hero-card { background: linear-gradient(135deg, #e9effc 0%, #faf7f1 60%, #fffdf9 100%); border-color: #e3e4ea; }
+.hero-card::after { background: radial-gradient(circle, rgba(222, 150, 60, .16), transparent 70%); }
+.today-card { background: #fffdf9; }
+.entry-form .panel, .form.card { background: #fffdf9; }
+.button, button.button { border-radius: 12px; }
+.button.secondary, button.button.secondary { background: #fffdf9; border-color: #dcd5c8; }
+.button.secondary:hover { background: var(--accent-soft); }
+.chip.quiet { background: #f0ebe2; color: var(--muted); }
+.hero-card .chip.quiet { background: rgba(255, 253, 249, .8); border-color: #e6e0d4; }
+.pet-chip { background: #fffdf9; border-color: #dcd5c8; }
+.pet-chip:hover { background: #f3efe7; }
+.choice, .form label.choice, .day-option, .form label.day-option { background: #fffdf9; border-color: #dcd5c8; }
+.table { border-color: var(--border); }
+.table th { background: #f3efe7; }
+.table tbody tr:nth-child(even) td { background: #faf8f3; }
+.cal-cell { background: #fbf9f4; border-color: #e9e3d8; }
+.cal-cell.logged { background: #f3efe7; }
+.link-list li:hover, .entry-list li:hover, .event-list li:hover { background: #f3efe7; }
+.bar { background: #ece7dd; }
+.progress-bar { background: #ece7dd; }
+input[type="range"] { background: linear-gradient(to right, var(--accent) 0 var(--pct), #e4ded2 var(--pct) 100%); }
+input[type="range"].unset { background: #e4ded2; }
+.flash { background: #fff6e6; border-color: #f3dfb8; border-left-color: #d9962a; color: #4d3b16; }
+.footer { color: #8a857c; }
+.step-card:nth-child(1) { background: linear-gradient(180deg, #fffdf9, #f4faf6); }
+.step-card:nth-child(2) { background: linear-gradient(180deg, #fffdf9, #f1f4fc); }
+.step-card:nth-child(3) { background: linear-gradient(180deg, #fffdf9, #f6f2fc); }
+html { min-height: 100%; }
+body { min-height: 100vh; }
+h1, h2, h3 { letter-spacing: -0.015em; }
+h1 { font-weight: 800; }
+h2 { font-weight: 750; }
+@media (max-width: 700px) {
+  .topbar { background: #fffdf9; }
+  .nav { background: rgba(255, 253, 249, .97); }
+}
