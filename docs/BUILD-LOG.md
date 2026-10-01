@@ -255,6 +255,12 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   a schema change (version 3, a `demo` flag on animals) so the app can tell
   examples from real pets; the migration test for version 2 files came with
   it. Before this, the examples existed only for people who ran a script.
+- Then: "have a tab that allows you to switch between example pets." A
+  pet switcher bar now sits under the header whenever there is more than
+  one pet: one chip per pet, the current one highlighted, and the link
+  keeps you on the same page for the other pet (Bruno's Trends to
+  Juniper's Trends). Before this, switching meant More, then Pets, then
+  Open, and you landed on Today every time.
 
 ---
 

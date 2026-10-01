@@ -450,3 +450,20 @@ def test_version_2_database_gains_the_demo_column(tmp_path):
     with app.app_context():
         assert models.get_animal(1).demo is False
         assert models.list_demo_animals() == []
+
+
+# --- pet switcher -------------------------------------------------------------
+
+def test_pet_switcher_keeps_the_page_and_only_shows_with_several_pets(client):
+    _pet(client)
+    html = client.get("/animals/1/trends").get_data(as_text=True)
+    assert "pet-switcher" not in html
+    _pet(client, name="Second")
+    html = client.get("/animals/1/trends").get_data(as_text=True)
+    assert "pet-switcher" in html
+    assert 'href="/animals/2/trends"' in html          # same page, other pet
+    assert 'class="pet-chip current"' in html
+    html = client.get("/animals/2/trends/mobility").get_data(as_text=True)
+    assert 'href="/animals/1/trends/mobility"' in html
+    html = client.get("/more").get_data(as_text=True)   # not a pet page: chips go to Today
+    assert 'href="/animals/1/today"' in html

@@ -375,3 +375,18 @@ body { font-size: 17px; line-height: 1.6; }
 .example-card h3 { margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .example-card .meta { margin: 0 0 10px; }
 .example-chip { min-height: 22px; padding: 0 8px; font-size: 0.74rem; letter-spacing: 0.02em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent-dark); }
+
+/* Pet switcher bar under the header */
+.pet-switcher { display: flex; align-items: center; gap: 8px; padding: 8px 22px; overflow-x: auto; scrollbar-width: none; background: var(--surface); border-bottom: 1px solid var(--border); }
+.pet-switcher::-webkit-scrollbar { display: none; }
+.pet-switcher-label { color: var(--muted); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 2px; }
+.pet-chip { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; min-height: 34px; padding: 4px 12px 4px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 700; font-size: 0.92rem; text-decoration: none; white-space: nowrap; }
+.pet-chip .icon { width: 18px; height: 18px; color: var(--accent-dark); }
+.pet-chip:hover { background: var(--surface-2); }
+.pet-chip.current { background: var(--accent-soft); border-color: var(--accent-soft); color: var(--accent-dark); }
+.pet-chip.more { color: var(--muted); font-weight: 600; padding: 4px 12px; }
+.pet-chip-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); }
+.pet-chip.current .pet-chip-tag { color: var(--accent-dark); opacity: .8; }
+@media (max-width: 700px) {
+  .pet-switcher { padding: 8px 14px; }
+}

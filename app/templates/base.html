@@ -32,6 +32,21 @@
       </nav>
     {% endif %}
   </header>
+  {% if g.current_animal %}
+    {% set pets = switcher_pets() %}
+    {% if pets %}
+      {% from "_icons.html" import icon %}
+      <nav class="pet-switcher" aria-label="Switch pet">
+        <span class="pet-switcher-label">Pet</span>
+        {% for p in pets %}
+          <a class="pet-chip{% if p.id == g.current_animal.id %} current{% endif %}" href="{{ switch_url(p) }}" {% if p.id == g.current_animal.id %}aria-current="true"{% endif %}>
+            {{ icon(p.species, 'icon') }}<span>{{ p.name }}</span>{% if p.demo %}<span class="pet-chip-tag">example</span>{% endif %}
+          </a>
+        {% endfor %}
+        <a class="pet-chip more" href="{{ url_for('dashboard.pets') }}">All pets</a>
+      </nav>
+    {% endif %}
+  {% endif %}
   <main class="content {% block content_class %}{% endblock %}" id="main">
     {% include "_checkin_banner.html" %}
     {% with messages = get_flashed_messages() %}

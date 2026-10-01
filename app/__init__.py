@@ -107,9 +107,26 @@ def create_app(test_config: dict | None = None) -> Flask:
     @app.context_processor
     def inject_globals():
         return {"disclaimer": safety.DISCLAIMER, "attribution": scoring.ATTRIBUTION,
-                "emergency": safety.EMERGENCY}
+                "emergency": safety.EMERGENCY, "switcher_pets": _switcher_pets, "switch_url": _switch_url}
 
     return app
+
+
+def _switcher_pets() -> list:
+    """Pets shown in the switcher bar: every active pet, when there is more than one."""
+    active = models.list_animals()
+    return active if len(active) > 1 else []
+
+
+def _switch_url(animal) -> str:
+    """The same page for another pet when the page is about a pet, else their Today page."""
+    args = dict(request.view_args or {})
+    if request.endpoint and "animal_id" in args and request.method == "GET":
+        try:
+            return url_for(request.endpoint, **{**args, "animal_id": animal.id})
+        except Exception:  # noqa: BLE001 - a page that cannot be rebuilt for another pet
+            pass
+    return url_for("dashboard.today", animal_id=animal.id)
 
 
 def _load_or_create_secret(data_dir: Path) -> str:

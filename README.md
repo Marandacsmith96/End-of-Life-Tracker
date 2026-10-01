@@ -50,6 +50,8 @@ observations, and it is not a validated medical device.
   pet's data.
 - **A gentle ending.** "My pet has passed away" keeps everything, stops
   prompts, and offers to keep, archive, export, or remove the profile.
+- **Several pets, one bar.** With more than one pet, a switcher under the
+  header jumps between them and stays on the same page.
 - **Example pets to explore.** The "How it works" page can add three fictional
   pets with weeks of entries (steady, declining, and improving) so you can
   click through every page first, then remove them with one button.
