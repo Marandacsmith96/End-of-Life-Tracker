@@ -564,3 +564,9 @@ h1 { font-size: 2.05rem; }
   .calendar { border-spacing: 3px; }
   .cal-cell { height: 52px; border-radius: 9px; }
 }
+
+/* "Update photo" under the portrait on Today */
+.hero-photo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.photo-update { margin: 0; }
+.photo-update label { cursor: pointer; color: var(--accent-dark); font-weight: 700; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 2px; }
+.photo-update label:hover { color: var(--accent); }

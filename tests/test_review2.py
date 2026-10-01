@@ -476,3 +476,17 @@ def test_home_tab_goes_to_the_home_page(client):
     html = client.get("/how-it-works").get_data(as_text=True)
     assert 'nav-item active" href="/how-it-works">Home' in html
     assert "Go to Maggie" in html
+
+
+def test_update_photo_sits_under_the_portrait_on_today(client, app):
+    _pet(client)
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "Add a photo" in html and 'action="/animals/1/photo"' in html
+    img = io.BytesIO()
+    Image.new("RGB", (40, 40)).save(img, format="JPEG")
+    img.seek(0)
+    r = client.post("/animals/1/photo", data={"photo": (img, "a.jpg")}, content_type="multipart/form-data",
+                    headers={"Referer": "http://localhost/animals/1/today"})
+    assert r.headers["Location"].endswith("/animals/1/today")
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "Update photo" in html and "<img src=" in html

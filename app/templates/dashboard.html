@@ -9,6 +9,12 @@
     {% else %}
       <span class="placeholder portrait" aria-hidden="true">{{ icon(animal.species, 'icon species') }}</span>
     {% endif %}
+    {% if not animal.archived %}
+      <form method="post" action="{{ url_for('animals.upload_photo', animal_id=animal.id) }}" enctype="multipart/form-data" class="photo-update">
+        <label class="link small">{{ 'Update photo' if animal.photo_path else 'Add a photo' }}
+          <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" onchange="this.form.submit()" hidden></label>
+      </form>
+    {% endif %}
   </div>
   <div class="hero-body">
     <h1>{{ animal.name }}'s quality of life</h1>
