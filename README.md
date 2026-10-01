@@ -1,6 +1,10 @@
+<img src="docs/logo.svg" alt="" width="72" align="left" style="margin-right: 14px">
+
 # Quality-of-Life Tracker
 
 **See the pattern, not just the day.**
+
+<br clear="left">
 
 > **Get the app, nothing to install:**
 > [Download for Windows](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Windows.zip) ·

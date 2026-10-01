@@ -33,5 +33,6 @@ exe = EXE(
     strip=False,
     upx=False,
     console=True,   # keep a console so errors are visible; set False once happy
+    icon=("packaging/icon.icns" if __import__("sys").platform == "darwin" else "packaging/icon.ico"),
 )
 coll = COLLECT(exe, a.binaries, a.zipfiles, a.datas, strip=False, upx=False, name="PetQoLTracker")

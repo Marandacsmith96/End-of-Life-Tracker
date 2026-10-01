@@ -1,1 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="#3d64c4"/><polyline points="7,21 12,15 17,18 25,9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="9" r="2.2" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Quality-of-Life Tracker">
+  <defs>
+    <linearGradient id="qolg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4f78d8"/><stop offset="1" stop-color="#2b4a9b"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#qolg)"/>
+  <g fill="#fff">
+    <ellipse cx="19.5" cy="25" rx="5" ry="6.3" transform="rotate(-20 19.5 25)"/>
+    <ellipse cx="44.5" cy="25" rx="5" ry="6.3" transform="rotate(20 44.5 25)"/>
+    <ellipse cx="28" cy="17" rx="4.7" ry="5.9" transform="rotate(-7 28 17)"/>
+    <ellipse cx="36" cy="17" rx="4.7" ry="5.9" transform="rotate(7 36 17)"/>
+  </g>
+  <path d="M32 51.5 C23.5 45.5 17.5 40.5 17.5 34.2 a7.3 7.3 0 0 1 14.5 -1.6 a7.3 7.3 0 0 1 14.5 1.6 C46.5 40.5 40.5 45.5 32 51.5 z" fill="#ffd6b3"/>
+</svg>

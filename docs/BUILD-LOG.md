@@ -298,6 +298,14 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   app still looks like itself. One real bug on the way: the page's top
   glow repeated as a band at the bottom of short pages, because a
   background on the body tiles to the body's height, not the window's.
+- "Create a logo too." A paw print whose main pad is a heart, white on
+  the app's blue, with the heart in the cozy peach. It is one hand-written
+  SVG used for the header, the favicon, the home page, and the README. The
+  same shapes are drawn again with Pillow to make the Windows and Mac icon
+  files, since the packaged app cannot use an SVG for its icon. First
+  attempt at the Pillow heart was boxy: the SVG's curved sides were sampled
+  at their control points instead of along the curve. Fixed by sampling the
+  cubic curves properly; a screenshot caught it in seconds.
 
 ---
 

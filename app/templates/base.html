@@ -13,7 +13,7 @@
   <a class="skip" href="#main">Skip to content</a>
   <header class="topbar">
     <a class="brand" href="{{ url_for('dashboard.landing') }}">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#3d64c4"/><polyline points="7,21 12,15 17,18 25,9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="25" cy="9" r="2.2" fill="#fff"/></svg>
+      <img class="brand-mark" src="{{ url_for('static', filename='logo.svg') }}" alt="" width="30" height="30">
       <span>Quality-of-Life Tracker</span>
     </a>
     {% if g.current_animal %}
