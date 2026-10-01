@@ -10,6 +10,7 @@ window instead of a browser tab:
 import logging
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -44,6 +45,24 @@ def _wait_until_listening(port: int, seconds: float = 15.0) -> bool:
                 return True
         time.sleep(0.2)
     return False
+
+
+def _open_browser(url: str) -> bool:
+    """Open the default browser, trying the OS's own opener if Python's helper fails."""
+    try:
+        if webbrowser.open(url):
+            return True
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        if sys.platform == "win32":
+            os.startfile(url)  # type: ignore[attr-defined]
+            return True
+        if sys.platform == "darwin":
+            return subprocess.call(["open", url]) == 0
+        return subprocess.call(["xdg-open", url]) == 0
+    except Exception:  # noqa: BLE001
+        return False
 
 
 def _say(*lines: str) -> None:
@@ -86,11 +105,7 @@ def main() -> None:
     except ImportError:
         webview = None
     if webview is None:
-        try:
-            opened = webbrowser.open(url)
-        except Exception:  # noqa: BLE001
-            opened = False
-        if not opened:
+        if not _open_browser(url):
             _say("  (Your browser did not open by itself; please open the address above yourself.)")
         server.join()
         return

@@ -36,6 +36,7 @@ jobs:
         shell: pwsh
         run: |
           Copy-Item packaging/README-Windows.txt dist/PetQoLTracker/READ-ME-FIRST.txt
+          Copy-Item "packaging/Open the app.url" "dist/PetQoLTracker/Open the app.url"
           Compress-Archive -Path dist/PetQoLTracker/* -DestinationPath QualityOfLifeTracker-Windows.zip
       - name: Add a readme and zip it up (Mac)
         if: runner.os == 'macOS'

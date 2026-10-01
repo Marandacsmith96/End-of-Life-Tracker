@@ -6,9 +6,10 @@ Quality-of-Life Tracker (Windows)
 
 2. Double-click PetQoLTracker.exe.
    A black window opens and shows an address like http://127.0.0.1:5000/.
-   Your web browser should open on it by itself; if it doesn't, open your
-   browser and type that address in.
+   Your web browser should open on it by itself. If it doesn't, double-click
+   "Open the app" in the same folder, or type that address into your browser.
    Leave the black window open while you use the app; closing it stops the app.
+   To open the app another day, double-click PetQoLTracker.exe again.
 
 3. If Windows shows a blue "Windows protected your PC" box, click
    "More info" and then "Run anyway". That box appears because the app
