@@ -3,7 +3,11 @@
 {% block content %}
 <section class="gentle">
   <h1>Enter your passcode</h1>
+  {% if from_phone %}
+  <p class="lede">Enter the phone passcode that was set on the computer the tracker runs on.</p>
+  {% else %}
   <p class="lede">This copy of the tracker is private. Enter the passcode you set when it was installed.</p>
+  {% endif %}
   <form method="post" class="form card block">
     <label>Passcode <input type="password" name="passcode" autocomplete="current-password" required autofocus></label>
     <div class="actions"><button class="button" type="submit">Unlock</button></div>

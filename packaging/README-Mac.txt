@@ -27,3 +27,10 @@ To try it with sample pets first, open Terminal in this folder and run:
 Updating to a newer version: download the ZIP again, unzip it, then move your
 "data" folder from the old folder into the new one. That folder holds all your
 entries and photos.
+
+Using it on your phone
+----------------------
+In the app, open More, then "Use on your phone", choose a passcode, and
+scan the code with your phone's camera. The phone has to be on the same
+Wi-Fi, and this window has to stay open. The first time, the computer may
+ask whether to allow the app on private networks: say yes.

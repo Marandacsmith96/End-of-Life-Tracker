@@ -59,6 +59,15 @@ observations, and it is not a validated medical device.
 - **See an example.** One button on the Home page fills the app with three
   fictional pets and weeks of entries (steady, declining, and improving) so
   you can click through every page first; another removes them.
+- **Use it on your phone.** Switch on phone access (More, then "Use on your
+  phone"), set a passcode, and scan the QR code: any phone or tablet on the
+  same Wi-Fi can open the tracker while the computer is on. Nothing goes
+  online.
+- **How each medication is going.** The Medications page shows, for each
+  one, how many logged days it was given in the last 30, a day-by-day strip,
+  and comfort scores before and after it started.
+- **Photo timeline.** Every photo added to a check-in, newest first by month,
+  each linked to its day.
 
 | Check-in | Trends | Vet visit |
 | --- | --- | --- |
@@ -102,6 +111,10 @@ same notes.
 
 Everything stays in the `data` folder next to those files. Back it up from
 the More page now and again.
+
+To use it from a phone on the same Wi-Fi, open More, then "Use on your
+phone", choose a passcode, and scan the code it shows. Windows may ask once
+whether to allow the app on private networks; say yes.
 
 **2. On the internet (from your phone too)**
 

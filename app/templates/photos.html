@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ animal.name }} · Photos{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>{{ icon('camera', 'icon h-icon') }}{{ animal.name }}'s photos</h1>
+  {% if not animal.archived %}<a class="link small" href="{{ url_for('entries.checkin', animal_id=animal.id) }}">Add today's photo</a>{% endif %}
+</div>
+{% if count %}
+  <p class="muted">{{ count }} photo{{ '' if count == 1 else 's' }}, newest first. Each one links to the day it was taken.</p>
+  {% for label, items in groups %}
+    <h2 class="month-head">{{ label }}</h2>
+    <div class="photo-grid">
+      {% for p in items %}
+        <figure class="photo-tile">
+          <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=p.entry_date.isoformat()) }}" aria-label="Open the check-in for {{ p.entry_date.strftime('%B') }} {{ p.entry_date.day }}">
+            <img src="{{ url_for('animals.serve_photo', filename=p.file_path) }}" alt="{{ p.caption or (animal.name ~ ' on ' ~ p.entry_date.strftime('%B') ~ ' ' ~ p.entry_date.day) }}" loading="lazy">
+          </a>
+          <figcaption>
+            <span class="date">{{ p.entry_date.strftime('%a, %b') }} {{ p.entry_date.day }}</span>
+            {% if p.day_status %}<span class="day-pill {{ p.day_status }} small">{{ day_labels[p.day_status] }}</span>{% endif %}
+            {% if p.caption %}<span class="muted small">{{ p.caption }}</span>{% endif %}
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <section class="card block empty-state">
+    <p>No photos yet. Photos added to a check-in (under "More details") are collected here, so you can look back over how {{ animal.name }} has been.</p>
+    {% if not animal.archived %}<a class="button secondary" href="{{ url_for('entries.checkin', animal_id=animal.id) }}">Check in and add a photo</a>{% endif %}
+  </section>
+{% endif %}
+{% endblock %}

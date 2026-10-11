@@ -15,7 +15,7 @@ a = Analysis(
         ("app/static", "app/static"),
         ("app/schema.sql", "app"),
     ] + ([("app/BUILD", "app")] if __import__("os").path.exists("app/BUILD") else []),
-    hiddenimports=["matplotlib.backends.backend_agg", "scripts.seed_demo"] + collect_submodules("reportlab"),
+    hiddenimports=["matplotlib.backends.backend_agg", "scripts.seed_demo"] + collect_submodules("reportlab") + collect_submodules("qrcode"),
     hookspath=[],
     runtime_hooks=[],
     excludes=["tkinter", "PyQt5", "PyQt6", "PySide2", "PySide6", "IPython", "notebook", "pytest"],

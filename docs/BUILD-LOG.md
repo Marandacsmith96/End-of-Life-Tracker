@@ -323,6 +323,47 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   on phones after the icon tile grew. Lesson repeated: each design pass
   needs its own phone-width and contrast check, not just a look.
 
+### Oct 11 — phone access, a medication view, and a photo timeline
+
+- "What can I do to improve the app?" got a list; you picked three.
+- **Use on your phone.** The app only ever listened on the computer itself
+  (127.0.0.1), which is why nothing else could reach it. There is now a
+  switch under More: choose a passcode, and the app opens a second door on
+  port 5100 that the whole home network can see, shows the address and a
+  QR code, and asks any other device for the passcode before showing a
+  page. The passcode is stored hashed in a small settings file; the switch
+  works without restarting the app and comes back on at the next start.
+  Only the computer itself can turn it on or off; a phone that tries gets
+  "forbidden". The hosted copy on Fly is untouched: a request is only
+  treated as "from a phone" when it arrived through that second door, so
+  the hosted copy's own passcode rule still applies there and nothing else
+  changes. The test for "did it really work over the network" was done with
+  the real launcher and real sockets, not the test client: enable, hit the
+  LAN address, get sent to unlock, fail with a wrong passcode, pass with the
+  right one, be refused when trying to switch it off from the phone, switch
+  it off from the computer and see the port close.
+- **How each medication is going.** The Medications page had a table and
+  nothing else, while the check-in collected a tick per medication per day
+  that was never shown back. Each medication now has a card: "given on 22
+  of the 25 days you logged in the last 30 days", a strip of 30 squares
+  (green given, amber not given, blank no record), and, when there are at
+  least four scored days either side of its start date, the average comfort
+  score in the two weeks before and after. That last sentence runs through
+  the safety guard with the medication's name masked, and ends by saying it
+  is something to mention to the vet rather than a verdict: the app must not
+  be read as judging whether a drug works.
+- **Photo timeline.** Photos added to check-ins were only visible on the
+  day they belonged to. A Photos page per pet (More, and a link on Today)
+  shows them newest first, grouped by month, each tile with the date and
+  the day's good/mixed/bad pill, linking back to that day's check-in. An
+  empty state explains where photos come from.
+- Eleven new tests cover the three features (155 in all). The qrcode
+  package was added to the requirements and to the PyInstaller spec, so the
+  Windows and Mac builds carry it.
+- Lesson: the useful improvements were all "show back what is already being
+  collected" (medication ticks, photos) or "remove a reason not to open the
+  app" (it is on the computer, I am on the sofa). None needed new data.
+
 ---
 
 ## Answers to the assignment's questions (material)

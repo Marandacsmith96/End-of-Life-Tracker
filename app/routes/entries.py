@@ -4,7 +4,7 @@ from datetime import date
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
-from .. import entries, markers, photos, scoring
+from .. import entries, markers, meds, photos, scoring
 from ..helpers import animal_or_404, parse_date
 
 bp = Blueprint("entries", __name__)
@@ -257,8 +257,11 @@ def medications(animal_id: int):
         entries.create_medication(animal_id, name, dose, schedule, start)
         flash(f"{name} added.")
         return redirect(url_for("entries.medications", animal_id=animal_id))
-    return render_template("medications.html", animal=animal, medications=entries.list_medications(animal_id),
-                           values={}, today=date.today().isoformat())
+    medications = entries.list_medications(animal_id)
+    end = animal.passed_date or date.today()
+    summaries = meds.summarize(medications, entries.list_entries(animal_id), entries.given_days_for_animal(animal_id), end)
+    return render_template("medications.html", animal=animal, medications=medications, summaries=summaries,
+                           window_days=meds.WINDOW_DAYS, values={}, today=date.today().isoformat())
 
 
 @bp.post("/medications/<int:medication_id>/toggle")
@@ -279,3 +282,20 @@ def delete_medication(medication_id: int):
     entries.delete_medication(medication_id)
     flash(f"{med.name} removed.")
     return redirect(url_for("entries.medications", animal_id=med.animal_id))
+
+
+# --- photo timeline ------------------------------------------------------------
+
+@bp.route("/animals/<int:animal_id>/photos")
+def photo_timeline(animal_id: int):
+    """Every photo added to a check-in, newest first, grouped by month."""
+    animal = animal_or_404(animal_id)
+    items = entries.list_photos_for_animal(animal_id)
+    groups: list[tuple[str, list]] = []
+    for photo in items:
+        label = f"{photo.entry_date:%B %Y}"
+        if not groups or groups[-1][0] != label:
+            groups.append((label, []))
+        groups[-1][1].append(photo)
+    return render_template("photos.html", animal=animal, groups=groups, count=len(items),
+                           day_labels=entries.DAY_STATUS_LABELS)

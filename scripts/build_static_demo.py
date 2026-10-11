@@ -44,7 +44,7 @@ DEMO_SCRIPT = """<script>
 
 SHORTCUTS = {"/": "index.html", "/today": "index.html", "/trends": "trends.html", "/calendar": "calendar.html",
              "/vet": "vet.html", "/more": "more.html", "/settings": "settings.html", "/how-it-works": "how-it-works.html",
-             "/pets": "pets.html"}
+             "/pets": "pets.html", "/settings/phone": "settings-phone.html"}
 KEEP_QUERY = {"range", "month", "since"}
 
 

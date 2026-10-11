@@ -142,6 +142,7 @@
     <div class="actions compact">
       <a class="link small" href="{{ url_for('events.new', animal_id=animal.id) }}">Add an event</a>
       <a class="link small" href="{{ url_for('trends.trends', animal_id=animal.id) }}#entries">All entries</a>
+      <a class="link small" href="{{ url_for('entries.photo_timeline', animal_id=animal.id) }}">Photos</a>
     </div>
   </div>
   {% if recent_events %}

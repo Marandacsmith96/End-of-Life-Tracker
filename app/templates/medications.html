@@ -25,6 +25,26 @@
 {% else %}
   <p class="card block muted">No medications yet.</p>
 {% endif %}
+{% if summaries %}
+<h2>How it's going</h2>
+<p class="muted">Whether each medication was ticked in the daily check-in over the last {{ window_days }} days. Days without a check-in, or before the medication was added, are left blank.</p>
+<div class="med-cards">
+  {% for s in summaries %}
+    <section class="card block med-card {{ '' if s.medication.active else 'inactive' }}" aria-label="{{ s.medication.name }}">
+      <div class="med-head">
+        <h3>{{ s.medication.name }}</h3>
+        <span class="muted small">{{ s.medication.dose or '' }}{% if s.medication.dose and s.medication.schedule %} · {% endif %}{{ s.medication.schedule or '' }}{% if not s.medication.active %} · stopped{% endif %}</span>
+      </div>
+      <p class="med-count">{{ s.count_text }}</p>
+      <div class="med-strip" role="img" aria-label="{{ s.count_text }}">
+        {% for d in s.days %}<span class="med-day {{ d.state }}" title="{{ d.day.strftime('%b') }} {{ d.day.day }}: {{ {'given': 'given', 'missed': 'not given', 'none': 'no record'}[d.state] }}"></span>{% endfor %}
+      </div>
+      <p class="muted small med-legend"><span class="med-day given"></span> given <span class="med-day missed"></span> not given <span class="med-day none"></span> no record</p>
+      {% if s.comfort_text %}<p class="med-comfort">{{ s.comfort_text }}</p>{% endif %}
+    </section>
+  {% endfor %}
+</div>
+{% endif %}
 <h2>Add a medication</h2>
 <form method="post" class="form card block">
   <label>Name <input type="text" name="name" value="{{ values.get('name', '') }}" maxlength="80" required></label>

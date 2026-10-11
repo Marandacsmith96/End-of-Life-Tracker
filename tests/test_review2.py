@@ -544,3 +544,156 @@ def test_seed_cli_does_not_duplicate_examples(app, monkeypatch):
     seed_demo.seed(reset=False)
     with app.app_context():
         assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie"]
+
+
+# --- phone access ------------------------------------------------------------
+
+PHONE = {"REMOTE_ADDR": "192.168.1.23", "pet_qol.phone_listener": True}
+
+
+def _from_phone(client, path, **kw):
+    return client.open(path, environ_base=PHONE, **kw)
+
+
+def test_phone_access_is_off_by_default_and_remote_requests_are_refused(client):
+    _pet(client)
+    assert _from_phone(client, "/animals/1/today").status_code == 403
+    assert client.get("/animals/1/today").status_code == 200  # this computer is unaffected
+
+
+def test_enabling_phone_access_needs_a_matching_passcode(client, app):
+    r = client.post("/settings/phone", data={"action": "enable", "passcode": "short", "passcode_confirm": "short"})
+    assert r.status_code == 400
+    r = client.post("/settings/phone", data={"action": "enable", "passcode": "sunflower", "passcode_confirm": "sunflowers"})
+    assert r.status_code == 400
+    r = client.post("/settings/phone", data={"action": "enable", "passcode": "sunflower", "passcode_confirm": "sunflower"})
+    assert r.status_code == 302
+    from app import phone
+    with app.app_context():
+        assert phone.is_enabled()
+        assert phone.check_passcode("sunflower") and not phone.check_passcode("Sunflower")
+    text = (app.config["DATA_DIR"] / "settings.json").read_text()
+    assert "sunflower" not in text  # only a hash is stored
+
+
+def test_phone_must_unlock_with_the_phone_passcode(client):
+    _pet(client)
+    client.post("/settings/phone", data={"action": "enable", "passcode": "sunflower", "passcode_confirm": "sunflower"})
+    phone = client.application.test_client()  # a second browser: the phone
+    r = phone.get("/animals/1/today", environ_base=PHONE)
+    assert r.status_code == 302 and "/unlock" in r.headers["Location"]
+    r = phone.post("/unlock?next=/animals/1/today", data={"passcode": "wrong"}, environ_base=PHONE)
+    assert r.status_code == 401
+    r = phone.post("/unlock?next=/animals/1/today", data={"passcode": "sunflower"}, environ_base=PHONE)
+    assert r.status_code == 302 and r.headers["Location"].endswith("/animals/1/today")
+    assert phone.get("/animals/1/today", environ_base=PHONE).status_code == 200
+    # The computer itself never needs the phone passcode.
+    assert client.get("/animals/1/today").status_code == 200
+    assert client.get("/unlock").status_code == 302
+
+
+def test_phone_cannot_change_phone_access(client):
+    client.post("/settings/phone", data={"action": "enable", "passcode": "sunflower", "passcode_confirm": "sunflower"})
+    phone = client.application.test_client()
+    phone.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE)
+    assert phone.get("/settings/phone", environ_base=PHONE).status_code == 200
+    assert phone.post("/settings/phone", data={"action": "disable"}, environ_base=PHONE).status_code == 403
+    r = client.post("/settings/phone", data={"action": "disable"})
+    assert r.status_code == 302
+    assert phone.get("/animals/1/today", environ_base=PHONE).status_code == 403
+
+
+def test_phone_page_shows_address_and_qr_when_on(client, monkeypatch):
+    from app import phone
+    monkeypatch.setattr(phone, "lan_ip", lambda: "192.168.1.5")
+    html = client.get("/settings/phone").get_data(as_text=True)
+    assert "Switch it on" in html and "qr-code" not in html
+    client.post("/settings/phone", data={"action": "enable", "passcode": "sunflower", "passcode_confirm": "sunflower"})
+    html = client.get("/settings/phone").get_data(as_text=True)
+    assert "http://192.168.1.5:5100/" in html and 'class="qr-code"' in html and 'width="' not in html.split("qr-code")[1][:40]
+    assert "Switch off" in html
+
+
+def test_phone_links_are_on_settings_and_more(client):
+    _pet(client)
+    assert "/settings/phone" in client.get("/settings").get_data(as_text=True)
+    assert "/settings/phone" in client.get("/more").get_data(as_text=True)
+
+
+# --- medications: how it's going --------------------------------------------
+
+def test_medication_summary_counts_given_days_and_comfort(client):
+    _pet(client)
+    start = (TODAY - timedelta(days=10)).isoformat()
+    client.post("/animals/1/medications", data={"name": "Gabapentin", "start_date": start})
+    for d in range(20, 10, -1):  # two weeks before: comfort 4
+        _checkin(client, d, each=4)
+    for d in range(10, 0, -1):  # after: comfort 7, given on every other day
+        extra = {"meds_included": "1", **({"given": "1"} if d % 2 == 0 else {})}
+        _checkin(client, d, each=7, **extra)
+    html = client.get("/animals/1/medications").get_data(as_text=True)
+    assert "How it" in html
+    assert "Given on 5 of the 10 days you logged in the last 30 days." in html
+    assert "Comfort scores averaged 7.0 in the two weeks after Gabapentin started, compared with 4.0" in html
+    assert html.count('class="med-day given"') == 5 + 1  # strip plus the legend
+    assert html.count('class="med-day missed"') == 5 + 1
+
+
+def test_medication_summary_without_records(client):
+    _pet(client)
+    client.post("/animals/1/medications", data={"name": "Meloxicam"})
+    html = client.get("/animals/1/medications").get_data(as_text=True)
+    assert "Not recorded in a check-in yet." in html
+    assert "Comfort scores" not in html
+
+
+def test_medication_summary_text_passes_the_safety_guard():
+    from app import meds
+    from app.safety import guard
+    med = Medication(1, 1, "Prednisolone", None, None, TODAY - timedelta(days=10), None, True)
+    ents = [_entry(d, each=(3 if d > 10 else 8)) for d in range(1, 24)]
+    [summary] = meds.summarize([med], ents, {1: {TODAY - timedelta(days=1): True}}, TODAY)
+    assert summary.given == 1 and summary.offered == 1
+    assert "8.0" in summary.comfort_text and "3.0" in summary.comfort_text
+    guard(summary.count_text)
+
+
+# --- photo timeline --------------------------------------------------------
+
+def _add_photo(client, days_ago, size=(40, 40)):
+    img = io.BytesIO()
+    Image.new("RGB", size, (200, 120, 90)).save(img, format="JPEG")
+    img.seek(0)
+    day = (TODAY - timedelta(days=days_ago)).isoformat()
+    data = {"entry_date": day, "day_status": "good", "photos": (img, f"p{days_ago}.jpg")}
+    r = client.post("/animals/1/checkin", data=data, content_type="multipart/form-data")
+    assert r.status_code == 302, r.get_data(as_text=True)[:200]
+
+
+def test_photo_timeline_lists_photos_newest_first_by_month(client):
+    _pet(client)
+    html = client.get("/animals/1/photos").get_data(as_text=True)
+    assert "No photos yet" in html
+    _add_photo(client, 40)
+    _add_photo(client, 3)
+    _add_photo(client, 1)
+    html = client.get("/animals/1/photos").get_data(as_text=True)
+    assert "3 photos" in html
+    assert html.count('class="photo-tile"') == 3
+    months = [m for m in {(TODAY - timedelta(days=d)).strftime("%B %Y") for d in (40, 3, 1)}]
+    for m in months:
+        assert m in html
+    first = html.index(f"date={(TODAY - timedelta(days=1)).isoformat()}")
+    last = html.index(f"date={(TODAY - timedelta(days=40)).isoformat()}")
+    assert first < last
+    assert "/animals/1/photos" in client.get("/more").get_data(as_text=True)
+    assert "/animals/1/photos" in client.get("/animals/1/today").get_data(as_text=True)
+
+
+def test_photo_timeline_only_shows_this_pets_photos(client):
+    _pet(client)
+    _pet(client, "Otis")
+    _add_photo(client, 2)
+    assert client.get("/animals/2/photos").get_data(as_text=True).count('class="photo-tile"') == 0
+    assert client.get("/animals/1/photos").get_data(as_text=True).count('class="photo-tile"') == 1
+    assert client.get("/animals/99/photos").status_code == 404

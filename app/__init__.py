@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from flask import Flask, abort, g, redirect, request, session, url_for
 from werkzeug.routing import IntegerConverter, ValidationError
 
-from . import db, entries, models, safety, scoring, version
+from . import db, entries, models, phone, safety, scoring, version
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MAX_ID = 2**63 - 1  # largest SQLite INTEGER
@@ -47,10 +47,19 @@ def create_app(test_config: dict | None = None) -> Flask:
     from .routes import animals, auth, baseline, caregiver, dashboard, demo, export, markers, settings, trends
     from .routes import entries as entry_routes
     from .routes import events as event_routes
+    from .routes import phone as phone_routes
 
     for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
-                   caregiver, export, settings, demo):
+                   caregiver, export, settings, demo, phone_routes):
         app.register_blueprint(module.bp)
+
+    @app.before_request
+    def only_while_phone_access_is_on():
+        """A request from another device is only served while phone access is
+        switched on (the listener is stopped when it is switched off; this
+        covers the moment in between)."""
+        if phone.is_remote_request() and not phone.is_enabled():
+            abort(403)
 
     @app.before_request
     def block_cross_site_posts():
@@ -110,6 +119,8 @@ def create_app(test_config: dict | None = None) -> Flask:
                 "emergency": safety.EMERGENCY, "switcher_pets": _switcher_pets, "switch_url": _switch_url,
                 "build_label": version.build_label()}
 
+    if not app.config.get("TESTING"):
+        phone.autostart(app)
     return app
 
 

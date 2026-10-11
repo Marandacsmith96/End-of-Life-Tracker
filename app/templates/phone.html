@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Use on your phone{% endblock %}
+{% block content %}
+<h1>{{ icon('phone', 'icon h-icon') }}Use on your phone</h1>
+<p class="lede">Open the tracker on a phone or tablet that is on the same Wi-Fi as this computer, so a check-in can happen on the sofa or at the vet's. Everything still lives on this computer; nothing goes online.</p>
+
+{% if enabled %}
+  <section class="card block phone-card">
+    <h2>Phone access is on</h2>
+    {% if address %}
+      <div class="phone-share">
+        <div class="phone-qr">{{ qr|safe }}</div>
+        <div class="phone-address">
+          <p>On your phone, point the camera at the code, or type this address into the browser:</p>
+          <p class="address"><code>{{ address }}</code></p>
+          <p class="muted small">Your phone will ask for the passcode once, then remember it.</p>
+        </div>
+      </div>
+    {% else %}
+      <p class="muted">This computer doesn't seem to be connected to a network right now. Connect to your Wi-Fi and reload this page to see the address.</p>
+    {% endif %}
+    {% if not running and not remote %}
+      <p class="danger-text">The listener could not start on port {{ port }}, so phones can't reach the app yet. Another program may be using that port; try restarting the app.</p>
+    {% endif %}
+    {% if remote %}
+      <p class="muted small">Phone access can only be switched off from the computer the tracker runs on.</p>
+    {% else %}
+      <form method="post" class="form" data-confirm="Switch phone access off? Phones on your Wi-Fi will no longer be able to open the app.">
+        <input type="hidden" name="action" value="disable">
+        <div class="actions"><button class="button secondary" type="submit">Switch off</button></div>
+      </form>
+    {% endif %}
+  </section>
+{% elif remote %}
+  <section class="card block"><p>Phone access is off. It can only be switched on from the computer the tracker runs on.</p></section>
+{% else %}
+  <section class="card block phone-card">
+    <h2>Switch it on</h2>
+    <p>Choose a passcode. Anyone on your Wi-Fi who knows it can open the tracker on their phone, so pick something only your household knows.</p>
+    <form method="post" class="form">
+      <input type="hidden" name="action" value="enable">
+      <label>Passcode <span class="muted">(at least {{ min_passcode }} characters)</span> <input type="password" name="passcode" minlength="{{ min_passcode }}" maxlength="80" autocomplete="new-password" required></label>
+      <label>Type it again <input type="password" name="passcode_confirm" minlength="{{ min_passcode }}" maxlength="80" autocomplete="new-password" required></label>
+      <div class="actions"><button class="button" type="submit">Switch on</button><a class="link" href="{{ url_for('settings.settings') }}">Back</a></div>
+    </form>
+  </section>
+{% endif %}
+
+<section class="card block">
+  <h2>Good to know</h2>
+  <ul class="plain-list">
+    <li><strong>Same Wi-Fi only.</strong> The phone has to be on the same home network as this computer; it won't work from elsewhere, and that's on purpose.</li>
+    <li><strong>The computer stays on.</strong> The app window on the computer has to be open for the phone to reach it.</li>
+    <li><strong>Windows may ask once.</strong> The first time it's switched on, Windows can show a "allow access" box for the app. Choose <em>private networks</em> and allow it.</li>
+    <li><strong>You can forget the passcode.</strong> Switch phone access off and on again to set a new one.</li>
+  </ul>
+</section>
+{% endblock %}

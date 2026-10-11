@@ -284,6 +284,21 @@ def medications_given_names_for_animal(animal_id: int) -> dict[int, list[str]]:
     return out
 
 
+def given_days_for_animal(animal_id: int) -> dict[int, dict[date, bool]]:
+    """{medication_id: {entry_date: given?}} for every check-in that offered
+    the medication (a row exists whether or not it was ticked)."""
+    rows = get_db().execute(
+        """SELECT em.medication_id, e.entry_date, em.given FROM entry_medications em
+           JOIN entries e ON e.id = em.entry_id
+           WHERE e.animal_id = ?""",
+        (animal_id,),
+    ).fetchall()
+    out: dict[int, dict[date, bool]] = {}
+    for r in rows:
+        out.setdefault(r["medication_id"], {})[r["entry_date"]] = bool(r["given"])
+    return out
+
+
 # --- photos ------------------------------------------------------------------
 
 @dataclass
@@ -318,3 +333,27 @@ def delete_entry_photo(photo_id: int) -> None:
     db = get_db()
     db.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
     db.commit()
+
+
+@dataclass
+class AnimalPhoto:
+    """A photo together with the day it was taken on."""
+    id: int
+    entry_id: int
+    file_path: str
+    caption: str | None
+    entry_date: date
+    day_status: str | None
+
+
+def list_photos_for_animal(animal_id: int) -> list[AnimalPhoto]:
+    """Every photo of the animal, newest day first."""
+    rows = get_db().execute(
+        """SELECT p.id, p.entry_id, p.file_path, p.caption, e.entry_date, e.day_status
+           FROM photos p JOIN entries e ON e.id = p.entry_id
+           WHERE e.animal_id = ?
+           ORDER BY e.entry_date DESC, p.id DESC""",
+        (animal_id,),
+    ).fetchall()
+    return [AnimalPhoto(r["id"], r["entry_id"], r["file_path"], r["caption"], r["entry_date"], r["day_status"])
+            for r in rows]

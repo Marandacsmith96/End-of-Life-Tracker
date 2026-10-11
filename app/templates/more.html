@@ -11,6 +11,7 @@
     <li>{{ icon('check-circle') }}<a href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Good-day behaviors</a></li>
     <li>{{ icon('flag') }}<a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
     <li>{{ icon('pill') }}<a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
+    <li>{{ icon('camera') }}<a href="{{ url_for('entries.photo_timeline', animal_id=animal.id) }}">Photos</a></li>
     <li>{{ icon('baseline') }}<a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a></li>
     <li>{{ icon('person') }}<a href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">How are you doing?</a> <span class="muted small">caregiver check-in</span></li>
   </ul>
@@ -31,6 +32,7 @@
   <h2>App</h2>
   <ul class="link-list">
     <li>{{ icon('archive') }}<a href="{{ url_for('settings.settings') }}">Backup, restore, and about</a></li>
+    <li>{{ icon('phone') }}<a href="{{ url_for('phone.settings') }}">Use on your phone</a></li>
     <li>{{ icon('trend') }}<a href="{{ url_for('dashboard.landing') }}">Home and how it works</a></li>
     <li>{{ icon('heart') }}<a href="{{ url_for('dashboard.landing') }}#examples">Example pets</a> <span class="muted small">add or remove the three sample pets</span></li>
   </ul>

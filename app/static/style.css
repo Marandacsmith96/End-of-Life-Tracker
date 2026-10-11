@@ -658,3 +658,40 @@ h2 { font-weight: 750; }
   .day-option span { white-space: nowrap; }
   .day-icon { width: 36px; height: 36px; padding: 7px; }
 }
+
+/* ---- Use on your phone ---- */
+.phone-share { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; margin: 6px 0 14px; }
+.phone-qr { flex: none; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; box-shadow: var(--shadow); }
+.qr-code { display: block; width: 180px; height: 180px; }
+.phone-address { flex: 1 1 240px; }
+.phone-address .address code { font-size: 1.15rem; padding: 6px 10px; background: var(--accent-soft, #eef2fb); border-radius: var(--radius-sm); word-break: break-all; }
+.plain-list { padding-left: 18px; margin: 0; }
+.plain-list li { margin: 6px 0; }
+
+/* ---- Medications: how it's going ---- */
+.table-scroll + h2 { margin-top: 22px; }
+.med-cards { margin-top: 4px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-bottom: 18px; }
+.med-card.block { margin-bottom: 0; }
+.med-card.inactive { opacity: .75; }
+.med-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }
+.med-head h3 { margin: 0; font-size: 1.05rem; }
+.med-count { margin: 0 0 8px; }
+.med-strip { display: flex; flex-wrap: wrap; gap: 3px; }
+.med-day { display: inline-block; width: 14px; height: 14px; border-radius: 4px; background: #efebe3; border: 1px solid #e3ddd2; }
+.med-day.given { background: var(--good); border-color: var(--good); }
+.med-day.missed { background: var(--mixed-soft); border-color: var(--mixed); }
+.med-legend { margin: 8px 0 0; display: flex; align-items: center; gap: 4px 6px; flex-wrap: wrap; }
+.med-legend .med-day { width: 11px; height: 11px; }
+.med-comfort { margin: 10px 0 0; padding: 10px 12px; background: var(--accent-soft); border-radius: var(--radius-sm); font-size: 0.95rem; }
+
+/* ---- Photo timeline ---- */
+.month-head { font-size: 1.1rem; margin: 22px 0 10px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.photo-tile { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.photo-tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.photo-tile figcaption { padding: 8px 10px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 0.9rem; }
+.photo-tile .date { font-weight: 700; }
+.day-pill.small { font-size: 0.78rem; padding: 1px 8px; }
+.empty-state { text-align: center; }
+.empty-state .button { margin-top: 8px; }
+@media (max-width: 700px) { .photo-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; } }
