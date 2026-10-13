@@ -1,7 +1,7 @@
 # Build log: Pet Quality-of-Life Tracker
 
-*Phase 2 submission. The dated running notes this essay is condensed from are
-in `docs/BUILD-LOG.md`, and the commit history on the branch is the other
+*Phase 2 submission. Condensed from the twenty-five pages of dated running
+notes in `docs/BUILD-LOG.md`; the commit history on the branch is the other
 record of what happened and when.*
 
 ## What I was building, and who actually wrote it
@@ -25,6 +25,16 @@ part was to decide what the app should be, answer its questions, make every
 product decision, use the app as a real person would, and tell it what was
 wrong. The rest of this log is about what that arrangement was actually
 like. **[you: one or two sentences on why you chose this project.]**
+
+A note on where this log comes from. At the very start, before any code was
+written, I asked Claude Code to keep a running log of what happened as we
+went: what I asked for, what it tried, what broke, and how long each problem
+lived before it was caught. It added to that log after every session. By the
+end it ran to about twenty-five pages of dated notes, with a table of every
+time it handed me something that looked right and was wrong. Everything in
+this essay is drawn from that record; I have picked the examples that teach
+the most rather than listing all of them. The full notes are in the
+repository as `docs/BUILD-LOG.md` for anyone who wants the long version.
 
 ## What worked, and why I think it worked
 
