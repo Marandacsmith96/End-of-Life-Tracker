@@ -4,6 +4,8 @@ import sqlite3
 from html import unescape
 import threading
 import zipfile
+
+import pytest
 from datetime import date, timedelta
 
 from PIL import Image
@@ -958,6 +960,9 @@ def test_birth_date_cannot_follow_the_passing_date(client, app):
 
 def test_secret_key_is_private_to_this_user(app):
     import stat
+    import sys
+    if sys.platform == "win32":
+        pytest.skip("Windows has no Unix file modes; the file inherits the user's folder permissions")
     mode = stat.S_IMODE((app.config["DATA_DIR"] / "secret_key").stat().st_mode)
     assert mode == 0o600
 
