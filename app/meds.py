@@ -31,8 +31,8 @@ class MedSummary:
     def count_text(self) -> str:
         if not self.offered:
             if self.medication.active:
-                return "No full check-in has recorded it yet."
-            return f"No full check-in recorded it in the last {WINDOW_DAYS} days."
+                return "Not ticked in a full check-in yet."
+            return f"Not ticked in any full check-in in the last {WINDOW_DAYS} days."
         plural = "day" if self.offered == 1 else "days"
         return (f"Given on {self.given} of the {self.offered} {plural} with a full check-in "
                 f"in the last {WINDOW_DAYS} days.")

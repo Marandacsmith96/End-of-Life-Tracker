@@ -1,6 +1,7 @@
 """Regression tests for the second bug hunt (routes, data layer, analysis, PDF)."""
 import io
 import sqlite3
+from html import unescape
 import threading
 import zipfile
 from datetime import date, timedelta
@@ -643,7 +644,7 @@ def test_medication_summary_without_records(client):
     _pet(client)
     client.post("/animals/1/medications", data={"name": "Meloxicam"})
     html = client.get("/animals/1/medications").get_data(as_text=True)
-    assert "No full check-in has recorded it yet." in html
+    assert "Not ticked in a full check-in yet." in html
     assert "Comfort scores" not in html
 
 
@@ -775,4 +776,58 @@ def test_stopped_medication_days_after_its_end_are_blank(client):
     with client.application.app_context():
         en.set_medication_active(1, False, on=TODAY - timedelta(days=40))
     html = client.get("/animals/1/medications").get_data(as_text=True)
-    assert "No full check-in recorded it in the last 30 days." in html
+    assert "Not ticked in any full check-in in the last 30 days." in html
+
+
+# --- fifth bug check: browser walkthrough findings -------------------------------
+
+def test_new_pet_is_not_nagged_before_its_first_checkin(client):
+    _pet(client)
+    assert b"No check-in recorded today" not in client.get("/animals/1/more").data
+    _checkin(client, 2)
+    assert b"No check-in recorded today" in client.get("/animals/1/more").data
+
+
+def test_remembered_pet_entries_are_not_dead_links(client):
+    _pet(client)
+    _checkin(client, 1)
+    client.post("/animals/1/passed", data={"passed_date": TODAY.isoformat(), "choice": "keep"})
+    r = client.get("/animals/1/checkin", follow_redirects=True)
+    html = r.get_data(as_text=True)
+    assert "kept in memory" in html and "archived" not in html.split("<main")[1].split("Recent")[0]
+    assert "/animals/1/checkin?date=" not in client.get("/animals/1/today").get_data(as_text=True)
+    assert "/animals/1/checkin?date=" not in client.get("/animals/1/trends").get_data(as_text=True)
+
+
+def test_good_days_observation_reads_as_a_sentence(client):
+    _pet(client)
+    for d in range(20, 7, -1):
+        _checkin(client, d, each=8)
+    for d in range(7, 0, -1):
+        _checkin(client, d, each=8, good_days=3)
+    html = unescape(client.get("/animals/1/today").get_data(as_text=True))
+    assert "More good days than bad scores" not in html
+    assert "The good-days-versus-bad score has been lower recently" in html
+
+
+def test_unknown_pages_get_the_app_look(client):
+    r = client.get("/animals/999/today")
+    assert r.status_code == 404
+    html = unescape(r.get_data(as_text=True))
+    assert "isn't here" in html and 'class="topbar"' in html
+
+
+def test_trend_summary_does_not_repeat_itself(client):
+    _pet(client)
+    _checkin(client, 0)
+    html = unescape(client.get("/animals/1/today").get_data(as_text=True))
+    summary = html.split('class="chart-summary">')[1].split("</p>")[0]
+    assert summary.count("isn't enough information yet") == 1 and "Limited data" in summary
+
+
+def test_remove_check_in_sits_below_the_save_bar(client):
+    _pet(client)
+    _checkin(client, 0)
+    html = client.get("/animals/1/checkin").get_data(as_text=True)
+    sticky = html.split('class="actions sticky-actions"')[1].split("</div>")[0]
+    assert "Remove this check-in" not in sticky and 'class="remove-entry"' in html

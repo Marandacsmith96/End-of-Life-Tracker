@@ -23,20 +23,28 @@
       var x = chart.scales.x, area = chart.chartArea, ctx = chart.ctx;
       ctx.save();
       var sorted = events.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-      var lastPx = -Infinity, row = 0;
+      var narrow = (area.right - area.left) < 420, maxChars = narrow ? 14 : 22;
+      var rowEnds = [-Infinity, -Infinity, -Infinity];   // right edge of the last label on each row
+      ctx.font = "600 10px " + Chart.defaults.font.family;
       sorted.forEach(function (ev) {
         var px = x.getPixelForValue(d(ev.date).getTime());
         if (px < area.left || px > area.right) return;
         ctx.strokeStyle = FAINT; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
         ctx.beginPath(); ctx.moveTo(px, area.top); ctx.lineTo(px, area.bottom); ctx.stroke();
         ctx.setLineDash([]);
-        row = (px - lastPx < 140) ? (row + 1) % 3 : 0;   // stagger labels that would collide
-        lastPx = px;
-        var text = ev.title.length > 22 ? ev.title.slice(0, 21) + "…" : ev.title;
-        ctx.font = "600 10px " + Chart.defaults.font.family; ctx.textAlign = "left";
-        var w = ctx.measureText(text).width, ty = area.top + 10 + row * 12;
-        ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.fillRect(px + 2, ty - 9, w + 4, 12);
-        ctx.fillStyle = MUTED; ctx.fillText(text, px + 4, ty);
+        var text = ev.title.length > maxChars ? ev.title.slice(0, maxChars - 1) + "…" : ev.title;
+        var w = ctx.measureText(text).width;
+        // Put the label to the right of its line unless it would run off the chart.
+        var left = px + 4, flip = left + w + 2 > area.right;
+        if (flip) left = px - 4 - w;
+        // Pick the first row whose previous label ends before this one starts.
+        var row = 0;
+        for (var r = 0; r < rowEnds.length; r++) { if (left > rowEnds[r] + 6) { row = r; break; } row = (rowEnds[r] < rowEnds[row]) ? r : row; }
+        rowEnds[row] = left + w;
+        var ty = area.top + 10 + row * 12;
+        ctx.textAlign = "left";
+        ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.fillRect(left - 2, ty - 9, w + 4, 12);
+        ctx.fillStyle = MUTED; ctx.fillText(text, left, ty);
       });
       ctx.restore();
     }
@@ -50,7 +58,7 @@
     var span = Math.max(1, (d(endIso) - d(startIso)) / DAY);
     var stepDays = span > 200 ? 30 : span > 60 ? 14 : span > 20 ? 7 : span > 8 ? 2 : 1;
     return {
-      type: "linear", min: d(startIso).getTime() - DAY / 2, max: d(endIso).getTime() + DAY / 2,
+      type: "linear", min: d(startIso).getTime() - DAY / 2, max: d(endIso).getTime() + Math.max(DAY / 2, span * DAY / 50),
       grid: { display: false },
       ticks: { maxRotation: 0, stepSize: stepDays * DAY, includeBounds: false, maxTicksLimit: 9,
         callback: function (val) { return new Date(val).toLocaleDateString(undefined, { month: "short", day: "numeric" }); } }
@@ -132,7 +140,7 @@
     new Chart(el, { type: "line", data: { datasets: [{ data: pts(s.dates, s.values), borderColor: SERIES, backgroundColor: SERIES, borderWidth: 2, pointRadius: 3, tension: 0.2 }] },
       options: { responsive: true, maintainAspectRatio: false, animation: false, parsing: false,
         plugins: { legend: { display: false }, tooltip: tooltip({ callbacks: { label: function (i) { return i.parsed.y + " " + s.unit; } } }) },
-        scales: { x: timeAxis(s.dates[0], s.dates[s.dates.length - 1]), y: { min: Math.max(0, Math.floor((lo - pad) * 10) / 10), max: Math.ceil((hi + pad) * 10) / 10, grid: { color: GRID, drawTicks: false }, border: { display: false } } } } });
+        scales: { x: timeAxis(s.dates[0], s.dates[s.dates.length - 1]), y: { min: Math.max(0, Math.floor((lo - pad) * 10) / 10), max: Math.ceil((hi + pad) * 10) / 10, ticks: { includeBounds: false }, grid: { color: GRID, drawTicks: false }, border: { display: false } } } } });
   }
 
   function markersChart(el, data) {

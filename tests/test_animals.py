@@ -1,5 +1,5 @@
 import io
-from datetime import date
+from datetime import date, timedelta
 
 from PIL import Image
 
@@ -79,6 +79,8 @@ def test_remove_requires_typing_the_name(client, app):
 
 def test_reminder_setting(client, app):
     _add(client)
+    two_days_ago = (date.today() - timedelta(days=2)).isoformat()
+    client.post("/animals/1/checkin/quick", data={"entry_date": two_days_ago, "day_status": "good"})
     client.post("/animals/1/reminder", data={"reminder": "off"})
     with app.app_context():
         assert models.get_animal(1).reminder == "off"

@@ -50,7 +50,7 @@
   /* Pet switcher: keep the current pet's chip in view when the bar scrolls. */
   var currentChip = document.querySelector(".pet-chip.current");
   if (currentChip && currentChip.scrollIntoView) {
-    currentChip.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+    currentChip.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "instant" });
   }
 
   /* One click per form: once a submit goes through, its buttons are disabled
@@ -157,4 +157,15 @@
   });
   guided(prefGuided());
   if (document.querySelector(".flash") && form.classList.contains("guided")) show(visibleSteps().length - 1);
+})();
+
+// Tables wider than the screen scroll sideways; say so, since nothing else shows it.
+(function () {
+  function mark() {
+    document.querySelectorAll(".table-scroll").forEach(function (box) {
+      box.classList.toggle("has-more", box.scrollWidth > box.clientWidth + 2);
+    });
+  }
+  mark();
+  window.addEventListener("resize", mark);
 })();

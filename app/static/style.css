@@ -91,7 +91,7 @@ button.link { background: none; border: none; padding: 0; font: inherit; font-we
 /* Forms */
 .form label { display: block; margin-bottom: 14px; font-weight: 700; }
 .form label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 0 14px 8px 0; font-weight: 500; }
-.form input[type="text"], .form input[type="date"], .form input[type="number"], .form select, .form textarea {
+.form input[type="text"], .form input[type="password"], .form input[type="date"], .form input[type="number"], .form select, .form textarea {
   display: block; width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text); min-height: 44px;
 }
 .form input:focus, .form select:focus, .form textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(61,100,196,.18); }
@@ -695,3 +695,14 @@ h2 { font-weight: 750; }
 .empty-state { text-align: center; }
 .empty-state .button { margin-top: 8px; }
 @media (max-width: 700px) { .photo-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; } }
+
+/* ---- Fifth bug check ---- */
+.table-scroll.has-more::after { content: "Swipe sideways to see the rest of the table"; display: block; font-size: 0.8rem; color: var(--muted); padding: 6px 2px 0; }
+.sticky-actions { background: var(--bg); box-shadow: 0 -8px 16px -8px rgba(60, 50, 30, .18); }
+.remove-entry { margin: 4px 0 24px; }
+.day-pill { white-space: nowrap; }
+.form input[type="file"] { display: block; width: 100%; padding: 10px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.form label.inline.confirm-row { display: flex; align-items: flex-start; gap: 10px; font-weight: 600; margin: 10px 0 14px; }
+.form label.inline.confirm-row input { margin-top: 3px; }
+.event-list .row-actions .link, .row-actions .link.small { font-size: 0.85rem; }
+.empty-state h1 { margin-top: 4px; }

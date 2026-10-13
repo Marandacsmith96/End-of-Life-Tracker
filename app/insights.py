@@ -87,15 +87,16 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
             moves.append((abs(comp.delta), key, comp))
     for _, key, comp in sorted(moves, reverse=True)[:3]:
         label = CATEGORY_LABELS[key]
+        subject = "The good-days-versus-bad score has" if key == "good_days" else f"{label} scores have"
         if comp.delta <= -1.0:
             out.append(Insight(
-                guard(f"{label} scores have been lower recently: average {comp.recent_mean:.1f} over the last "
+                guard(f"{subject} been lower recently: average {comp.recent_mean:.1f} over the last "
                       f"{an.RECENT_DAYS} days compared with {comp.previous_mean:.1f} before."),
                 "category", "attention",
                 {"key": key, "recent": comp.recent_mean, "previous": comp.previous_mean}))
         elif comp.delta >= 1.0:
             out.append(Insight(
-                guard(f"{label} scores have been higher recently: average {comp.recent_mean:.1f} over the last "
+                guard(f"{subject} been higher recently: average {comp.recent_mean:.1f} over the last "
                       f"{an.RECENT_DAYS} days compared with {comp.previous_mean:.1f} before."),
                 "category", "info",
                 {"key": key, "recent": comp.recent_mean, "previous": comp.previous_mean}))

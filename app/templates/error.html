@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card block empty-state">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <p class="actions"><a class="button" href="{{ url_for('dashboard.home') }}">Go home</a>{% if g.current_animal %} <a class="button secondary" href="{{ url_for('dashboard.today', animal_id=g.current_animal.id) }}">{{ g.current_animal.name }}'s Today</a>{% endif %}</p>
+</section>
+{% endblock %}

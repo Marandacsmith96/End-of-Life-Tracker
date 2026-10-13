@@ -96,7 +96,7 @@
     </div>
   </div>
   {% if series.overall.dates %}
-    {% with height='tall', chart_id='chart-today', summary_text=trend_text ~ ' ' ~ (classification.sufficiency.text if classification.sufficiency.level != 'adequate' else '') %}
+    {% with height='tall', chart_id='chart-today', summary_text=(classification.sufficiency.text or trend_text) if classification.kind == 'insufficient_data' else trend_text ~ ' ' ~ (classification.sufficiency.text if classification.sufficiency.level != 'adequate' else '') %}
       {% include "_trend_chart.html" %}
     {% endwith %}
   {% else %}
@@ -156,7 +156,7 @@
     <ul class="entry-list">
       {% for e in recent_entries %}
         <li>
-          <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%a, %b') }} {{ e.entry_date.day }}</a>
+          {% if animal.archived %}<span class="date">{{ e.entry_date.strftime('%a, %b') }} {{ e.entry_date.day }}</span>{% else %}<a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%a, %b') }} {{ e.entry_date.day }}</a>{% endif %}
           {% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ icon({"good": "sun", "mixed": "cloud-sun", "bad": "cloud"}[e.day_status]) }}{{ day_labels[e.day_status] }}</span>{% endif %}
           {% if e.mean is not none %}<span class="muted small">{{ '%.1f'|format(e.mean) }} / 10</span>{% endif %}
           {% if e.notes %}<span class="muted small note">{{ e.notes|truncate(70) }}</span>{% endif %}

@@ -15,7 +15,7 @@
 <section class="card block">
   <h2>Overall quality of life</h2>
   {% if series.overall.dates %}
-    {% with chart_id='chart-overall', summary_text=trend_text ~ ' ' ~ classification.sufficiency.text, height='tall' %}
+    {% with chart_id='chart-overall', summary_text=(classification.sufficiency.text or trend_text) if classification.kind == 'insufficient_data' else trend_text ~ ' ' ~ classification.sufficiency.text, height='tall' %}
       {% include "_trend_chart.html" %}
     {% endwith %}
   {% else %}
@@ -50,7 +50,7 @@
         <div class="multiple-head">
           <h3><span class="q-tile small cat-{{ c.key }}">{{ icon(category_icons[c.key], 'icon') }}</span>{{ c.label }}</h3>
           {% if c.comparison.usable and c.comparison.delta is not none %}
-            <span class="delta {{ 'down' if c.comparison.delta <= -0.5 else 'up' if c.comparison.delta >= 0.5 else '' }}">{{ '%.1f'|format(c.comparison.recent_mean) }} <span class="muted small">vs {{ '%.1f'|format(c.comparison.previous_mean) }}</span></span>
+            <span class="delta {{ 'down' if c.comparison.delta <= -0.5 else 'up' if c.comparison.delta >= 0.5 else '' }}">{{ '%.1f'|format(c.comparison.recent_mean) }} <span class="muted small nowrap">vs {{ '%.1f'|format(c.comparison.previous_mean) }}</span></span>
           {% elif c.latest is not none %}
             <span class="muted small">latest {{ c.latest|int }}</span>
           {% endif %}
@@ -109,7 +109,7 @@
       <tbody>
       {% for e in rows %}
         <tr>
-          <td class="nowrap"><a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a></td>
+          <td class="nowrap">{% if animal.archived %}{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}{% else %}<a href="{{ url_for('entries.checkin', animal_id=animal.id, date=e.entry_date.isoformat()) }}">{{ e.entry_date.strftime('%b') }} {{ e.entry_date.day }}, {{ e.entry_date.year }}</a>{% endif %}</td>
           <td>{% if e.day_status %}<span class="day-pill {{ e.day_status }}">{{ icon({"good": "sun", "mixed": "cloud-sun", "bad": "cloud"}[e.day_status]) }}{{ day_labels[e.day_status] }}</span>{% endif %}</td>
           <td>{% if e.mean is not none %}{{ '%.1f'|format(e.mean) }}{% endif %}</td>
           {% for c in categories %}<td>{{ e.scores[c.key] if e.scores[c.key] is not none else '' }}</td>{% endfor %}

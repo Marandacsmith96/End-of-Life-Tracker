@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ animal.name }} · Vet{% endblock %}
 {% block content %}
-<h1>Prepare for my vet visit</h1>
+<h1>{% if animal.passed %}{{ animal.name }}'s vet summary{% else %}Prepare for my vet visit{% endif %}</h1>
 <p class="lede">Changes since {{ prep.since.strftime('%B') }} {{ prep.since.day }}{% if prep.last_visit and prep.last_visit.event_date == prep.since %} (your last recorded vet visit){% endif %}, compared with the {{ (prep.prev_end - prep.prev_start).days + 1 }} days before.</p>
 <form method="get" class="range-bar" aria-label="Compare since">
   <label class="muted small">Compare since <input type="date" name="since" value="{{ prep.since.isoformat() }}" max="{{ prep.end.isoformat() }}"></label>

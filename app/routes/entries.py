@@ -154,6 +154,9 @@ def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=N
 def checkin(animal_id: int):
     """Full check-in: good/bad day, behaviors, HHHHHMM scores, optional extras."""
     animal = animal_or_404(animal_id)
+    if animal.passed:
+        flash(f"{animal.name}'s record is kept in memory, so check-ins can no longer be added or changed.")
+        return redirect(url_for("dashboard.today", animal_id=animal_id))
     if animal.archived:
         flash(f"{animal.name}'s profile is archived. Restore it to add new check-ins.")
         return redirect(url_for("dashboard.today", animal_id=animal_id))
@@ -194,6 +197,9 @@ def checkin(animal_id: int):
 def quick_checkin(animal_id: int):
     """Quick check-in: good/bad day and behaviors only. Under ten seconds."""
     animal = animal_or_404(animal_id)
+    if animal.passed:
+        flash(f"{animal.name}'s record is kept in memory, so check-ins can no longer be added or changed.")
+        return redirect(url_for("dashboard.today", animal_id=animal_id))
     if animal.archived:
         flash(f"{animal.name}'s profile is archived. Restore it to add new check-ins.")
         return redirect(url_for("dashboard.today", animal_id=animal_id))

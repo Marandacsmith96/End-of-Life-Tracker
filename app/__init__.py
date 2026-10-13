@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Flask, abort, g, redirect, request, session, url_for
+from flask import Flask, abort, g, redirect, render_template, request, session, url_for
 from werkzeug.routing import IntegerConverter, ValidationError
 
 from . import db, entries, models, phone, safety, scoring, version
@@ -84,6 +84,22 @@ def create_app(test_config: dict | None = None) -> Flask:
         if auth.passcode_required() and request.endpoint not in auth.OPEN_ENDPOINTS and not auth.is_unlocked():
             return redirect(url_for("auth.login", next=request.full_path.rstrip("?") if request.method == "GET" else None))
 
+    @app.errorhandler(404)
+    def not_found(_error):
+        return render_template("error.html", title="That page isn't here",
+                               message="The link may be old, or the pet it belonged to may have been removed."), 404
+
+    @app.errorhandler(405)
+    def wrong_method(_error):
+        return render_template("error.html", title="That didn't work",
+                               message="The page was asked for in a way it doesn't support. Try again from the app."), 405
+
+    @app.errorhandler(413)
+    def too_large(_error):
+        limit = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
+        return render_template("error.html", title="That file is too big",
+                               message=f"Photos and backups can be up to {limit} MB each."), 413
+
     @app.route("/animals/<int:animal_id>/history")
     def history_redirect(animal_id: int):
         """Old URL kept so bookmarks keep working."""
@@ -111,7 +127,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             interval = models.REMINDER_DAYS.get(g.current_animal.reminder)
             if interval and not g.today_logged:
                 last = latest[0].entry_date if latest else None
-                g.checkin_prompt = last is None or (today - last) >= timedelta(days=interval)
+                g.checkin_prompt = last is not None and (today - last) >= timedelta(days=interval)
 
     @app.context_processor
     def inject_globals():
