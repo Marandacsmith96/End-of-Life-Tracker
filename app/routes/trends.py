@@ -36,7 +36,7 @@ def trends(animal_id: int):
     rates = an.marker_rates(all_entries, responses, marker_list, end - timedelta(days=29), end)
     return render_template(
         "trends.html", animal=animal, start=start, end=end, preset=preset,
-        series=charts.build_series(rows, start, end, base, event_list),
+        series=charts.build_series(rows, start, end, base, event_list, all_entries=all_entries),
         weekly=charts.weekly_day_counts(rows, start or (rows[-1].entry_date if rows else end), end),
         classification=classification, trend_text=trend_text, categories=cat_summaries,
         counts=counts, rates=rates, event_list=event_list, baseline=base,

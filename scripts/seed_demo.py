@@ -329,9 +329,12 @@ def add_examples(today: date | None = None) -> list[str]:
     button cannot create two of each."""
     today = today or date.today()
     with _EXAMPLES_LOCK:
-        present = {a.name for a in models.list_demo_animals()}
+        demo = models.list_demo_animals()
+        present = {a.name for a in demo}
         added = []
         for ex in EXAMPLES:
+            if len(demo) + len(added) >= len(EXAMPLES):
+                break  # every example is already there, even if one was renamed
             if ex["name"] not in present:
                 ex["fn"](random.Random(ex["seed"]), today)
                 added.append(ex["name"])

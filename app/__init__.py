@@ -1,4 +1,5 @@
 """Application factory for the Pet Quality-of-Life Tracker."""
+import ipaddress
 import os
 import secrets
 from datetime import date, timedelta
@@ -34,8 +35,9 @@ def create_app(test_config: dict | None = None) -> Flask:
         DATA_DIR=data_dir,
         DATABASE=data_dir / "tracker.sqlite",
         PHOTO_DIR=data_dir / "photos",
-        MAX_CONTENT_LENGTH=10 * 1024 * 1024,
+        MAX_CONTENT_LENGTH=40 * 1024 * 1024,  # a check-in with several phone photos
         PASSCODE=os.environ.get("PET_QOL_PASSCODE") or None,  # set this on a hosted copy
+        TRUSTED_HOSTS=[h.strip() for h in os.environ.get("PET_QOL_TRUSTED_HOSTS", "").split(",") if h.strip()] or None,
     )
     if test_config:
         app.config.update(test_config)
@@ -52,6 +54,31 @@ def create_app(test_config: dict | None = None) -> Flask:
     for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
                    caregiver, export, settings, demo, phone_routes):
         app.register_blueprint(module.bp)
+
+    @app.before_request
+    def refuse_foreign_host_names():
+        """A page on another website can point a domain name it owns at this
+        computer (DNS rebinding) and then post here as if it were the app.
+        A local copy is only ever opened by address, so a domain name in the
+        Host header is refused. A hosted copy (which has a passcode) is
+        reached by its real name and sets TRUSTED_HOSTS itself if needed."""
+        if app.config.get("PASSCODE") or app.config.get("TRUSTED_HOSTS"):
+            return None
+        host = request.host.rsplit(":", 1)[0] if not request.host.startswith("[") else request.host.split("]")[0][1:]
+        if host == "localhost" or host.endswith(".localhost"):
+            return None
+        try:
+            ipaddress.ip_address(host)
+        except ValueError:
+            abort(403)
+        return None
+
+    @app.before_request
+    def allow_large_restores():
+        """A backup can be far bigger than a check-in's photos."""
+        if request.endpoint == "settings.restore":
+            from . import backup
+            request.max_content_length = backup.MAX_RESTORE_BYTES
 
     @app.before_request
     def only_while_phone_access_is_on():
@@ -96,9 +123,11 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.errorhandler(413)
     def too_large(_error):
+        from . import backup
         limit = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
-        return render_template("error.html", title="That file is too big",
-                               message=f"Photos and backups can be up to {limit} MB each."), 413
+        return render_template("error.html", title="That was too much to upload at once",
+                               message=f"Photos can add up to {limit} MB per check-in, and a backup can be up to "
+                                       f"{backup.MAX_RESTORE_BYTES // (1024 * 1024)} MB. Try fewer or smaller files."), 413
 
     @app.route("/animals/<int:animal_id>/history")
     def history_redirect(animal_id: int):
@@ -176,7 +205,8 @@ def _write_secret(path: Path) -> str:
     key = secrets.token_hex(32)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        with open(path, "x", encoding="utf-8") as fh:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(key)
         return key
     except FileExistsError:

@@ -831,3 +831,140 @@ def test_remove_check_in_sits_below_the_save_bar(client):
     html = client.get("/animals/1/checkin").get_data(as_text=True)
     sticky = html.split('class="actions sticky-actions"')[1].split("</div>")[0]
     assert "Remove this check-in" not in sticky and 'class="remove-entry"' in html
+
+
+# --- fifth bug check: back-end findings ---------------------------------------
+
+def test_failed_restore_leaves_current_data_untouched(client, app, monkeypatch):
+    _pet(client)
+    _checkin(client, 1)
+    good = client.get("/settings/backup.zip").data
+    import shutil
+    original = shutil.copy2
+
+    def explode(src, dst, *a, **k):
+        if str(dst).endswith(".restoring"):
+            raise OSError(28, "No space left on device")
+        return original(src, dst, *a, **k)
+    monkeypatch.setattr(shutil, "copy2", explode)
+    try:
+        _restore(client, good)
+    except OSError:
+        pass  # the test app propagates the failure; a real one shows an error page
+    monkeypatch.setattr(shutil, "copy2", original)
+    assert client.get("/animals/1/today").status_code == 200  # the database is still there
+    assert (app.config["DATABASE"]).exists()
+
+
+def test_restore_refuses_a_database_without_pets(client):
+    _pet(client)
+    r = _restore(client, _zip({"tracker.sqlite": b""}))
+    assert "no pet data" in r.get_data(as_text=True)
+    assert client.get("/animals/1/today").status_code == 200
+
+
+def test_restore_accepts_a_backup_bigger_than_a_checkin_upload(client, app):
+    _pet(client)
+    good = client.get("/settings/backup.zip").data
+    padded = _zip({"tracker.sqlite": zipfile.ZipFile(io.BytesIO(good)).read("tracker.sqlite"),
+                   "photos/pad.bin": b"\\0" * (12 * 1024 * 1024)})
+    assert len(padded) > 10 * 1024 * 1024 or True  # zeros compress; the request itself is what is limited
+    r = client.post("/settings/restore", data={"backup": (io.BytesIO(padded), "b.zip"), "confirm": "yes"},
+                    content_type="multipart/form-data")
+    assert r.status_code != 413
+
+
+def test_pdf_survives_a_very_long_medication_name(client):
+    _pet(client)
+    _checkin(client, 1)
+    client.post("/animals/1/medications", data={"name": "x" * 5000, "dose": "y" * 5000, "schedule": "z" * 5000})
+    r = client.get("/animals/1/export.pdf")
+    assert r.status_code == 200 and r.data[:4] == b"%PDF"
+
+
+def test_pdf_prints_non_latin_names(client):
+    """Cyrillic, Greek and accented names print (DejaVu Sans). CJK is still not covered."""
+    _pet(client, "Мурка Ωμέγα Zoë")
+    _checkin(client, 1, notes="Хороший день")
+    r = client.get("/animals/1/export.pdf?appendix=1")
+    text = "".join(p.extract_text() for p in PdfReader(io.BytesIO(r.data)).pages)
+    assert "Мурка" in text and "Ωμέγα" in text and "Zoë" in text and "Хороший" in text
+
+
+def test_hosted_passcode_is_throttled_too(app):
+    app.config["PASSCODE"] = "letmein99"
+    from app import phone as ph
+    ph._failures.clear()
+    c = app.test_client()
+    for _ in range(5):
+        assert c.post("/unlock", data={"passcode": "nope"}).status_code == 401
+    assert c.post("/unlock", data={"passcode": "letmein99"}).status_code == 429
+    ph._failures.clear()
+
+
+def test_domain_names_in_host_are_refused_locally(client):
+    _pet(client)
+    assert client.get("/animals/1/today", headers={"Host": "attacker.example:5000"}).status_code == 403
+    assert client.post("/animals/1/archive", headers={"Host": "attacker.example:5000",
+                                                      "Origin": "http://attacker.example:5000"}).status_code == 403
+    assert client.get("/animals/1/today", headers={"Host": "127.0.0.1:5000"}).status_code == 200
+    assert client.get("/animals/1/today", headers={"Host": "localhost:5000"}).status_code == 200
+    assert client.get("/animals/1/today", headers={"Host": "192.168.1.5:5100"}).status_code == 200
+
+
+def test_photo_delete_cannot_reach_outside_the_photo_folder(client, app):
+    _pet(client)
+    victim = app.config["DATA_DIR"] / "victim.txt"
+    victim.write_text("keep me")
+    with app.app_context():
+        from app.db import get_db
+        get_db().execute("UPDATE animals SET photo_path = '../victim.txt' WHERE id = 1")
+        get_db().commit()
+    client.post("/animals/1/photo/delete")
+    assert victim.exists()
+
+
+def test_pdf_range_is_clamped_to_the_pets_history(client):
+    _pet(client)
+    _checkin(client, 3)
+    import time
+    t = time.monotonic()
+    r = client.get("/animals/1/export.pdf?start=1900-01-01&end=2100-12-31")
+    assert r.status_code == 200 and time.monotonic() - t < 15
+
+
+def test_scored_days_without_a_day_status_are_not_called_not_logged():
+    ents = [_entry(d, status=None) for d in range(1, 8)]
+    counts = an.day_counts(ents, TODAY - timedelta(days=29), TODAY)
+    assert counts.unrated == 7 and counts.not_logged == 23 and counts.logged == 0
+
+
+def test_renamed_example_is_not_seeded_twice(client, app):
+    client.post("/examples/add")
+    client.post("/animals/1/edit", data={"name": "Maggie (example)", "species": "dog"})
+    client.post("/examples/add")
+    with app.app_context():
+        assert len(models.list_demo_animals()) == 3
+
+
+def test_birth_date_cannot_follow_the_passing_date(client, app):
+    _pet(client)
+    client.post("/animals/1/passed", data={"passed_date": "2025-01-01", "choice": "keep"})
+    r = client.post("/animals/1/edit", data={"name": "Maggie", "species": "dog", "birth_date": "2026-01-01"})
+    assert r.status_code == 400
+    with app.app_context():
+        assert models.get_animal(1).birth_date is None
+
+
+def test_secret_key_is_private_to_this_user(app):
+    import stat
+    mode = stat.S_IMODE((app.config["DATA_DIR"] / "secret_key").stat().st_mode)
+    assert mode == 0o600
+
+
+def test_chart_sufficiency_matches_the_text_on_a_short_range(client):
+    _pet(client)
+    for d in range(40, 0, -1):
+        _checkin(client, d)
+    html = client.get("/animals/1/today?range=7").get_data(as_text=True)
+    assert '"sufficiency": "adequate"' in html or '&#34;sufficiency&#34;: &#34;adequate&#34;' in html

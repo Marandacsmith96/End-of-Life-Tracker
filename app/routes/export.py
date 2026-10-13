@@ -80,6 +80,9 @@ def export_pdf(animal_id: int):
     start, end, _ = resolve_range(request.args.get("range"), request.args.get("start"),
                                   request.args.get("end"), today=end_default, default="90")
     all_entries = entries.list_entries(animal_id)
+    if start is not None:
+        earliest = min((e.entry_date for e in all_entries), default=end)
+        start = max(start, min(earliest, end), end - timedelta(days=3660))
     rows = [e for e in all_entries if (start is None or e.entry_date >= start) and e.entry_date <= end]
     marker_list = markers.list_markers(animal_id)
     responses = markers.responses_for_animal(animal_id)

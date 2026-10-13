@@ -28,7 +28,8 @@ def weight_unit_for(entries: list[Entry]) -> str | None:
 
 
 def build_series(entries: list[Entry], start: date | None, end: date,
-                 baseline: Baseline | None = None, events: list[Event] = ()) -> dict:
+                 baseline: Baseline | None = None, events: list[Event] = (),
+                 all_entries: list[Entry] | None = None) -> dict:
     """Everything the trend chart needs, JSON-serialisable.
 
     Raw points and the smoothed line are separate so the chart can always
@@ -38,7 +39,7 @@ def build_series(entries: list[Entry], start: date | None, end: date,
     ordered = sorted(entries, key=lambda e: e.entry_date)
     overall = an.overall_points(ordered)
     smoothed = an.rolling_mean(overall)
-    suff = an.sufficiency(overall, end)
+    suff = an.sufficiency(an.overall_points(all_entries) if all_entries is not None else overall, end)
     unit = weight_unit_for(ordered)
     weighed = [(e.entry_date, round(to_unit(e.weight, e.weight_unit or unit, unit), 2))
                for e in ordered if e.weight is not None and unit]

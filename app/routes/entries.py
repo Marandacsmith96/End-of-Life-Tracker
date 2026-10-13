@@ -251,9 +251,9 @@ def delete_entry_photo(photo_id: int):
 def medications(animal_id: int):
     animal = animal_or_404(animal_id)
     if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        dose = request.form.get("dose", "").strip() or None
-        schedule = request.form.get("schedule", "").strip() or None
+        name = request.form.get("name", "").strip()[:80]
+        dose = request.form.get("dose", "").strip()[:80] or None
+        schedule = request.form.get("schedule", "").strip()[:80] or None
         start = parse_date(request.form.get("start_date"))
         if not name:
             flash("Please enter the medication's name.")

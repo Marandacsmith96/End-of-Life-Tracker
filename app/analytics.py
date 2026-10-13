@@ -221,6 +221,7 @@ class DayCounts:
     bad: int
     start: date
     end: date
+    unrated: int = 0
 
     @property
     def logged(self) -> int:
@@ -232,20 +233,22 @@ class DayCounts:
 
     @property
     def not_logged(self) -> int:
-        return self.days - self.logged
+        return self.days - self.logged - self.unrated
 
 
 def day_counts(entries: list[Entry], start: date, end: date) -> DayCounts:
-    good = mixed = bad = 0
+    good = mixed = bad = unrated = 0
     for e in entries:
-        if start <= e.entry_date <= end and e.day_status:
+        if start <= e.entry_date <= end:
             if e.day_status == "good":
                 good += 1
             elif e.day_status == "bad":
                 bad += 1
-            else:
+            elif e.day_status:
                 mixed += 1
-    return DayCounts(good, mixed, bad, start, end)
+            else:
+                unrated += 1  # a check-in with scores or notes but no good/bad answer
+    return DayCounts(good, mixed, bad, start, end, unrated)
 
 
 # --- personal markers -------------------------------------------------------

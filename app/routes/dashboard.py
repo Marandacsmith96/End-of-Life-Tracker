@@ -70,7 +70,7 @@ def today(animal_id: int):
     recent_mean, recent_n = an.window_mean(an.overall_points(all_entries), end - timedelta(days=6), end)
     return render_template(
         "dashboard.html", animal=animal, today_entry=today_entry, month=month, week=week,
-        series=charts.build_series(in_range, start, end, base, event_list),
+        series=charts.build_series(in_range, start, end, base, event_list, all_entries=all_entries),
         classification=classification, trend_text=trend_text, observations=observations,
         rates=rates, done_today=done_today, total_markers=total_markers,
         recent_mean=recent_mean, recent_n=recent_n, baseline=base, preset=preset,

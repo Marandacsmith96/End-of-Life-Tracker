@@ -130,7 +130,10 @@ The repo deploys itself to Fly.io from GitHub Actions. One-time setup:
 
 The app then lives at `https://pet-qol-tracker-9uwy.fly.dev` (change the
 name with a `FLY_APP` repository variable). Entries are kept on a persistent
-disk, and every page asks for the passcode first. A `Dockerfile` and a
+disk, and every page asks for the passcode first. Five wrong passcodes in a
+row from one address bring a thirty-second wait. If you put the app behind
+your own domain, set `PET_QOL_TRUSTED_HOSTS` to that name (comma-separated
+for several) so requests for any other name are refused. A `Dockerfile` and a
 `render.yaml` are included too if you prefer Render.
 
 ## Run it from a terminal

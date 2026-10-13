@@ -76,6 +76,8 @@ def edit_animal(animal_id: int):
     animal = animal_or_404(animal_id)
     if request.method == "POST":
         values, errors = _parse_form(request.form)
+        if values["birth_date"] and animal.passed_date and values["birth_date"] > animal.passed_date:
+            errors.append(f"Birth date cannot be after {animal.name}'s passing date.")
         if errors:
             for message in errors:
                 flash(message)

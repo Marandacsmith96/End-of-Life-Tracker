@@ -403,6 +403,62 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   way in needs a second way out, and the reviewer's first question was the
   right one: "what happens to the phones already inside?"
 
+### Oct 13 — fifth bug check, the whole app
+
+- "Check for bugs again." This time two reviewers looked at everything,
+  not just the newest code: one read the whole back end and probed it
+  with scripts, the other clicked through every page in a real browser at
+  phone and desktop widths with screenshots. Twenty-eight findings, all
+  fixed; the two that mattered most were old.
+- **A failed restore could leave no database at all.** Restore deleted
+  the photo folder and the database before copying the new ones in, so a
+  full disk or a locked file halfway through meant every page failed with
+  "no such table" and the next start created an empty app. Now the new
+  files are copied in beside the old ones first and swapped with renames,
+  which cannot half-succeed. The same review found that an empty
+  database inside a backup passed validation (the upgrade code treated it
+  as "fresh" and built an empty schema), and that a backup over 10 MB
+  could never be restored because the upload limit for photos applied to
+  it. Three separate holes in one feature that had already been reviewed
+  twice. Lesson: a destructive operation needs its own failure-mode
+  review, not a pass over the happy path.
+- **Another website could drive a local copy.** The cross-site check
+  compared the Origin header with the Host header, and Host is whatever
+  the browser was told. A page on an attacker's domain that points that
+  domain at 127.0.0.1 (DNS rebinding) could read and post everything,
+  since a local copy needs no passcode. A local copy now refuses any Host
+  that is a domain name rather than an address or "localhost"; hosted
+  copies are reached by name and are untouched.
+- Smaller back-end fixes: the hosted passcode now gets the same
+  five-tries-then-wait throttle as the phone one; deleting a photo could
+  follow a path in a tampered backup outside the photo folder; the PDF
+  crashed on a very long medication name and printed blanks for any
+  non-Latin letters (it now embeds DejaVu Sans, so Cyrillic, Greek and
+  accents work; CJK still does not); a PDF for a 200-year range took 80
+  seconds (the range is clamped to the pet's history); the chart's
+  "limited data" fade disagreed with the text next to it on short ranges;
+  scored days with no good/bad answer were counted as "not logged"; a
+  renamed example pet was seeded again; a birth date could be set after
+  the passing date; the secret key file was readable by other users of the
+  computer; and "Hurt scores have been lower" now says "Comfort (Hurt)"
+  with a note under the vet table that higher is better on every row.
+- From the browser walkthrough: a pet kept in memory got "profile is
+  archived" when a past check-in was opened, and its entry dates were
+  dead links; the good-days observation read "More good days than bad
+  scores have been lower"; unknown pages showed a bare server error page;
+  tables wider than a phone gave no hint that they scroll; chart event
+  labels piled on top of each other and ran off the right edge; a
+  brand-new pet was nagged to check in during its own setup; the
+  check-in save bar was see-through and carried "Remove this check-in"
+  next to Save; the passcode fields and the backup file picker were
+  unstyled; the trend summary said "not enough information" twice; day
+  pills wrapped onto three lines in tables; the pet switcher opened with
+  the first chip half off-screen.
+- Twenty new tests (180 in all). The browser reviewer's harness note is
+  worth keeping: Chrome refuses port 5061 as "unsafe" (it is reserved for
+  SIP), which is why the launcher's search for a free port starts at
+  5000 and the phone listener uses 5100.
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -463,6 +519,8 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Safety rules applied to the owner's own words | reviewer trying a realistic event title | since the safety layer was built |
 | Restore trusting any file with an "animals" table | reviewer feeding it a foreign database | since backup/restore was built |
 | Phone passcode change that signed nobody out | reviewer replaying an old cookie | two days, since phone access was built |
+| Restore that deleted the data before copying the new data in | reviewer making the copy fail | since backup/restore was built, through two reviews of it |
+| Cross-site check that trusted the Host header | reviewer trying DNS rebinding | since the check was added |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

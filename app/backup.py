@@ -1,5 +1,6 @@
 """Back up and restore the data folder as a zip file."""
 import io
+import os
 import shutil
 import sqlite3
 import tempfile
@@ -53,6 +54,13 @@ def _validate_staged_db(path: Path) -> int:
     except sqlite3.DatabaseError as exc:
         raise InvalidBackup("The database inside that backup is not readable.") from exc
     try:
+        try:
+            has_pets = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'animals'").fetchone()[0]
+        except sqlite3.DatabaseError as exc:
+            raise InvalidBackup("That file is not a tracker database, or it is damaged.") from exc
+        if not has_pets:
+            raise InvalidBackup("That backup has no pet data in it (the database inside is empty).")
         try:
             db.upgrade(conn)
         except sqlite3.DatabaseError as exc:
@@ -110,17 +118,35 @@ def restore_backup(file_storage) -> int:
         # bad file can never leave the app with no database.
         count = _validate_staged_db(staged / DB_NAME)
 
-        if photo_dir.exists():
-            shutil.rmtree(photo_dir)
+        # Bring the new files next to the old ones first, then swap with
+        # renames: if anything fails before the swap, the current data is
+        # untouched; a rename cannot half-succeed the way a copy can.
+        data_dir.mkdir(parents=True, exist_ok=True)
+        incoming_db = db_path.with_name(db_path.name + ".restoring")
+        incoming_photos = photo_dir.with_name(photo_dir.name + ".restoring")
+        old_photos = photo_dir.with_name(photo_dir.name + ".replaced")
+        for stale in (incoming_db, incoming_photos, old_photos):
+            _remove(stale)
+        shutil.copy2(staged / DB_NAME, incoming_db)
         staged_photos = staged / "photos"
         if staged_photos.is_dir():
-            shutil.copytree(staged_photos, photo_dir)
+            shutil.copytree(staged_photos, incoming_photos)
         else:
-            photo_dir.mkdir(parents=True, exist_ok=True)
-        for suffix in ("", "-wal", "-shm", "-journal"):
-            leftover = db_path.with_name(db_path.name + suffix)
-            if leftover.exists():
-                leftover.unlink()
-        shutil.copy2(staged / DB_NAME, db_path)
-    data_dir.mkdir(parents=True, exist_ok=True)
+            incoming_photos.mkdir(parents=True)
+
+        for suffix in ("-wal", "-shm", "-journal"):
+            _remove(db_path.with_name(db_path.name + suffix))
+        os.replace(incoming_db, db_path)
+        if photo_dir.exists():
+            os.replace(photo_dir, old_photos)
+        os.replace(incoming_photos, photo_dir)
+        _remove(old_photos)
     return count
+
+
+def _remove(path: Path) -> None:
+    """Delete a file or folder if it exists."""
+    if path.is_dir():
+        shutil.rmtree(path, ignore_errors=True)
+    elif path.exists():
+        path.unlink()

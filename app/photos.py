@@ -66,8 +66,9 @@ def save_entry_photo(file_storage, entry_id: int) -> str:
 def delete_photo_file(relative_path: str | None) -> None:
     if not relative_path:
         return
-    target = Path(current_app.config["PHOTO_DIR"]) / relative_path
-    if target.is_file():
+    root = Path(current_app.config["PHOTO_DIR"]).resolve()
+    target = (root / relative_path).resolve()
+    if target.is_relative_to(root) and target.is_file():
         target.unlink()
 
 

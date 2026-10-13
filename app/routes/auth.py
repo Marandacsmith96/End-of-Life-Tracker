@@ -31,6 +31,16 @@ def _accept(given: str) -> bool:
     return hmac.compare_digest(given.encode("utf-8"), expected.encode("utf-8"))
 
 
+def _client_address(remote: bool) -> str:
+    """Who is guessing: on the phone listener the socket's address (headers
+    there could be forged); on a hosted copy, which sits behind its host's
+    proxy, the address that proxy reports."""
+    if remote:
+        return request.remote_addr or ""
+    route = request.access_route
+    return (route[0] if route else request.remote_addr) or ""
+
+
 def is_unlocked() -> bool:
     if session.get("unlocked") is not True:
         return False
@@ -51,20 +61,19 @@ def login():
         return redirect(url_for("dashboard.home"))
     if request.method == "POST":
         remote = phone.is_remote_request()
-        addr = request.remote_addr or ""
-        if remote and (wait := phone.seconds_to_wait(addr)):
+        addr = _client_address(remote)
+        if wait := phone.seconds_to_wait(addr):
             flash(f"Too many tries. Please wait {wait} seconds and try again.")
-            return render_template("unlock.html", from_phone=True), 429
+            return render_template("unlock.html", from_phone=remote), 429
         given = request.form.get("passcode", "")
         if _accept(given):
             session["unlocked"] = True
             session.permanent = True
             if remote:
                 session["phone_generation"] = phone.generation()
-                phone.note_success(addr)
+            phone.note_success(addr)
             return redirect(safe_next(request.args.get("next")) or url_for("dashboard.home"))
-        if remote:
-            phone.note_failure(addr)
+        phone.note_failure(addr)
         if not current_app.config.get("TESTING"):
             time.sleep(0.5)  # slows down guessing from another device
         flash("That passcode isn't right.")

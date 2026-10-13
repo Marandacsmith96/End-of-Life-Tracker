@@ -1,5 +1,6 @@
 """The one-page vet summary (ReportLab), with an optional appendix."""
 import io
+from pathlib import Path
 from datetime import date, timedelta
 
 from reportlab.lib import colors
@@ -26,16 +27,41 @@ WARN_BG = colors.HexColor("#fbf3e2")
 WARN_BORDER = colors.HexColor("#ecd7a6")
 
 
+FONT, FONT_BOLD = "Helvetica", "Helvetica-Bold"
+
+
+def _fonts() -> None:
+    """Use DejaVu Sans (shipped with matplotlib) so names and notes in any
+    alphabet print; the built-in Helvetica only knows Western Latin letters."""
+    global FONT, FONT_BOLD
+    if FONT != "Helvetica":
+        return
+    try:
+        import matplotlib
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        folder = Path(matplotlib.get_data_path()) / "fonts" / "ttf"
+        pdfmetrics.registerFont(TTFont("DejaVuSans", str(folder / "DejaVuSans.ttf")))
+        pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", str(folder / "DejaVuSans-Bold.ttf")))
+        pdfmetrics.registerFontFamily("DejaVuSans", normal="DejaVuSans", bold="DejaVuSans-Bold",
+                                      italic="DejaVuSans", boldItalic="DejaVuSans-Bold")
+        FONT, FONT_BOLD = "DejaVuSans", "DejaVuSans-Bold"
+    except Exception:  # noqa: BLE001 - fall back to the built-in font rather than fail the export
+        pass
+
+
 def _styles():
+    _fonts()
     base = getSampleStyleSheet()
     def mk(name, **kw):
         kw.setdefault("textColor", INK)
+        kw.setdefault("fontName", FONT)
         return ParagraphStyle(name, parent=base["Normal"], **kw)
     return {
         "title": ParagraphStyle("t", parent=base["Title"], fontSize=16, leading=19, alignment=TA_LEFT,
-                                textColor=INK, spaceAfter=1),
+                                textColor=INK, spaceAfter=1, fontName=FONT_BOLD),
         "sub": mk("s", fontSize=8.5, leading=11, textColor=MUTED),
-        "h2": mk("h", fontSize=9.5, leading=11, spaceBefore=5, spaceAfter=2, fontName="Helvetica-Bold"),
+        "h2": mk("h", fontSize=9.5, leading=11, spaceBefore=5, spaceAfter=2, fontName=FONT_BOLD),
         "body": mk("b", fontSize=8.5, leading=11),
         "small": mk("sm", fontSize=7.2, leading=9, textColor=MUTED),
         "cell": mk("c", fontSize=7.5, leading=9.5),
@@ -61,14 +87,14 @@ def _image(png: bytes, width: float) -> Image:
 def _table(rows, widths, st, header=True) -> Table:
     t = Table(rows, colWidths=widths, repeatRows=1 if header else 0)
     style = [
-        ("FONTSIZE", (0, 0), (-1, -1), 7.5), ("LEADING", (0, 0), (-1, -1), 9.5),
+        ("FONTNAME", (0, 0), (-1, -1), FONT), ("FONTSIZE", (0, 0), (-1, -1), 7.5), ("LEADING", (0, 0), (-1, -1), 9.5),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("TOPPADDING", (0, 0), (-1, -1), 1.8), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8),
         ("LEFTPADDING", (0, 0), (-1, -1), 4), ("RIGHTPADDING", (0, 0), (-1, -1), 4),
         ("LINEBELOW", (0, 0), (-1, -1), 0.3, BORDER),
     ]
     if header:
-        style += [("TEXTCOLOR", (0, 0), (-1, 0), MUTED), ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        style += [("TEXTCOLOR", (0, 0), (-1, 0), MUTED), ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
                   ("LINEBELOW", (0, 0), (-1, 0), 0.6, BORDER)]
     t.setStyle(TableStyle(style))
     return t
@@ -89,7 +115,7 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     generated = generated or date.today()
     ordered = sorted(entries, key=lambda e: e.entry_date)
     chart_start = start or (ordered[0].entry_date if ordered else end - timedelta(days=29))
-    series = charts.build_series(ordered, start, end, baseline, events)
+    series = charts.build_series(ordered, start, end, baseline, events, all_entries=all_entries)
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter, leftMargin=0.6 * inch, rightMargin=0.6 * inch,
                             topMargin=0.45 * inch, bottomMargin=0.45 * inch,
@@ -207,7 +233,8 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
         left_items.append(Paragraph("None recorded in this range.", st["small"]))
     right_items = [Paragraph("Medications (as entered by owner)", st["h2"])]
     if medications:
-        rows = [[Paragraph(f"{_esc(m.name)}{(' · ' + _esc(m.dose)) if m.dose else ''}{(' · ' + _esc(m.schedule)) if m.schedule else ''}", st["cell"]),
+        rows = [[Paragraph(f"{_esc(_clip(m.name, 80))}{(' · ' + _esc(_clip(m.dose, 60))) if m.dose else ''}"
+                           f"{(' · ' + _esc(_clip(m.schedule, 60))) if m.schedule else ''}", st["cell"]),
                  "Active" if m.active else "Stopped"] for m in medications[:8]]
         if len(medications) > 8:
             rows.append([Paragraph(f"… and {len(medications) - 8} more in the app.", st["small"]), ""])
