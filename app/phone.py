@@ -8,6 +8,7 @@ network: there is no account, no cloud, and no internet exposure unless the
 owner's router is deliberately set up to forward the port.
 """
 import ipaddress
+import math
 import re
 import secrets
 import socket
@@ -74,19 +75,26 @@ WAIT_SECONDS = 30
 _failures: dict[str, tuple[int, float]] = {}  # address -> (wrong tries in a row, time of the last)
 
 
+MAX_TRACKED = 500  # addresses remembered at once; the oldest are forgotten beyond this
+
+
 def seconds_to_wait(addr: str) -> int:
     """How long this address must wait before another try (0 = may try now)."""
     with _lock:
         tries, last = _failures.get(addr, (0, 0.0))
     if tries < MAX_TRIES:
         return 0
-    return max(0, int(WAIT_SECONDS - (time.monotonic() - last)) + 1)
+    remaining = WAIT_SECONDS - (time.monotonic() - last)
+    return math.ceil(remaining) if remaining > 0 else 0
 
 
 def note_failure(addr: str) -> None:
     with _lock:
         tries, _ = _failures.get(addr, (0, 0.0))
         _failures[addr] = (tries + 1, time.monotonic())
+        if len(_failures) > MAX_TRACKED:
+            for old in sorted(_failures, key=lambda a: _failures[a][1])[: len(_failures) - MAX_TRACKED]:
+                del _failures[old]
 
 
 def note_success(addr: str) -> None:
