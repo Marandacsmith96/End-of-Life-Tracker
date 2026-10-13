@@ -30,9 +30,12 @@ class MedSummary:
     @property
     def count_text(self) -> str:
         if not self.offered:
-            return "Not recorded in a check-in yet."
+            if self.medication.active:
+                return "No full check-in has recorded it yet."
+            return f"No full check-in recorded it in the last {WINDOW_DAYS} days."
         plural = "day" if self.offered == 1 else "days"
-        return f"Given on {self.given} of the {self.offered} {plural} you logged in the last {WINDOW_DAYS} days."
+        return (f"Given on {self.given} of the {self.offered} {plural} with a full check-in "
+                f"in the last {WINDOW_DAYS} days.")
 
 
 def summarize(medications: list[Medication], entries: list[Entry],
@@ -42,10 +45,12 @@ def summarize(medications: list[Medication], entries: list[Entry],
     out = []
     for med in medications:
         record = given_days.get(med.id, {})
+        # Once a medication is stopped, later days are simply not its days.
+        stopped_after = med.end_date if not med.active and med.end_date else None
         days = []
         for i in range(WINDOW_DAYS):
             day = start + timedelta(days=i)
-            if day in record:
+            if day in record and (stopped_after is None or day <= stopped_after):
                 days.append(MedDay(day, "given" if record[day] else "missed"))
             else:
                 days.append(MedDay(day, "none"))

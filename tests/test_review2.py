@@ -633,7 +633,7 @@ def test_medication_summary_counts_given_days_and_comfort(client):
         _checkin(client, d, each=7, **extra)
     html = client.get("/animals/1/medications").get_data(as_text=True)
     assert "How it" in html
-    assert "Given on 5 of the 10 days you logged in the last 30 days." in html
+    assert "Given on 5 of the 10 days with a full check-in in the last 30 days." in html
     assert "Comfort scores averaged 7.0 in the two weeks after Gabapentin started, compared with 4.0" in html
     assert html.count('class="med-day given"') == 5 + 1  # strip plus the legend
     assert html.count('class="med-day missed"') == 5 + 1
@@ -643,7 +643,7 @@ def test_medication_summary_without_records(client):
     _pet(client)
     client.post("/animals/1/medications", data={"name": "Meloxicam"})
     html = client.get("/animals/1/medications").get_data(as_text=True)
-    assert "Not recorded in a check-in yet." in html
+    assert "No full check-in has recorded it yet." in html
     assert "Comfort scores" not in html
 
 
@@ -697,3 +697,82 @@ def test_photo_timeline_only_shows_this_pets_photos(client):
     assert client.get("/animals/2/photos").get_data(as_text=True).count('class="photo-tile"') == 0
     assert client.get("/animals/1/photos").get_data(as_text=True).count('class="photo-tile"') == 1
     assert client.get("/animals/99/photos").status_code == 404
+
+
+# --- fourth bug check: phone access follow-ups --------------------------------
+
+def _enable(client, passcode="sunflower"):
+    r = client.post("/settings/phone", data={"action": "enable", "passcode": passcode, "passcode_confirm": passcode})
+    assert r.status_code == 302
+
+
+def test_switching_phone_access_off_and_on_signs_every_phone_out(client):
+    _pet(client)
+    _enable(client)
+    phone = client.application.test_client()
+    phone.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE)
+    assert phone.get("/animals/1/today", environ_base=PHONE).status_code == 200
+    client.post("/settings/phone", data={"action": "disable"})
+    _enable(client, "newsecret99")
+    r = phone.get("/animals/1/today", environ_base=PHONE)
+    assert r.status_code == 302 and "/unlock" in r.headers["Location"]  # the old unlock no longer counts
+    assert phone.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE).status_code == 401
+    phone.post("/unlock", data={"passcode": "newsecret99"}, environ_base=PHONE)
+    assert phone.get("/animals/1/today", environ_base=PHONE).status_code == 200
+
+
+def test_phone_gets_a_lock_button_and_can_lock(client):
+    _pet(client)
+    _enable(client)
+    phone = client.application.test_client()
+    phone.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE)
+    html = phone.get("/animals/1/today", environ_base=PHONE).get_data(as_text=True)
+    assert "/lock" in html
+    assert "/lock" not in client.get("/animals/1/today").get_data(as_text=True)  # the computer has nothing to lock
+    phone.post("/lock", environ_base=PHONE)
+    assert phone.get("/animals/1/today", environ_base=PHONE).status_code == 302
+
+
+def test_repeated_wrong_phone_passcodes_are_slowed_down(client):
+    _enable(client)
+    from app import phone as ph
+    ph._failures.clear()
+    attacker = client.application.test_client()
+    for _ in range(5):
+        assert attacker.post("/unlock", data={"passcode": "guess"}, environ_base=PHONE).status_code == 401
+    r = attacker.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE)
+    assert r.status_code == 429  # even the right one must wait now
+    other = {**PHONE, "REMOTE_ADDR": "192.168.1.99"}
+    assert client.application.test_client().post("/unlock", data={"passcode": "sunflower"}, environ_base=other).status_code == 302
+    ph._failures.clear()
+
+
+def test_phone_cannot_restore_a_backup(client):
+    _pet(client)
+    _enable(client)
+    phone = client.application.test_client()
+    phone.post("/unlock", data={"passcode": "sunflower"}, environ_base=PHONE)
+    assert phone.get("/settings/backup.zip", environ_base=PHONE).status_code == 200
+    html = phone.get("/settings", environ_base=PHONE).get_data(as_text=True)
+    assert "only be done from the computer" in html and 'name="backup"' not in html
+    data = _zip({"tracker.sqlite": b"x"})
+    r = phone.post("/settings/restore", data={"backup": (io.BytesIO(data), "b.zip"), "confirm": "yes"},
+                   content_type="multipart/form-data", environ_base=PHONE)
+    assert r.status_code == 403
+    assert client.get("/animals/1/today").status_code == 200  # nothing was replaced
+
+
+def test_stopped_medication_days_after_its_end_are_blank(client):
+    _pet(client)
+    client.post("/animals/1/medications", data={"name": "Buprenorphine"})
+    for d in range(8, 0, -1):
+        _checkin(client, d, meds_included="1", given="1")
+    from app import entries as en
+    with client.application.app_context():
+        en.set_medication_active(1, False, on=TODAY - timedelta(days=4))
+    html = client.get("/animals/1/medications").get_data(as_text=True)
+    assert "Given on 5 of the 5 days with a full check-in" in html  # days 8..4, not the three after it stopped
+    with client.application.app_context():
+        en.set_medication_active(1, False, on=TODAY - timedelta(days=40))
+    html = client.get("/animals/1/medications").get_data(as_text=True)
+    assert "No full check-in recorded it in the last 30 days." in html

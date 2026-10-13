@@ -32,7 +32,17 @@ def _accept(given: str) -> bool:
 
 
 def is_unlocked() -> bool:
-    return session.get("unlocked") is True
+    if session.get("unlocked") is not True:
+        return False
+    if phone.is_remote_request():
+        # A phone stays unlocked only while the passcode it unlocked under is current.
+        return session.get("phone_generation") == phone.generation()
+    return True
+
+
+def can_lock() -> bool:
+    """Whether a Lock button makes sense on this page."""
+    return passcode_required() and is_unlocked()
 
 
 @bp.route("/unlock", methods=("GET", "POST"))
@@ -40,15 +50,25 @@ def login():
     if not passcode_required():
         return redirect(url_for("dashboard.home"))
     if request.method == "POST":
+        remote = phone.is_remote_request()
+        addr = request.remote_addr or ""
+        if remote and (wait := phone.seconds_to_wait(addr)):
+            flash(f"Too many tries. Please wait {wait} seconds and try again.")
+            return render_template("unlock.html", from_phone=True), 429
         given = request.form.get("passcode", "")
         if _accept(given):
             session["unlocked"] = True
             session.permanent = True
+            if remote:
+                session["phone_generation"] = phone.generation()
+                phone.note_success(addr)
             return redirect(safe_next(request.args.get("next")) or url_for("dashboard.home"))
+        if remote:
+            phone.note_failure(addr)
         if not current_app.config.get("TESTING"):
             time.sleep(0.5)  # slows down guessing from another device
         flash("That passcode isn't right.")
-        return render_template("unlock.html", from_phone=phone.is_remote_request()), 401
+        return render_template("unlock.html", from_phone=remote), 401
     return render_template("unlock.html", from_phone=phone.is_remote_request())
 
 

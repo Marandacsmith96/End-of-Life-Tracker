@@ -1,9 +1,9 @@
 """Backup, restore, and about."""
 import io
 
-from flask import Blueprint, flash, redirect, render_template, request, send_file, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, send_file, session, url_for
 
-from .. import backup, db, safety, scoring
+from .. import backup, db, phone, safety, scoring
 
 bp = Blueprint("settings", __name__)
 
@@ -21,6 +21,8 @@ def download_backup():
 
 @bp.post("/settings/restore")
 def restore():
+    if phone.is_remote_request():
+        abort(403)  # replacing everything is a job for the computer the data lives on
     if request.form.get("confirm") != "yes":
         flash("Please tick the box to confirm you want to replace your current data.")
         return redirect(url_for("settings.settings"))

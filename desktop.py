@@ -108,10 +108,12 @@ def main() -> None:
         from app import phone
         if phone.is_enabled():
             phone_url = phone.url()
-            if phone.listener_running() and phone_url:
-                _say(f"  Phone access is on. On a phone on the same Wi-Fi, open: {phone_url}", "")
-            elif not phone.listener_running():
+            if not phone.listener_running():
                 _say(f"  Phone access is on, but port {phone.port()} could not be opened for phones.", "")
+            elif phone_url:
+                _say(f"  Phone access is on. On a phone on the same Wi-Fi, open: {phone_url}", "")
+            else:
+                _say("  Phone access is on, but this computer has no network address right now.", "")
     _say("  Leave this window open while you use the app. Close it to stop.", "")
     try:
         import webview  # pywebview (optional)

@@ -364,6 +364,45 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   collected" (medication ticks, photos) or "remove a reason not to open the
   app" (it is on the computer, I am on the sofa). None needed new data.
 
+### Oct 13 — fourth bug check, aimed at phone access
+
+- "Check for bugs" again, scoped to the three new features. My own read,
+  a crawl of every page as an unlocked phone (4,991 pages, all fine), and
+  an independent reviewer who also exercised the real listener. The
+  reviewer found nine things; one mattered.
+- **Switching the passcode did not sign phones out.** A phone that had
+  unlocked kept a cookie saying "unlocked" for 31 days, and switching phone
+  access off and on with a new passcode only rewrote the settings file. The
+  page even promised the opposite ("switch it off and on again to set a
+  new one"). Now every enable mints a fresh token, a phone's unlock
+  remembers the token it unlocked under, and a phone only counts as
+  unlocked while that token is current. Confirmed over real sockets: old
+  cookie, new passcode, sent back to the unlock page.
+- Phones had no Lock button (it was only shown for the hosted copy's
+  passcode). It now appears whenever a passcode protects the page.
+- Guessing was slowed only by a half-second pause, which parallel requests
+  ignore. After five wrong tries from one address, that address must wait
+  thirty seconds, even for the right passcode.
+- A phone could restore a backup and wipe everything. Restoring is now
+  only possible from the computer; the phone's settings page says so.
+  Downloading a backup from a phone is still allowed.
+- The medication card said "given on 5 of the 10 days you logged", but
+  quick check-ins never ask about medications, so the count only covers
+  full check-ins. It now says so, and the explanation mentions quick
+  check-ins. My own finding on the same card: a medication stopped weeks
+  ago showed "given on 0 of 27 days" because the example data had offered
+  it on every day; days after a medication's end date are now left blank,
+  and the wording for a stopped medication with nothing in the window
+  changed.
+- Smaller: the packaged build pulled in the QR library's own test suite
+  (it now lists only the module it uses); the launcher said nothing when
+  phone access was on but the computer had no network address; the page
+  now mentions that a VPN can make the shown address wrong; and the photo
+  tiles' link label hid the image description from screen readers.
+- Five regression tests (160 in all). Lesson: a feature that adds a second
+  way in needs a second way out, and the reviewer's first question was the
+  right one: "what happens to the phones already inside?"
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -423,6 +462,7 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Baseline sliders saving 7 for "blank" | reviewer reading the template against its own hint text | since the baseline form was built |
 | Safety rules applied to the owner's own words | reviewer trying a realistic event title | since the safety layer was built |
 | Restore trusting any file with an "animals" table | reviewer feeding it a foreign database | since backup/restore was built |
+| Phone passcode change that signed nobody out | reviewer replaying an old cookie | two days, since phone access was built |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

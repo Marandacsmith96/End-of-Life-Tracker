@@ -117,7 +117,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     def inject_globals():
         return {"disclaimer": safety.DISCLAIMER, "attribution": scoring.ATTRIBUTION,
                 "emergency": safety.EMERGENCY, "switcher_pets": _switcher_pets, "switch_url": _switch_url,
-                "build_label": version.build_label()}
+                "build_label": version.build_label(), "can_lock": auth.can_lock,
+                "from_phone": phone.is_remote_request}
 
     if not app.config.get("TESTING"):
         phone.autostart(app)

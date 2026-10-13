@@ -9,8 +9,10 @@ owner's router is deliberately set up to forward the port.
 """
 import ipaddress
 import re
+import secrets
 import socket
 import threading
+import time
 
 from flask import current_app, request
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -39,20 +41,57 @@ def port() -> int:
 
 
 def enable(passcode: str) -> None:
-    """Store the passcode (hashed) and switch phone access on."""
+    """Store the passcode (hashed) and switch phone access on.
+
+    Every enable gets a fresh generation token; a phone's unlock remembers the
+    token it unlocked under, so switching off (or off and on with a new
+    passcode) signs every phone out."""
     prefs.update(phone_access=True, phone_passcode_hash=generate_password_hash(passcode),
-                 phone_port=port())
+                 phone_generation=secrets.token_hex(8), phone_port=port())
+    _failures.clear()
     start_listener(current_app._get_current_object())
 
 
 def disable() -> None:
-    prefs.update(phone_access=False)
+    prefs.update(phone_access=False, phone_generation=None)
     stop_listener()
+
+
+def generation() -> str | None:
+    """The token phones must hold to count as unlocked (None while off)."""
+    return prefs.get("phone_generation") if is_enabled() else None
 
 
 def check_passcode(given: str) -> bool:
     stored = prefs.get("phone_passcode_hash")
     return bool(stored) and check_password_hash(stored, given or "")
+
+
+# --- slowing down guessing -----------------------------------------------------
+
+MAX_TRIES = 5
+WAIT_SECONDS = 30
+_failures: dict[str, tuple[int, float]] = {}  # address -> (wrong tries in a row, time of the last)
+
+
+def seconds_to_wait(addr: str) -> int:
+    """How long this address must wait before another try (0 = may try now)."""
+    with _lock:
+        tries, last = _failures.get(addr, (0, 0.0))
+    if tries < MAX_TRIES:
+        return 0
+    return max(0, int(WAIT_SECONDS - (time.monotonic() - last)) + 1)
+
+
+def note_failure(addr: str) -> None:
+    with _lock:
+        tries, _ = _failures.get(addr, (0, 0.0))
+        _failures[addr] = (tries + 1, time.monotonic())
+
+
+def note_success(addr: str) -> None:
+    with _lock:
+        _failures.pop(addr, None)
 
 
 # --- which requests come from another device --------------------------------

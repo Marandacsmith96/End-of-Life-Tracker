@@ -27,7 +27,7 @@
 {% endif %}
 {% if summaries %}
 <h2>How it's going</h2>
-<p class="muted">Whether each medication was ticked in the daily check-in over the last {{ window_days }} days. Days without a check-in, or before the medication was added, are left blank.</p>
+<p class="muted">Whether each medication was ticked under "More details" in the full check-in over the last {{ window_days }} days. Quick check-ins, days without a check-in, and days before the medication was added are left blank.</p>
 <div class="med-cards">
   {% for s in summaries %}
     <section class="card block med-card {{ '' if s.medication.active else 'inactive' }}" aria-label="{{ s.medication.name }}">

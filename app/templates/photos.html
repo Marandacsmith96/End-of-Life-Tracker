@@ -13,8 +13,8 @@
     <div class="photo-grid">
       {% for p in items %}
         <figure class="photo-tile">
-          <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=p.entry_date.isoformat()) }}" aria-label="Open the check-in for {{ p.entry_date.strftime('%B') }} {{ p.entry_date.day }}">
-            <img src="{{ url_for('animals.serve_photo', filename=p.file_path) }}" alt="{{ p.caption or (animal.name ~ ' on ' ~ p.entry_date.strftime('%B') ~ ' ' ~ p.entry_date.day) }}" loading="lazy">
+          <a href="{{ url_for('entries.checkin', animal_id=animal.id, date=p.entry_date.isoformat()) }}" title="Open the check-in for {{ p.entry_date.strftime('%B') }} {{ p.entry_date.day }}">
+            <img src="{{ url_for('animals.serve_photo', filename=p.file_path) }}" alt="{{ animal.name }} on {{ p.entry_date.strftime('%B') }} {{ p.entry_date.day }}{% if p.caption %}: {{ p.caption }}{% endif %}" loading="lazy">
           </a>
           <figcaption>
             <span class="date">{{ p.entry_date.strftime('%a, %b') }} {{ p.entry_date.day }}</span>
