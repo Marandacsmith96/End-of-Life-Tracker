@@ -17,11 +17,10 @@ Juniper is a 12-year-old cat who starts low after a diagnosis of an overactive
 thyroid and dental disease, dips again around a dental procedure, then climbs
 steadily as treatment takes hold and levels off near her old self.
 
-Rosie is a 15-year-old beagle mix tracked the way a real person tracks: daily
-for the first week, then missed weekends, a five-day holiday gap, quick
-check-ins without scores on busy days, a heart murmur found at a check-up
-part-way through, and a slow decline that is hard to see from one day to the
-next.
+Rosie is a 15-year-old beagle mix with one real-looking month of tracking:
+daily for the first week, then missed days, quick check-ins without scores on
+busy days, a heart murmur found at a check-up in the second week, a new tablet,
+one very good day, and a small drift that no single day shows.
 
 All four include noise, the odd off day, and missing entries. Nothing here is
 real.
@@ -327,105 +326,90 @@ ROSIE_NOTES = {
 
 
 def seed_rosie(rng: random.Random, today: date) -> None:
-    """What real tracking looks like: enthusiastic for a week, then missed
-    weekends, a holiday gap, quick check-ins on busy days, a diagnosis part-way
-    through, and a slow change that is hard to see from one day to the next."""
+    """A real first month: started after a few worrying nights, logged every
+    day for a week, then missed days, quick check-ins on busy days, a vet
+    visit in the second week that found a heart murmur, a new tablet, one
+    very good day, and a small drift that no single day shows."""
     animal_id = models.create_animal(
         "Rosie", "dog", "Beagle mix", today - timedelta(days=365 * 15 + 40), "female",
-        "Arthritis; heart murmur (mitral valve disease, found this autumn)", demo=True)
+        "Arthritis; heart murmur (found this month)", demo=True)
     marker_ids = [markers.create_marker(animal_id, m) for m in ROSIE_MARKERS]
-    baseline.save_baseline(animal_id, today - timedelta(days=182),
+    baseline.save_baseline(animal_id, today - timedelta(days=120),
                            {"hurt": 8, "hunger": 9, "hydration": 8, "hygiene": 9, "happiness": 9,
                             "mobility": 7, "good_days": 9}, "mostly_good", "most_days",
                            "Slower on walks but still herself.")
     melox = entries.create_medication(animal_id, "Meloxicam", "1.5 mg", "once a day with breakfast",
-                                      today - timedelta(days=130))
+                                      today - timedelta(days=100))
     pimo = entries.create_medication(animal_id, "Pimobendan", "5 mg", "twice a day, an hour before food",
-                                     today - timedelta(days=54))
-    d0 = today - timedelta(days=74)
-    events.create_event(animal_id, d0 + timedelta(days=20), "vet_visit", "Check-up: heart murmur, chest x-rays",
+                                     today - timedelta(days=19))
+    d0 = today - timedelta(days=29)
+    events.create_event(animal_id, d0 + timedelta(days=10), "vet_visit", "Check-up: heart murmur, chest x-rays",
                         "Vet heard a murmur, 3 out of 6. X-rays show the heart a little enlarged. Starting pimobendan.")
-    events.create_event(animal_id, d0 + timedelta(days=20), "new_medication", "Started pimobendan 5 mg", None)
-    events.create_event(animal_id, d0 + timedelta(days=33), "travel", "Away five days, Rosie at my sister's",
-                        "She ate well there, apparently. No notes from those days.")
-    events.create_event(animal_id, d0 + timedelta(days=52), "active_day", "Grandkids visited",
+    events.create_event(animal_id, d0 + timedelta(days=10), "new_medication", "Started pimobendan 5 mg", None)
+    events.create_event(animal_id, d0 + timedelta(days=22), "active_day", "Grandkids visited",
                         "Played tug for the first time in weeks, then slept all evening.")
-    events.create_event(animal_id, d0 + timedelta(days=60), "vet_visit", "Recheck: cough better, heart stable",
-                        "Told to count her breaths while she sleeps now and then: under 30 a minute is fine.")
-    events.create_event(animal_id, d0 + timedelta(days=66), "grooming", "Bath and nails", None)
+    events.create_event(animal_id, d0 + timedelta(days=26), "grooming", "Bath and nails", None)
 
     weight = 24.6
-    for i in range(75):
+    for i in range(30):
         day = d0 + timedelta(days=i)
-        t = i / 74
-        # How often a real person logs: daily at first, then weekends slip, a
-        # holiday gap with nothing, a slump, and a fresh start after the recheck.
-        if 33 <= i <= 37:
-            continue
-        if i < 10:
-            skip = 0.0
-        elif i < 33:
-            skip = 0.55 if day.weekday() >= 5 else 0.15
-        elif i < 60:
-            skip = 0.65 if day.weekday() >= 5 else 0.4
-        else:
-            skip = 0.35 if day.weekday() >= 5 else 0.1
-        if rng.random() < skip:
+        t = i / 29
+        # Every day for the first week; after that weekends slip and the odd weekday is missed.
+        if i >= 7 and rng.random() < (0.5 if day.weekday() >= 5 else 0.1 if i >= 23 else 0.15):
             continue
         noise = lambda s=1.0: rng.gauss(0, s)  # noqa: E731
-        cough_spell = 1.6 if 14 <= i <= 19 else 0          # the week before the vet visit
-        settled = 0.9 if 22 <= i <= 40 else 0.5 if i > 40 else 0   # pimobendan helps, then the slow slide resumes
+        cough_spell = 1.6 if 5 <= i <= 9 else 0            # the nights that led to the vet visit
+        settled = 0.9 if 12 <= i <= 20 else 0.5 if i > 20 else 0   # the tablets help, then the slow drift resumes
         rainy = 0.9 if rng.random() < 0.2 else 0
-        comfort = 6.6 - 1.2 * t - cough_spell + settled
-        hunger = 8.0 - 0.6 * t - cough_spell * 0.5
+        comfort = 6.6 - 0.9 * t - cough_spell + settled
+        hunger = 8.0 - 0.5 * t - cough_spell * 0.5
         hydration = 7.5 - 0.3 * t
-        hygiene = 7.6 - 0.7 * t
-        happiness = 7.2 - 1.3 * t - cough_spell + settled * 0.8
-        mobility = 6.2 - 1.5 * t - rainy - cough_spell * 0.4
-        good_days = 7.0 - 1.6 * t - cough_spell + settled * 0.7
+        hygiene = 7.6 - 0.5 * t
+        happiness = 7.2 - 1.0 * t - cough_spell + settled * 0.8
+        mobility = 6.2 - 1.2 * t - rainy - cough_spell * 0.4
+        good_days = 7.0 - 1.2 * t - cough_spell + settled * 0.7
         scores = {
             "hurt": clamp(round(comfort + noise())), "hunger": clamp(round(hunger + noise(0.8))),
             "hydration": clamp(round(hydration + noise(0.7))), "hygiene": clamp(round(hygiene + noise(0.7))),
             "happiness": clamp(round(happiness + noise())), "mobility": clamp(round(mobility + noise(0.8))),
             "good_days": clamp(round(good_days + noise(0.9))),
         }
-        if i == 52:  # the grandkids
+        if i == 22:  # the grandkids
             scores = {k: clamp(v + 2) for k, v in scores.items()}
         mean = sum(scores.values()) / 7
-        if mean >= 6.6:
+        if mean >= 7.0:
             status = "good"
-        elif mean <= 4.9:
+        elif mean <= 5.2:
             status = "bad"
         else:
             status = "mixed" if rng.random() < 0.65 else ("good" if rng.random() < 0.5 else "bad")
         # Busy days get the ten-second version: good or bad day and the behaviours, no scores.
-        quick = rng.random() < (0.25 if i < 10 else 0.2 if i >= 60 else 0.5)
-        weight = max(22.5, weight - rng.uniform(0.0, 0.06))
-        log_weight = round(weight, 1) if (i % 10 == 3 and not quick) else None
-        appetite = rng.choices(["none", "low", "normal", "high"], weights=[0.05, 0.2 + 0.2 * t, 0.65 - 0.2 * t, 0.1])[0]
+        quick = rng.random() < (0.2 if i < 7 or i >= 23 else 0.4)
+        weight = max(23.5, weight - rng.uniform(0.0, 0.05))
+        log_weight = round(weight, 1) if (i in (1, 15, 28) and not quick) else None
+        appetite = rng.choices(["none", "low", "normal", "high"], weights=[0.05, 0.2 + 0.1 * t, 0.65 - 0.1 * t, 0.1])[0]
         entry_id = entries.save_entry(
             animal_id, day, status, {} if quick else scores, log_weight, "lb" if log_weight else None,
             None if quick else appetite, rng.choice(ROSIE_NOTES[status]))
         probs = {
-            marker_ids[0]: 0.85 - 0.3 * t - (0.3 if cough_spell else 0),   # comes to the door
-            marker_ids[1]: 0.9 - 0.25 * t,                                  # finishes breakfast
-            marker_ids[2]: 0.7 - 0.45 * t - (0.3 if rainy else 0),          # back steps: the clearest slide
-            marker_ids[3]: 0.4 - 0.3 * t + (0.6 if i == 52 else 0),         # asks to play tug
+            marker_ids[0]: 0.85 - 0.25 * t - (0.3 if cough_spell else 0),   # comes to the door
+            marker_ids[1]: 0.9 - 0.2 * t,                                   # finishes breakfast
+            marker_ids[2]: 0.7 - 0.4 * t - (0.3 if rainy else 0),           # back steps: the clearest slide
+            marker_ids[3]: 0.4 - 0.25 * t + (0.6 if i == 22 else 0),        # asks to play tug
         }
         done = {m for m, pr in probs.items() if rng.random() < clamp(pr, 0, 1)}
         markers.set_responses(entry_id, done, set(marker_ids))
         if not quick:
-            given = {melox} if rng.random() < 0.9 else set()
+            given = {melox} if rng.random() < 0.85 else set()
             offered = {melox}
-            if i >= 20:
+            if i >= 10:
                 offered.add(pimo)
-                if rng.random() < 0.85:
+                if rng.random() < 0.8:
                     given.add(pimo)
             entries.set_entry_medications(entry_id, given, offered)
-    for weeks_ago, status, note in ((9, "okay", None), (7, "harder", "The night coughing scared me."),
-                                    (4, "okay", "Easier now she's on the heart tablets."),
-                                    (1, "harder", "Hard to tell if she's slipping or if it's just her age.")):
-        caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 3), status, note)
+    for weeks_ago, status, note in ((3, "harder", "The night coughing scared me."),
+                                    (1, "okay", "Easier now she's on the heart tablets. Hard to tell if she's slipping or if it's just her age.")):
+        caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 2), status, note)
 
 
 # What the "Try it with example pets" section shows. Order matters.
@@ -440,9 +424,9 @@ EXAMPLES = (
      "story": "12-year-old cat, 60 days. Starts low after a thyroid diagnosis and dental surgery, "
               "then improves as treatment takes hold."},
     {"key": "rosie", "name": "Rosie", "species": "dog", "seed": 67, "fn": seed_rosie,
-     "story": "15-year-old beagle mix, 75 days. What real tracking looks like: missed weekends, a "
-              "holiday gap, quick check-ins on busy days, a heart diagnosis part-way through, and a "
-              "slow change that is hard to see from one day to the next."},
+     "story": "15-year-old beagle mix, 30 days. A real first month: a week of daily check-ins, "
+              "then missed days and quick check-ins, a heart murmur found at the vet, a new tablet, "
+              "and a small drift that no single day shows."},
 )
 
 

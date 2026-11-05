@@ -481,6 +481,14 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   app now calls her recent weeks "relatively stable" while the full-range
   chart shows the drift from about 7 to about 6.4. Her story text says
   exactly that: a change that is hard to see from one day to the next.
+- Then: "I just want 30 days of activity, make it a real example." Seventy-five
+  days was a story; a month is what a new user actually has. Rosie now has
+  one month: every day for the first week, then 27 of 30 days logged, 21 of
+  them with scores, a cough spell that led to the vet visit in week two, the
+  new tablet, one very good day, and a last-week average of 6.6 against 7.0
+  before. The first cut of the month came out as 21 "good" days out of 24,
+  which no worried owner's month looks like; the good/bad thresholds were
+  tightened so the month reads mixed, as it should.
 - Every "three example pets" in the README, the Home page, the More page,
   the demo banner and the tests became four; the static demo builder got a
   fourth file prefix.
