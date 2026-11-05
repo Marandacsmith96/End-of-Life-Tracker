@@ -422,7 +422,7 @@ def test_example_pets_can_be_added_and_removed(client, app):
     assert b"Example pet" in r.data  # badge on the dashboard the add lands on
     with app.app_context():
         demo = models.list_demo_animals()
-        assert [a.name for a in demo] == ["Maggie", "Bruno", "Juniper"]
+        assert [a.name for a in demo] == ["Maggie", "Bruno", "Juniper", "Rosie"]
         assert all(a.demo for a in demo)
         assert len(entries.list_entries(demo[2].id)) > 40
     html = client.get("/how-it-works").get_data(as_text=True)
@@ -526,8 +526,8 @@ def test_adding_examples_twice_at_once_makes_one_set(app):
     for t in threads:
         t.join()
     with app.app_context():
-        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie"]
-    assert sorted(len(r) for r in results) == [0, 3]
+        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie", "Rosie"]
+    assert sorted(len(r) for r in results) == [0, 4]
 
 
 def test_photo_upload_only_returns_to_this_site(client):
@@ -546,7 +546,7 @@ def test_seed_cli_does_not_duplicate_examples(app, monkeypatch):
     seed_demo.seed(reset=False)
     seed_demo.seed(reset=False)
     with app.app_context():
-        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie"]
+        assert sorted(a.name for a in models.list_demo_animals()) == ["Bruno", "Juniper", "Maggie", "Rosie"]
 
 
 # --- phone access ------------------------------------------------------------
@@ -946,7 +946,7 @@ def test_renamed_example_is_not_seeded_twice(client, app):
     client.post("/animals/1/edit", data={"name": "Maggie (example)", "species": "dog"})
     client.post("/examples/add")
     with app.app_context():
-        assert len(models.list_demo_animals()) == 3
+        assert len(models.list_demo_animals()) == 4
 
 
 def test_birth_date_cannot_follow_the_passing_date(client, app):

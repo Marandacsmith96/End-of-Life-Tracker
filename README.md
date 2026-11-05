@@ -11,7 +11,7 @@
 > [Download for Mac](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac.zip) (Apple silicon) ·
 > [Mac with an Intel chip](https://github.com/Marandacsmith96/End-of-Life-Tracker/releases/download/latest/QualityOfLifeTracker-Mac-Intel.zip)
 > Unzip, then double-click `PetQoLTracker.exe` (Windows) or `Start.command` (Mac). Python is included.
-> [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, three sample pets)
+> [Step-by-step instructions](#use-it-for-real) · **[Try the demo in your browser](https://claude.ai/artifact/9UWy35g8BQPusiz9wxE1Zd)** (read-only, four sample pets)
 
 A gentle quality-of-life tracker for aging and seriously ill pets. Record
 daily observations in seconds, see changes over time, and bring clearer
@@ -56,8 +56,9 @@ observations, and it is not a validated medical device.
   prompts, and offers to keep, archive, export, or remove the profile.
 - **Several pets, one bar.** With more than one pet, a switcher under the
   header jumps between them and stays on the same page.
-- **See an example.** One button on the Home page fills the app with three
-  fictional pets and weeks of entries (steady, declining, and improving) so
+- **See an example.** One button on the Home page fills the app with four
+  fictional pets and weeks of entries (steady, declining, improving, and one
+  tracked the messy way real people track) so
   you can click through every page first; another removes them.
 - **Use it on your phone.** Switch on phone access (More, then "Use on your
   phone"), set a passcode, and scan the QR code: any phone or tablet on the
@@ -144,7 +145,7 @@ You need Python 3.11 or newer.
 python3 -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/seed_demo.py --reset   # optional: the three example pets (or add them from "How it works" in the app)
+python scripts/seed_demo.py --reset   # optional: the four example pets (or add them from "How it works" in the app)
 python run.py
 ```
 

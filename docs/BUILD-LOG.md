@@ -459,6 +459,37 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   SIP), which is why the launcher's search for a free port starts at
   5000 and the phone listener uses 5100.
 
+### Nov 5 — a fourth example pet, tracked the way people really track
+
+- "Add a real-life example to the app." The three existing example pets
+  are tidy: logged almost every day, with scores on most days, and a story
+  shaped to show one kind of trend. Nobody tracks like that. Rosie is a
+  fifteen-year-old beagle mix built from the other direction: what the
+  data looks like when a real person keeps it. Daily for the first week
+  while the app is new, then missed weekends, a five-day gap while she is
+  at a relative's, a slump of half-logged weeks, quick check-ins without
+  scores on busy days, notes in an owner's voice ("Not sure if I'm reading
+  too much into this"), a heart murmur found at a check-up three weeks in,
+  a new tablet, a grandkids-visit spike, and a slow slide underneath it
+  all that no single day shows.
+- The first version was too real: the app said "not enough information"
+  about her, because fewer than four of the last seven days had scores.
+  That is the correct answer for that data, and it is also a lesson the
+  example should teach rather than be: quick check-ins feed the calendar
+  and the behaviours but not the trend line. So her last fortnight, after
+  the vet recheck, is logged more fully (a plausible fresh start), and the
+  app now calls her recent weeks "relatively stable" while the full-range
+  chart shows the drift from about 7 to about 6.4. Her story text says
+  exactly that: a change that is hard to see from one day to the next.
+- Every "three example pets" in the README, the Home page, the More page,
+  the demo banner and the tests became four; the static demo builder got a
+  fourth file prefix.
+- This session restarted on a fresh machine with no Python environment
+  and lost the first attempt at the edit; the environment had to be
+  rebuilt and the change re-applied. Worth noting because "the tool forgot"
+  is a real cost of this way of working, and the only defence is small
+  commits pushed often.
+
 ---
 
 ## Answers to the assignment's questions (material)
