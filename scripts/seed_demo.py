@@ -358,15 +358,15 @@ def seed_rosie(rng: random.Random, today: date) -> None:
         if i >= 7 and rng.random() < (0.5 if day.weekday() >= 5 else 0.1 if i >= 23 else 0.15):
             continue
         noise = lambda s=1.0: rng.gauss(0, s)  # noqa: E731
-        cough_spell = 1.6 if 5 <= i <= 9 else 0            # the nights that led to the vet visit
+        cough_spell = 2.0 if 5 <= i <= 9 else 0            # the nights that led to the vet visit
         settled = 0.9 if 12 <= i <= 20 else 0.5 if i > 20 else 0   # the tablets help, then the slow drift resumes
         rainy = 0.9 if rng.random() < 0.2 else 0
         comfort = 6.6 - 0.9 * t - cough_spell + settled
-        hunger = 8.0 - 0.5 * t - cough_spell * 0.5
-        hydration = 7.5 - 0.3 * t
-        hygiene = 7.6 - 0.5 * t
+        hunger = 8.0 - 0.5 * t - cough_spell * 0.6
+        hydration = 7.5 - 0.3 * t - cough_spell * 0.3
+        hygiene = 7.6 - 0.5 * t - cough_spell * 0.4
         happiness = 7.2 - 1.0 * t - cough_spell + settled * 0.8
-        mobility = 6.2 - 1.2 * t - rainy - cough_spell * 0.4
+        mobility = 6.2 - 1.2 * t - rainy - cough_spell * 0.7
         good_days = 7.0 - 1.2 * t - cough_spell + settled * 0.7
         scores = {
             "hurt": clamp(round(comfort + noise())), "hunger": clamp(round(hunger + noise(0.8))),
@@ -379,10 +379,10 @@ def seed_rosie(rng: random.Random, today: date) -> None:
         mean = sum(scores.values()) / 7
         if mean >= 7.0:
             status = "good"
-        elif mean <= 5.2:
+        elif mean <= 5.8:
             status = "bad"
-        else:
-            status = "mixed" if rng.random() < 0.65 else ("good" if rng.random() < 0.5 else "bad")
+        else:  # an in-between day is usually "mixed"; a bad day with high scores would be odd
+            status = "mixed" if rng.random() < 0.7 else "good"
         # Busy days get the ten-second version: good or bad day and the behaviours, no scores.
         quick = rng.random() < (0.2 if i < 7 or i >= 23 else 0.4)
         weight = max(23.5, weight - rng.uniform(0.0, 0.05))
