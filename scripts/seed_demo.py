@@ -76,6 +76,8 @@ def seed_maggie(rng: random.Random, today: date) -> None:
         events.create_event(animal_id, med_change, "dose_change", "Gabapentin increased to 200 mg",
                             "Twice a day. Vet suggested re-checking in three weeks.")
         events.create_event(animal_id, med_change, "vet_visit", "Pain review appointment", None)
+        events.create_event(animal_id, d0 + timedelta(days=40), "treatment", "Started joint chews (glucosamine)",
+                            "Two a day with breakfast. Vet said give them a month before judging.")
         events.create_event(animal_id, d0 + timedelta(days=71), "active_day", "Family visit, lots of attention", None)
 
         # Latent "true" trajectory for mobility and comfort, 0-10.
