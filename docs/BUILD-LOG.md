@@ -522,6 +522,31 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   have caught it. The honest check is not "did the bind succeed" but "does
   the address reach me".
 
+### Nov 10 — supplements and the signs they are meant to help
+
+- "Add a section specifically for supplements: measure mobility, itching and
+  other clinical signs related to supplements." The problem a supplement
+  poses is that you hope it helps, and hope colours memory. So the design
+  is: a supplement is a medication-table row of a second kind, with a list
+  of signs it watches. Five signs get their own 0-10 slider in the daily
+  check-in (itching, stiffness after rest, skin and coat, stool, energy),
+  and two come from scores the app already collects (mobility, appetite),
+  so there is nothing extra to answer for those. The sliders reuse the
+  check-in's "untouched means unsaved" rule from the default-5 bug.
+- The Supplements page shows, per supplement and per sign, a 30-day strip,
+  the last 7 days against the 21 before, and the two weeks before its start
+  date against the two weeks after, in a sentence that goes through the
+  safety guard and ends "something to mention to your vet rather than a
+  verdict". Lower-is-better signs say so. There is also a "score today's
+  signs" form on the page for days that only got a quick check-in.
+- Schema version 4: two columns on the medications table and a new
+  sign_entries table, with a migration test from version 3. Maggie, the
+  first example pet, now has joint chews started in week six watching
+  stiffness and mobility, so the demo shows the page filled in.
+- The first wording came out as "Mobility (from the daily scores) scores
+  were lower"; the sign label doubled as the sentence subject. Sentences
+  now use a short form of the label.
+
 ---
 
 ## Answers to the assignment's questions (material)

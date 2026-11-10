@@ -2,7 +2,7 @@
 {% block title %}{{ animal.name }} · Medications{% endblock %}
 {% block content %}
 <h1>Medications</h1>
-<p class="muted">Active medications appear as optional checkboxes in the daily check-in. Mark one stopped when it ends so past entries keep their history. Dose changes are best recorded as <a href="{{ url_for('events.new', animal_id=animal.id, type='dose_change') }}">events</a> so they show on the charts.</p>
+<p class="muted">Active medications appear as optional checkboxes in the daily check-in. Mark one stopped when it ends so past entries keep their history. Dose changes are best recorded as <a href="{{ url_for('events.new', animal_id=animal.id, type='dose_change') }}">events</a> so they show on the charts. Supplements have <a href="{{ url_for('supplements.supplements', animal_id=animal.id) }}">their own page</a>, with the signs they're meant to help.</p>
 {% if medications %}
   <div class="table-scroll">
   <table class="table">

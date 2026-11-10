@@ -50,9 +50,10 @@ def create_app(test_config: dict | None = None) -> Flask:
     from .routes import entries as entry_routes
     from .routes import events as event_routes
     from .routes import phone as phone_routes
+    from .routes import supplements as supplement_routes
 
     for module in (auth, dashboard, animals, entry_routes, markers, baseline, trends, event_routes,
-                   caregiver, export, settings, demo, phone_routes):
+                   caregiver, export, settings, demo, phone_routes, supplement_routes):
         app.register_blueprint(module.bp)
 
     @app.before_request

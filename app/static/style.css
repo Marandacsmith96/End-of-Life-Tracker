@@ -706,3 +706,20 @@ h2 { font-weight: 750; }
 .form label.inline.confirm-row input { margin-top: 3px; }
 .event-list .row-actions .link, .row-actions .link.small { font-size: 0.85rem; }
 .empty-state h1 { margin-top: 4px; }
+
+/* ---- Supplements and the signs they are meant to help ---- */
+.sup-card.inactive { opacity: .75; }
+.sup-card h2 .muted { font-weight: 500; font-size: 0.9rem; }
+.sign-view { border-top: 1px solid var(--border); padding: 12px 0 4px; }
+.sign-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }
+.sign-strip { display: flex; align-items: flex-end; gap: 2px; height: 44px; }
+.sign-bar { flex: 1 1 0; min-width: 4px; height: calc(10% + var(--v, 0) * 9%); background: linear-gradient(180deg, var(--accent), var(--accent-dark)); border-radius: 3px 3px 1px 1px; }
+.sign-bar.none { height: 3px; background: #e3ddd2; }
+.sign-numbers { margin-top: 6px; }
+.sign-comfort { margin: 8px 0 0; padding: 10px 12px; background: var(--accent-soft); border-radius: var(--radius-sm); font-size: 0.95rem; }
+.sign-row { margin: 10px 0 14px; }
+.sign-row .question { display: block; font-weight: 700; margin-bottom: 6px; }
+.sign-block .anchors, .sign-row .anchors { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); }
+.sign-choices { border: none; padding: 0; margin: 0 0 14px; }
+.sign-choices legend { font-weight: 700; margin-bottom: 8px; }
+.sign-choices .choice { margin-bottom: 8px; }

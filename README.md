@@ -69,6 +69,11 @@ observations, and it is not a validated medical device.
   and comfort scores before and after it started.
 - **Photo timeline.** Every photo added to a check-in, newest first by month,
   each linked to its day.
+- **Supplements, honestly.** Add a supplement, pick the signs it is meant to
+  help (itching, stiffness after rest, skin and coat, stool, energy, or the
+  mobility and appetite scores you already give), score them in the daily
+  check-in, and see the numbers before and after it started. The page
+  describes; it never says whether something works.
 
 | Check-in | Trends | Vet visit |
 | --- | --- | --- |

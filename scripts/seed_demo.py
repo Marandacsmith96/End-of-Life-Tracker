@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import baseline, caregiver, create_app, entries, events, markers, models, photos  # noqa: E402
+from app import baseline, caregiver, create_app, entries, events, markers, models, photos, signs  # noqa: E402
 from app.scoring import CATEGORY_KEYS  # noqa: E402
 
 NOTES = {
@@ -66,6 +66,9 @@ def seed_maggie(rng: random.Random, today: date) -> None:
         gaba = entries.create_medication(animal_id, "Gabapentin", "100 mg", "twice a day", today - timedelta(days=120))
         carp = entries.create_medication(animal_id, "Carprofen", "75 mg", "with breakfast", today - timedelta(days=200))
         d0 = today - timedelta(days=89)
+        # A joint supplement started in week six, watching stiffness and the mobility score.
+        joint = entries.create_medication(animal_id, "Joint chews (glucosamine)", "2 chews", "with breakfast",
+                                          d0 + timedelta(days=40), kind="supplement", signs=("stiffness", "mobility"))
         med_change = d0 + timedelta(days=55)
         events.create_event(animal_id, d0 + timedelta(days=12), "vet_visit", "Check-up and bloodwork",
                             "Kidney values slightly worse. Discussed pain control.")
@@ -133,7 +136,17 @@ def seed_maggie(rng: random.Random, today: date) -> None:
             given = {gaba} if rng.random() < 0.93 else set()
             if rng.random() < 0.85:
                 given.add(carp)
-            entries.set_entry_medications(entry_id, given, {gaba, carp})
+            # Stiffness after rest: scored most days; eases a little after the chews start, then creeps back.
+            if rng.random() < 0.8:
+                eased = 2.0 if 44 <= i <= 70 else 0.9 if i > 70 else 0
+                stiff = 4.5 + 3.5 * t - eased + rng.gauss(0, 1.0)
+                signs.save_signs(animal_id, day, {"stiffness": clamp(round(stiff))})
+            offered = {gaba, carp}
+            if i >= 40:
+                offered.add(joint)
+                if rng.random() < 0.9:
+                    given.add(joint)
+            entries.set_entry_medications(entry_id, given, offered)
         for weeks_ago, status, note in ((8, "okay", None), (5, "harder", "Not sleeping well; up with her twice a night."),
                                         (2, "exhausted", None)):
             caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago), status, note)

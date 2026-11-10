@@ -86,8 +86,22 @@ CREATE TABLE IF NOT EXISTS medications (
     schedule    TEXT,
     start_date  DATE,
     end_date    DATE,
-    active      INTEGER NOT NULL DEFAULT 1
+    active      INTEGER NOT NULL DEFAULT 1,
+    kind        TEXT    NOT NULL DEFAULT 'medication',   -- 'medication' or 'supplement'
+    signs       TEXT    NOT NULL DEFAULT ''              -- comma-separated sign keys a supplement watches
 );
+
+-- Clinical signs scored 0-10 on a day, apart from the HHHHHMM scale: itching,
+-- stiffness after rest, skin and coat, stool, energy. Used to watch supplements.
+CREATE TABLE IF NOT EXISTS sign_entries (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    animal_id   INTEGER NOT NULL REFERENCES animals(id) ON DELETE CASCADE,
+    entry_date  DATE    NOT NULL,
+    sign_key    TEXT    NOT NULL,
+    value       INTEGER NOT NULL CHECK (value BETWEEN 0 AND 10),
+    UNIQUE (animal_id, entry_date, sign_key)
+);
+CREATE INDEX IF NOT EXISTS idx_sign_entries_animal_date ON sign_entries(animal_id, entry_date);
 
 CREATE TABLE IF NOT EXISTS entry_medications (
     entry_id      INTEGER NOT NULL REFERENCES entries(id)     ON DELETE CASCADE,

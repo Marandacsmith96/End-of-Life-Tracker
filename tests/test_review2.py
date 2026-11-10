@@ -1055,3 +1055,108 @@ def test_launcher_rejects_a_server_that_is_not_this_app(app, monkeypatch):
     finally:
         other.shutdown()
         other.server_close()
+
+
+# --- supplements and the signs they are meant to help ---------------------------
+
+def _supplement(client, animal=1, name="Fish oil", days_ago=20, signs=("itching", "coat")):
+    r = client.post(f"/animals/{animal}/supplements", data={"name": name, "dose": "1 capsule",
+                    "start_date": (TODAY - timedelta(days=days_ago)).isoformat(), "signs": list(signs)})
+    assert r.status_code == 302, r.get_data(as_text=True)[:300]
+
+
+def test_v3_database_gains_supplement_columns_and_sign_table(tmp_path):
+    from app import db as dbm
+    path = tmp_path / "old.sqlite"
+    conn = sqlite3.connect(path)
+    conn.executescript((pathlib_schema := __import__("pathlib").Path("app/schema.sql")).read_text(encoding="utf-8"))
+    conn.executescript("ALTER TABLE medications DROP COLUMN kind; ALTER TABLE medications DROP COLUMN signs; DROP TABLE sign_entries;")
+    conn.execute("INSERT INTO animals (name, species) VALUES ('Old', 'dog')")
+    conn.execute("INSERT INTO medications (animal_id, name) VALUES (1, 'Carprofen')")
+    conn.execute("PRAGMA user_version = 3")
+    conn.commit(); conn.close()
+    conn = dbm.connect(path)
+    dbm.upgrade(conn)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == dbm.SCHEMA_VERSION
+    row = conn.execute("SELECT kind, signs FROM medications").fetchone()
+    assert row["kind"] == "medication" and row["signs"] == ""
+    assert conn.execute("SELECT COUNT(*) FROM sign_entries").fetchone()[0] == 0
+    assert dbm.check_schema(conn) == []
+
+
+def test_supplement_needs_a_name_and_a_sign(client):
+    _pet(client)
+    assert client.post("/animals/1/supplements", data={"name": "", "signs": ["itching"]}).status_code == 400
+    assert client.post("/animals/1/supplements", data={"name": "Fish oil"}).status_code == 400
+    _supplement(client)
+    html = client.get("/animals/1/supplements").get_data(as_text=True)
+    assert "Fish oil" in html and "Itching" in html and "Skin and coat" in html
+    assert "Fish oil" not in client.get("/animals/1/medications").get_data(as_text=True)  # not a medication
+    assert "/animals/1/supplements" in client.get("/more").get_data(as_text=True)
+
+
+def test_watched_signs_appear_in_the_checkin_and_are_saved_only_when_moved(client, app):
+    _pet(client)
+    _supplement(client)
+    html = client.get("/animals/1/checkin").get_data(as_text=True)
+    assert 'name="sign_itching"' in html and 'name="sign_coat"' in html and 'name="sign_stool"' not in html
+    _checkin(client, 1, meds_included="1", sign_itching_set="1", sign_itching="6", sign_coat_set="0", sign_coat="5")
+    from app import signs
+    with app.app_context():
+        assert signs.signs_on(1, TODAY - timedelta(days=1)) == {"itching": 6}
+    html = client.get(f"/animals/1/checkin?date={(TODAY - timedelta(days=1)).isoformat()}").get_data(as_text=True)
+    assert 'name="sign_itching"' in html and ">6</output>" in html  # the saved score shows when editing the day
+
+
+def test_signs_can_be_scored_from_the_supplements_page(client, app):
+    _pet(client)
+    _supplement(client)
+    r = client.post("/animals/1/supplements/signs", data={"entry_date": TODAY.isoformat(), "sign_itching_set": "1",
+                                                           "sign_itching": "3"}, follow_redirects=True)
+    html = unescape(r.get_data(as_text=True))
+    assert "Signs saved" in html and "Last 7 days: <strong>3.0" in html
+    r = client.post("/animals/1/supplements/signs", data={"entry_date": TODAY.isoformat()}, follow_redirects=True)
+    assert "Move a slider" in r.get_data(as_text=True)
+    r = client.post("/animals/1/supplements/signs", data={"entry_date": TODAY.isoformat(), "sign_itching_set": "1",
+                                                           "sign_itching": "11"}, follow_redirects=True)
+    assert "whole number from 0 to 10" in r.get_data(as_text=True)
+
+
+def test_supplement_summary_compares_before_and_after_without_a_verdict(client):
+    _pet(client)
+    _supplement(client, days_ago=14, signs=("itching", "mobility"))
+    for d in range(28, 14, -1):
+        _checkin(client, d, each=5, meds_included="1", sign_itching_set="1", sign_itching="8")
+    for d in range(14, 0, -1):
+        _checkin(client, d, each=7, meds_included="1", sign_itching_set="1", sign_itching="3")
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert "Itching scores were lower in the two weeks after Fish oil started: average 3.0 compared with 8.0 before. Lower is less of it." in html
+    assert "Mobility scores were higher in the two weeks after Fish oil started: average 7.0 compared with 5.0 before." in html
+    assert "rather than a verdict" in html
+    for word in ("works", "working", "effective", "helped"):
+        assert f" {word} " not in html.split("Add a supplement")[0].split("sign-comfort")[-1]
+
+
+def test_supplement_summary_text_passes_the_safety_guard():
+    from app import signs
+    from app.safety import guard
+    sup = Medication(1, 1, "Omega-3", None, None, TODAY - timedelta(days=14), None, True, "supplement", ("coat",))
+    pts = {"coat": [an.Point(TODAY - timedelta(days=d), 3.0 if d >= 14 else 8.0) for d in range(27, 0, -1)]}
+    view = signs._sentence(signs.SIGN_BY_KEY["coat"], sup, an.event_effect(pts["coat"], sup.start_date))
+    assert "Skin and coat scores were higher" in view and "Higher is better" in view
+    guard(view, owner_text=("Omega-3",))
+
+
+def test_marking_a_supplement_stopped_returns_to_the_supplements_page(client):
+    _pet(client)
+    _supplement(client)
+    r = client.post("/medications/1/toggle")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/animals/1/supplements")
+    assert "Mark active" in client.get("/animals/1/supplements").get_data(as_text=True)
+
+
+def test_example_maggie_has_a_supplement_with_signs(client, app):
+    client.post("/examples/add")
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert "Joint chews" in html and "Stiffness after rest" in html and "sign-comfort" in html
+    assert "Given on" in html

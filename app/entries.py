@@ -182,22 +182,36 @@ class Medication:
     start_date: date | None
     end_date: date | None
     active: bool
+    kind: str = "medication"          # or "supplement"
+    signs: tuple[str, ...] = ()       # sign keys a supplement watches
+
+    @property
+    def is_supplement(self) -> bool:
+        return self.kind == "supplement"
 
 
 def _row_to_medication(row) -> Medication:
+    keys = row.keys()
+    signs = tuple(s for s in (row["signs"] if "signs" in keys else "").split(",") if s)
     return Medication(
         id=row["id"], animal_id=row["animal_id"], name=row["name"], dose=row["dose"],
         schedule=row["schedule"], start_date=row["start_date"], end_date=row["end_date"],
-        active=bool(row["active"]),
+        active=bool(row["active"]), kind=(row["kind"] if "kind" in keys else "medication") or "medication",
+        signs=signs,
     )
 
 
-def list_medications(animal_id: int, active_only: bool = False) -> list[Medication]:
+def list_medications(animal_id: int, active_only: bool = False, kind: str | None = None) -> list[Medication]:
+    """Medications and supplements share a table; ``kind`` picks one or the other."""
     sql = "SELECT * FROM medications WHERE animal_id = ?"
+    params: list = [animal_id]
     if active_only:
         sql += " AND active = 1"
+    if kind:
+        sql += " AND kind = ?"
+        params.append(kind)
     sql += " ORDER BY active DESC, name COLLATE NOCASE"
-    return [_row_to_medication(r) for r in get_db().execute(sql, (animal_id,)).fetchall()]
+    return [_row_to_medication(r) for r in get_db().execute(sql, params).fetchall()]
 
 
 def get_medication(medication_id: int) -> Medication | None:
@@ -207,15 +221,21 @@ def get_medication(medication_id: int) -> Medication | None:
 
 def create_medication(
     animal_id: int, name: str, dose: str | None = None, schedule: str | None = None,
-    start_date: date | None = None,
+    start_date: date | None = None, kind: str = "medication", signs=(),
 ) -> int:
     db = get_db()
     cur = db.execute(
-        "INSERT INTO medications (animal_id, name, dose, schedule, start_date) VALUES (?, ?, ?, ?, ?)",
-        (animal_id, name, dose, schedule, start_date),
+        "INSERT INTO medications (animal_id, name, dose, schedule, start_date, kind, signs) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (animal_id, name, dose, schedule, start_date, kind, ",".join(signs)),
     )
     db.commit()
     return cur.lastrowid
+
+
+def set_medication_signs(medication_id: int, signs) -> None:
+    db = get_db()
+    db.execute("UPDATE medications SET signs = ? WHERE id = ?", (",".join(signs), medication_id))
+    db.commit()
 
 
 def set_medication_active(medication_id: int, active: bool, on: date | None = None) -> None:

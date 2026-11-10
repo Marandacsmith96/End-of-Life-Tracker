@@ -4,7 +4,7 @@ from datetime import date
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
-from .. import entries, markers, meds, photos, scoring
+from .. import entries, markers, meds, photos, scoring, signs
 from ..helpers import animal_or_404, parse_date
 
 bp = Blueprint("entries", __name__)
@@ -89,6 +89,9 @@ def _save_markers_and_meds(animal_id: int, entry_id: int, form) -> None:
         offered = {m.id for m in entries.list_medications(animal_id, active_only=True)}
         given = {int(x) for x in form.getlist("given") if x.isdecimal()} & offered
         entries.set_entry_medications(entry_id, given, offered)
+        sign_values, _ = signs.parse_form(form)
+        if sign_values:
+            signs.save_signs(animal_id, entries.get_entry(entry_id).entry_date, sign_values)
 
 
 def _save_photos(entry_id: int, files) -> int:
@@ -143,6 +146,8 @@ def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=N
             photos=entries.list_entry_photos(entry.id) if entry else [],
             today=date.today().isoformat(), start_step=start_step,
             has_scores=entry.has_scores if entry else False,
+            watched_signs=signs.watched_signs(entries.list_medications(animal.id, kind="supplement")),
+            sign_values=signs.signs_on(animal.id, shown),
             category_icons=scoring.CATEGORY_ICONS, nice_date=f"{shown:%A, %B} {shown.day}",
         ),
         status,
@@ -258,12 +263,12 @@ def medications(animal_id: int):
         if not name:
             flash("Please enter the medication's name.")
             return render_template("medications.html", animal=animal,
-                                   medications=entries.list_medications(animal_id), values=request.form,
+                                   medications=entries.list_medications(animal_id, kind="medication"), values=request.form,
                                    today=date.today().isoformat()), 400
         entries.create_medication(animal_id, name, dose, schedule, start)
         flash(f"{name} added.")
         return redirect(url_for("entries.medications", animal_id=animal_id))
-    medications = entries.list_medications(animal_id)
+    medications = entries.list_medications(animal_id, kind="medication")
     end = animal.passed_date or date.today()
     summaries = meds.summarize(medications, entries.list_entries(animal_id), entries.given_days_for_animal(animal_id), end)
     return render_template("medications.html", animal=animal, medications=medications, summaries=summaries,
@@ -277,7 +282,7 @@ def toggle_medication(medication_id: int):
         abort(404)
     entries.set_medication_active(medication_id, not med.active)
     flash(f"{med.name} marked {'active' if not med.active else 'stopped'}.")
-    return redirect(url_for("entries.medications", animal_id=med.animal_id))
+    return redirect(_back_to(med))
 
 
 @bp.post("/medications/<int:medication_id>/delete")
@@ -287,7 +292,13 @@ def delete_medication(medication_id: int):
         abort(404)
     entries.delete_medication(medication_id)
     flash(f"{med.name} removed.")
-    return redirect(url_for("entries.medications", animal_id=med.animal_id))
+    return redirect(_back_to(med))
+
+
+def _back_to(med: entries.Medication) -> str:
+    if med.is_supplement:
+        return url_for("supplements.supplements", animal_id=med.animal_id)
+    return url_for("entries.medications", animal_id=med.animal_id)
 
 
 # --- photo timeline ------------------------------------------------------------

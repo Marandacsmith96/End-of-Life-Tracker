@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ animal.name }} · Supplements{% endblock %}
+{% block content %}
+<h1>{{ icon('leaf', 'icon h-icon') }}Supplements</h1>
+<p class="lede">A supplement is hard to judge by feel, because hope colours memory. Pick the signs it is meant to help, score them in the daily check-in, and this page shows the numbers before and after it started. It describes; it never says whether something works.</p>
+
+{% if views %}
+  {% for v in views %}
+    {% set sup = v.supplement %}
+    <section class="card block sup-card {{ '' if sup.active else 'inactive' }}" aria-label="{{ sup.name }}">
+      <div class="section-head tight">
+        <h2>{{ sup.name }} <span class="muted small">{{ sup.dose or '' }}{% if sup.dose and sup.schedule %} · {% endif %}{{ sup.schedule or '' }}</span></h2>
+        <div class="row-actions">
+          <form method="post" action="{{ url_for('entries.toggle_medication', medication_id=sup.id) }}"><button class="link small" type="submit">{{ 'Mark stopped' if sup.active else 'Mark active' }}</button></form>
+          <form method="post" action="{{ url_for('entries.delete_medication', medication_id=sup.id) }}" data-confirm="Remove {{ sup.name }}? Its signs stay recorded."><button class="link small danger" type="submit">Remove</button></form>
+        </div>
+      </div>
+      <p class="muted small">
+        {% if sup.start_date %}Started {{ sup.start_date.strftime('%b') }} {{ sup.start_date.day }}, {{ sup.start_date.year }}.{% else %}No start date, so there is no before and after; add one when you edit it.{% endif %}
+        {% if not sup.active and sup.end_date %} Stopped {{ sup.end_date.strftime('%b') }} {{ sup.end_date.day }}.{% endif %}
+        {% if given[sup.id] %} {{ given[sup.id].count_text }}{% endif %}
+      </p>
+      {% for sv in v.signs %}
+        <div class="sign-view">
+          <div class="sign-head">
+            <strong>{{ sv.sign.label }}</strong>
+            <span class="muted small">{{ 'higher is better' if sv.sign.higher_is_better else 'lower is less of it' }}</span>
+          </div>
+          <div class="sign-strip" role="img" aria-label="{{ sv.sign.label }} over the last {{ window_days }} days">
+            {% for day, value in v.bars(sv) %}
+              {% if value is none %}<span class="sign-bar none" title="{{ day.strftime('%b') }} {{ day.day }}: no score"></span>
+              {% else %}<span class="sign-bar" style="--v: {{ value }}" title="{{ day.strftime('%b') }} {{ day.day }}: {{ value|int }}"></span>{% endif %}
+            {% endfor %}
+          </div>
+          <div class="sign-numbers muted small">
+            {% if sv.recent is not none %}Last 7 days: <strong>{{ '%.1f'|format(sv.recent) }}</strong>{% if sv.previous is not none %} · the 21 days before: {{ '%.1f'|format(sv.previous) }}{% endif %}{% else %}No scores in the last week.{% endif %}
+          </div>
+          {% if sv.text %}<p class="sign-comfort">{{ sv.text }}</p>
+          {% elif sup.start_date %}<p class="muted small">Not enough scored days on both sides of the start date yet (four each are needed) to compare before and after.</p>{% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  {% endfor %}
+{% else %}
+  <section class="card block">
+    <p>No supplements yet. Add one below and choose which signs to watch. Mobility and appetite come from the daily scores you already give; the others get their own slider in the check-in.</p>
+  </section>
+{% endif %}
+
+{% if watched and not animal.archived %}
+<section class="card block" aria-label="Score today's signs">
+  <h2>Score today's signs</h2>
+  <p class="muted small">The same sliders are in the daily check-in under "More details". Scoring here is handy on days you only did a quick check-in.</p>
+  <form method="post" action="{{ url_for('supplements.log_signs', animal_id=animal.id) }}" class="form">
+    <label>Date <input type="date" name="entry_date" value="{{ today }}" max="{{ today }}"></label>
+    {% for s in watched %}
+      {% set is_set = s.key in today_values %}
+      <div class="sign-row">
+        <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="{{ '1' if is_set else '0' }}">
+        <label class="question small" for="sign-{{ s.key }}">{{ s.question.replace('{name}', animal.name) }}</label>
+        <div class="slider">
+          <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ today_values.get(s.key, 5) }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
+          <output for="sign-{{ s.key }}">{{ today_values.get(s.key) if is_set else '–' }}</output>
+        </div>
+        <div class="anchors" id="anchors-sign-{{ s.key }}"><span>0 · {{ s.low }}</span><span>10 · {{ s.high }}</span></div>
+      </div>
+    {% endfor %}
+    <div class="actions"><button class="button" type="submit">Save signs</button></div>
+  </form>
+</section>
+{% endif %}
+
+<h2>Add a supplement</h2>
+<form method="post" class="form card block">
+  <label>Name <input type="text" name="name" value="{{ values.get('name', '') }}" maxlength="80" required placeholder="e.g. Fish oil, joint chews, probiotic"></label>
+  <label>Dose <span class="muted">(optional)</span> <input type="text" name="dose" value="{{ values.get('dose', '') }}" maxlength="80" placeholder="e.g. 1 capsule"></label>
+  <label>How often <span class="muted">(optional)</span> <input type="text" name="schedule" value="{{ values.get('schedule', '') }}" maxlength="80" placeholder="e.g. once a day with dinner"></label>
+  <label>Start date <span class="muted">(so before and after can be compared)</span> <input type="date" name="start_date" value="{{ values.get('start_date', '') }}" max="{{ today }}"></label>
+  <fieldset class="sign-choices">
+    <legend>Signs to watch</legend>
+    {% for s in signs %}
+      <label class="choice"><input type="checkbox" name="signs" value="{{ s.key }}" {% if s.key in chosen_signs %}checked{% endif %}> {{ s.label }}</label>
+    {% endfor %}
+  </fieldset>
+  <div class="actions"><button class="button" type="submit">Add</button><a class="link" href="{{ url_for('dashboard.more') }}">Back</a></div>
+</form>
+{% endblock %}

@@ -11,6 +11,7 @@
     <li>{{ icon('check-circle') }}<a href="{{ url_for('markers.behaviors', animal_id=animal.id) }}">Good-day behaviors</a></li>
     <li>{{ icon('flag') }}<a href="{{ url_for('events.timeline', animal_id=animal.id) }}">Events timeline</a></li>
     <li>{{ icon('pill') }}<a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Medications</a></li>
+    <li>{{ icon('leaf') }}<a href="{{ url_for('supplements.supplements', animal_id=animal.id) }}">Supplements</a> <span class="muted small">and the signs they're meant to help</span></li>
     <li>{{ icon('camera') }}<a href="{{ url_for('entries.photo_timeline', animal_id=animal.id) }}">Photos</a></li>
     <li>{{ icon('baseline') }}<a href="{{ url_for('baseline.edit', animal_id=animal.id) }}">Baseline from before</a></li>
     <li>{{ icon('person') }}<a href="{{ url_for('caregiver.checkin', animal_id=animal.id) }}">How are you doing?</a> <span class="muted small">caregiver check-in</span></li>
