@@ -973,3 +973,85 @@ def test_chart_sufficiency_matches_the_text_on_a_short_range(client):
         _checkin(client, d)
     html = client.get("/animals/1/today?range=7").get_data(as_text=True)
     assert '"sufficiency": "adequate"' in html or '&#34;sufficiency&#34;: &#34;adequate&#34;' in html
+
+
+# --- the launcher must not trust a port that someone else answers ---------------
+
+def _dummy_server(port, body=b"404 page not found", status=404):
+    """A stand-in for another program that happens to hold a port."""
+    import http.server
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(status)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *a):  # quiet
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", port), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def _free_port():
+    import socket
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def test_launcher_skips_a_port_answered_by_another_program(app):
+    import desktop
+    from app.phone import port_is_free
+    port = _free_port()
+    other = _dummy_server(port)
+    try:
+        assert not port_is_free("127.0.0.1", port)
+        assert not desktop._answers_as_us(f"http://127.0.0.1:{port}/", "token")
+        token = "abc123"
+        app.add_url_rule("/__alive", "alive", lambda: token)
+        chosen, httpd, thread = desktop._start_server(app, port, token)
+        try:
+            assert httpd is not None and chosen != port
+            assert desktop._answers_as_us(f"http://127.0.0.1:{chosen}/", token)
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+    finally:
+        other.shutdown()
+        other.server_close()
+
+
+def test_launcher_rejects_a_server_that_is_not_this_app(app, monkeypatch):
+    """Even when the bind looks fine (as it can on Windows), the liveness check must catch it."""
+    import desktop
+    from app import phone
+    port = _free_port()
+    other = _dummy_server(port)
+    monkeypatch.setattr(phone, "port_is_free", lambda host, p: True)  # pretend the bind would succeed
+    calls = []
+
+    class FakeServer:
+        def serve_forever(self): pass
+        def shutdown(self): calls.append("shutdown")
+        def server_close(self): calls.append("close")
+
+    import werkzeug.serving
+    real = werkzeug.serving.make_server
+    monkeypatch.setattr(werkzeug.serving, "make_server",
+                        lambda host, p, a, threaded=True: FakeServer() if p == port else real(host, p, a, threaded=threaded))
+    token = "tok"
+    app.add_url_rule("/__alive", "alive", lambda: token)
+    try:
+        chosen, httpd, thread = desktop._start_server(app, port, token)
+        try:
+            assert chosen == port + 1 and calls == ["shutdown", "close"]
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+    finally:
+        other.shutdown()
+        other.server_close()

@@ -498,6 +498,30 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   is a real cost of this way of working, and the only defence is small
   commits pushed often.
 
+### Nov 10 — "it says page not found"
+
+- You opened the Windows download: the black window said the app was
+  running, and the browser page said "page not found". The same packaged
+  build, made here with the same recipe, served the home page fine, so
+  the machine was the difference. The most likely cause: another program
+  on that computer already listening on port 5000. Python's web server
+  asks Windows for "address reuse", and Windows takes that as permission
+  for a second program to bind a port that is already taken. So the
+  launcher bound "successfully", printed the address, and the browser
+  reached whoever had the port first. "404 page not found" is the
+  standard reply of a common kind of server, not ours; our own missing
+  page says "That page isn't here".
+- Two defences now. Before starting, the launcher probes the port with
+  the exclusive flag, which fails honestly when the port is in use. After
+  starting, it fetches a tiny page of its own with a one-off token and
+  checks the reply is really this app; if not, it shuts that server down
+  and tries the next port, saying so in the window. The phone listener
+  got the same probe. The packaging notes explain the symptom.
+- Lesson: "bind succeeded" meant something different on Windows than on
+  the Linux machine where everything was tested, and no test here could
+  have caught it. The honest check is not "did the bind succeed" but "does
+  the address reach me".
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -560,6 +584,7 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Phone passcode change that signed nobody out | reviewer replaying an old cookie | two days, since phone access was built |
 | Restore that deleted the data before copying the new data in | reviewer making the copy fail | since backup/restore was built, through two reviews of it |
 | Cross-site check that trusted the Host header | reviewer trying DNS rebinding | since the check was added |
+| Launcher trusting a "successful" bind on Windows | the owner opening the download | since the launcher was written |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

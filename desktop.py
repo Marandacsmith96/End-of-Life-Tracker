@@ -11,6 +11,7 @@ import contextlib
 import io
 import logging
 import os
+import secrets
 import subprocess
 import sys
 import threading
@@ -25,21 +26,45 @@ HOST = "127.0.0.1"
 PREFERRED_PORT = int(os.environ.get("PET_QOL_PORT", "5000"))
 
 
-def _bind_server(app, start: int):
-    """Bind the web server to the preferred port, or the next free one.
+def _answers_as_us(url: str, token: str) -> bool:
+    """Fetch our liveness page and check it is really this app replying.
 
-    Binding here, before any thread starts, means a port taken by another
-    program simply moves us along instead of failing later in the background.
-    """
+    On Windows another program can hold the same port and get the browser's
+    requests instead of us (its reply is typically "404 page not found")."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(url + "__alive", timeout=3) as resp:
+            return resp.read().decode("utf-8", "replace").strip() == token
+    except Exception:  # noqa: BLE001 - any failure means "not us"
+        return False
+
+
+def _start_server(app, start: int, token: str):
+    """Bind the web server to the preferred port, or the next free one, and
+    make sure the address really reaches this app before trusting it.
+
+    Returns (port, server, thread) or (None, None, None)."""
     from werkzeug.serving import make_server
 
+    from app.phone import port_is_free
+
     for port in range(start, start + 20):
+        if not port_is_free(HOST, port):
+            continue
         try:
             with contextlib.redirect_stderr(io.StringIO()):  # werkzeug prints, then exits, on a busy port
-                return port, make_server(HOST, port, app, threaded=True)
+                httpd = make_server(HOST, port, app, threaded=True)
         except (OSError, SystemExit):
             continue
-    return None, None
+        thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        thread.start()
+        if _answers_as_us(f"http://{HOST}:{port}/", token):
+            return port, httpd, thread
+        _say(f"  Port {port} is answered by another program on this computer; trying the next one.")
+        httpd.shutdown()
+        httpd.server_close()
+    return None, None, None
 
 
 def _write_shortcut(url: str) -> None:
@@ -88,14 +113,16 @@ def main() -> None:
     app = create_app()
     from app.version import build_label
     _say("", f"Quality-of-Life Tracker ({build_label()}) is starting...")
-    port, httpd = _bind_server(app, PREFERRED_PORT)
+    token = secrets.token_hex(8)
+    app.add_url_rule("/__alive", "alive", lambda: token)  # lets the launcher check the port is really ours
+    port, httpd, server = _start_server(app, PREFERRED_PORT, token)
     if httpd is None:
         _say(f"No free network port between {PREFERRED_PORT} and {PREFERRED_PORT + 19}. "
              "Close other copies of the app (or other programs) and try again.")
         return False
     url = f"http://{HOST}:{port}/"
-    server = threading.Thread(target=httpd.serve_forever, daemon=True)
-    server.start()
+    if port != PREFERRED_PORT:
+        _say(f"  (Port {PREFERRED_PORT} was taken by another program, so the app is using port {port}.)")
     _write_shortcut(url)
     _say(
         "",

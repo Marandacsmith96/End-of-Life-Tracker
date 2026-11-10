@@ -34,3 +34,10 @@ In the app, open More, then "Use on your phone", choose a passcode, and
 scan the code with your phone's camera. The phone has to be on the same
 Wi-Fi, and this window has to stay open. The first time, the computer may
 ask whether to allow the app on private networks: say yes.
+
+
+If the page that opens says "404 page not found"
+-------------------------------------------------
+Another program on your computer is using the same address. Close the app's
+window, start it again, and it will choose a different port and open the
+right page. The address it prints in its window is always the right one.

@@ -120,6 +120,27 @@ def is_remote_request() -> bool:
 
 # --- the listener ------------------------------------------------------------
 
+def port_is_free(host: str, port: int) -> bool:
+    """Can this address be bound right now?
+
+    Python's web server asks for "address reuse", and on Windows that lets a
+    second program bind a port that is already in use. The result is a
+    launcher that says it is running while the browser talks to whoever had
+    the port first. So probe with the exclusive flag on Windows (and a
+    plain bind elsewhere) before starting a server."""
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+        if exclusive is not None:
+            probe.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        probe.bind((host, port))
+        return True
+    except OSError:
+        return False
+    finally:
+        probe.close()
+
+
 def _tagged(app):
     """The app as seen by the phone listener: every request is marked so the
     passcode and the "only from this computer" rules know where it came from."""
@@ -141,6 +162,8 @@ def start_listener(app) -> bool:
     with _lock:
         if p in _servers:
             return True
+        if not port_is_free("0.0.0.0", p):
+            return False
         try:
             with contextlib.redirect_stderr(io.StringIO()):  # werkzeug prints, then exits, on a busy port
                 httpd = make_server("0.0.0.0", p, _tagged(app), threaded=True)
