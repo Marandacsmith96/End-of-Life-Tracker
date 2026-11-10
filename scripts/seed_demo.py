@@ -6,8 +6,9 @@
 
 Maggie is a 13-year-old Golden Retriever: a relatively stable first month,
 gradual mobility decline with appetite mostly maintained, more bad days over
-time, a pain-medication change around day 55 with a temporary improvement,
-then a slower decline.
+time, joint chews from day 40 with a clear and lasting drop in stiffness after
+rest (and a lift in mobility), a pain-medication change around day 55 with a
+temporary improvement, then a slower decline.
 
 Bruno is a 14-year-old Labrador: a steady decline over about two months with
 no recovery, mobility falling fastest, appetite holding until late, good days
@@ -86,6 +87,10 @@ def seed_maggie(rng: random.Random, today: date) -> None:
             # mobility: stable ~8 for a month, then declines; bump after med change; slower decline after
             mobility = 8.0 - 3.2 * max(0, (i - 28) / 61)
             comfort = 7.8 - 2.6 * max(0, (i - 28) / 61)
+            # Joint chews from day 40: mobility and comfort lift over a week and stay lifted.
+            chews = min(1.0, max(0, (i - 40) / 7))
+            mobility += 1.8 * chews
+            comfort += 0.7 * chews
             if i >= 55:
                 boost = 1.6 * max(0, 1 - (i - 55) / 24)
                 comfort += boost
@@ -131,15 +136,17 @@ def seed_maggie(rng: random.Random, today: date) -> None:
             if 55 <= i < 72:
                 probs[marker_ids[2]] += 0.2
                 probs[marker_ids[3]] += 0.15
+            probs[marker_ids[2]] += 0.3 * chews   # the couch: easier with the chews
+            probs[marker_ids[3]] += 0.25 * chews  # and so is the walk
             done = {m for m, p in probs.items() if rng.random() < clamp(p, 0, 1)}
             markers.set_responses(entry_id, done, set(marker_ids))
             given = {gaba} if rng.random() < 0.93 else set()
             if rng.random() < 0.85:
                 given.add(carp)
-            # Stiffness after rest: scored most days; eases a little after the chews start, then creeps back.
-            if rng.random() < 0.8:
-                eased = 2.0 if 44 <= i <= 70 else 0.9 if i > 70 else 0
-                stiff = 4.5 + 3.5 * t - eased + rng.gauss(0, 1.0)
+            # Stiffness after rest: scored most days; high before the chews, clearly lower within a
+            # week of starting them, and it stays lower even as the rest of her slowly declines.
+            if rng.random() < 0.85:
+                stiff = 5.0 + 3.0 * t - 3.4 * chews + rng.gauss(0, 0.9)
                 signs.save_signs(animal_id, day, {"stiffness": clamp(round(stiff))})
             offered = {gaba, carp}
             if i >= 40:
@@ -428,8 +435,9 @@ def seed_rosie(rng: random.Random, today: date) -> None:
 # What the "Try it with example pets" section shows. Order matters.
 EXAMPLES = (
     {"key": "maggie", "name": "Maggie", "species": "dog", "seed": 13, "fn": seed_maggie,
-     "story": "13-year-old Golden Retriever, 90 days. Mostly steady, with mobility slipping and a "
-              "medication change that helped for a while."},
+     "story": "13-year-old Golden Retriever, 90 days. Mostly steady, with mobility slipping, joint "
+              "chews from week six with a clear change in stiffness, and a medication change that "
+              "helped for a while."},
     {"key": "bruno", "name": "Bruno", "species": "dog", "seed": 29, "fn": seed_bruno,
      "story": "14-year-old Labrador, 60 days. A steady decline with no recovery; what the trend "
               "pages look like when things are getting worse."},

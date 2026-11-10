@@ -546,6 +546,15 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 - The first wording came out as "Mobility (from the daily scores) scores
   were lower"; the sign label doubled as the sentence subject. Sentences
   now use a short form of the label.
+- Then: "make Maggie a supplement example, show it effectively working."
+  Her joint chews now make a clear, lasting difference in the data:
+  stiffness after rest averages 6.0 in the two weeks before they start and
+  3.8 in the two weeks after, mobility 7.8 before and 9.0 after, and the
+  couch and the walk get easier with them. What the app says about it is
+  unchanged on purpose: the numbers, "lower is less of it", and "something
+  to mention to your vet rather than a verdict". Showing a supplement
+  working is the owner's reading of a page that only ever reports; that
+  distinction is the whole product.
 
 ---
 
