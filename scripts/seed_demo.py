@@ -1,6 +1,6 @@
 """Seed realistic demo pets so the trend view means something immediately.
 
-    python scripts/seed_demo.py                 # adds Maggie, Bruno, Juniper, and Rosie
+    python scripts/seed_demo.py                 # adds Maggie, Bruno, Juniper, Rosie, and Bones
     python scripts/seed_demo.py --reset         # wipes the data folder first
     python scripts/seed_demo.py --pet maggie    # just one of them
 
@@ -23,7 +23,12 @@ daily for the first week, then missed days, quick check-ins without scores on
 busy days, a heart murmur found at a check-up in the second week, a new tablet,
 one very good day, and a small drift that no single day shows.
 
-All four include noise, the odd off day, and missing entries. Nothing here is
+Bones is a 12-year-old collie mix with hip arthritis: three weeks of stiffness
+and shrinking walks, then a joint supplement the vet suggested, and a clear,
+lasting change in the signs it is meant to help, with the owner's own notes
+kept beside the numbers.
+
+All five include noise, the odd off day, and missing entries. Nothing here is
 real.
 """
 import argparse
@@ -442,6 +447,103 @@ def seed_rosie(rng: random.Random, today: date) -> None:
         caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 2), status, note)
 
 
+BONES_MARKERS = ["Jumps into the car by himself", "Does the full loop of the park", "Brings the ball back more than twice",
+                 "Comes upstairs to bed"]
+BONES_NOTES = {
+    "good": [None, None, None, "Did the whole park loop and wanted more.", "Jumped into the car without the ramp.",
+             "Chased the ball like he used to.", "Up the stairs at bedtime without stopping."],
+    "mixed": [None, None, "Stiff first thing, loosened up by lunch.", "Needed the ramp for the car today.",
+              "Did half the loop and sat down.", "Slept most of the afternoon."],
+    "bad": [None, "Couldn't get up off the kitchen floor without help.", "Wouldn't come upstairs; slept by the door.",
+            "Whined getting into the car.", "Skipped the walk altogether."],
+}
+
+
+def seed_bones(rng: random.Random, today: date) -> None:
+    """A joint supplement that the records back up: stiff and slowing for three
+    weeks, then a glucosamine chew from the vet, and within a week or two the
+    stiffness scores drop, mobility climbs, and the car and the stairs come
+    back. The app still only reports the numbers; the owner does the reading."""
+    animal_id = models.create_animal(
+        "Bones", "dog", "Border Collie mix", today - timedelta(days=365 * 12 + 15), "male",
+        "Arthritis in both hips (confirmed on x-ray this autumn)", demo=True)
+    marker_ids = [markers.create_marker(animal_id, m) for m in BONES_MARKERS]
+    baseline.save_baseline(animal_id, today - timedelta(days=150),
+                           {"hurt": 8, "hunger": 9, "hydration": 9, "hygiene": 9, "happiness": 9,
+                            "mobility": 8, "good_days": 9}, "mostly_good", "most_days",
+                           "Still mad for the ball; a bit slower on the stairs.")
+    d0 = today - timedelta(days=59)
+    started = d0 + timedelta(days=20)
+    joint = entries.create_medication(animal_id, "Glucosamine and chondroitin chews", "1 large chew", "with dinner",
+                                      started, kind="supplement", signs=("stiffness", "mobility", "energy"))
+    entries.update_supplement_details(
+        joint, "Glucosamine and chondroitin chews", "1 large chew", "with dinner", started,
+        "Hip arthritis: stiff after sleeping, stopped jumping into the car", "vet_suggested",
+        "Vet suggested glucosamine and chondroitin after the x-rays. Big soft chews from the clinic, "
+        "about $40 for a month. He thinks they are the best part of dinner.", ("stiffness", "mobility", "energy"))
+    events.create_event(animal_id, d0 + timedelta(days=18), "vet_visit", "X-rays: arthritis in both hips",
+                        "Vet suggested starting a joint supplement and keeping walks short but regular.")
+    events.create_event(animal_id, started, "treatment", "Started joint chews", "One with dinner. Give it a few weeks.")
+    events.create_event(animal_id, d0 + timedelta(days=45), "vet_visit", "Recheck", "Moving better. Keep going with the chews.")
+    entries.add_supplement_note(joint, started + timedelta(days=5), "unsure", "Too early to tell. He likes them, at least.")
+    entries.add_supplement_note(joint, started + timedelta(days=13), "helping", "Jumped into the car on his own for the first time in weeks.")
+    entries.add_supplement_note(joint, started + timedelta(days=30), "helping", "Back to the full park loop. Stairs at bedtime, no stopping.")
+
+    for i in range(60):
+        day = d0 + timedelta(days=i)
+        if i >= 5 and rng.random() < (0.2 if day.weekday() >= 5 else 0.08):
+            continue
+        t = i / 59
+        # Before the chews: stiff and slowing. After: a lift over about ten days that holds.
+        lift = min(1.0, max(0.0, (i - 20) / 7))
+        noise = lambda s=0.9: rng.gauss(0, s)  # noqa: E731
+        mobility = 4.6 - 0.8 * min(1, i / 20) + 3.2 * lift
+        comfort = 5.8 - 0.6 * min(1, i / 20) + 2.0 * lift
+        happiness = 6.6 - 0.5 * min(1, i / 20) + 1.6 * lift
+        hunger = 7.7 + 0.6 * lift
+        hydration = 7.8 + 0.3 * lift
+        hygiene = 7.5 + 0.8 * lift      # he could not reach to groom himself before
+        good_days = 5.6 - 0.8 * min(1, i / 20) + 2.8 * lift
+        scores = {
+            "hurt": clamp(round(comfort + noise())), "hunger": clamp(round(hunger + noise(0.7))),
+            "hydration": clamp(round(hydration + noise(0.6))), "hygiene": clamp(round(hygiene + noise(0.6))),
+            "happiness": clamp(round(happiness + noise())), "mobility": clamp(round(mobility + noise(0.8))),
+            "good_days": clamp(round(good_days + noise(0.9))),
+        }
+        mean = sum(scores.values()) / 7
+        if mean >= 7.2:
+            status = "good"
+        elif mean <= 5.9:
+            status = "bad"
+        else:
+            status = "mixed" if rng.random() < 0.7 else "good"
+        quick = rng.random() < 0.15
+        weight = round(21.5 + rng.gauss(0, 0.15), 1) if (i % 14 == 2 and not quick) else None
+        appetite = rng.choices(["normal", "low", "high"], weights=[0.8, 0.1, 0.1])[0]
+        entry_id = entries.save_entry(
+            animal_id, day, status, {} if quick else scores, weight, "kg" if weight else None,
+            None if quick else appetite, rng.choice(BONES_NOTES[status]))
+        probs = {
+            marker_ids[0]: 0.15 + 0.7 * lift,          # the car: the clearest sign
+            marker_ids[1]: 0.3 + 0.55 * lift,          # the full loop
+            marker_ids[2]: 0.4 + 0.45 * lift,          # the ball
+            marker_ids[3]: 0.35 + 0.55 * lift,         # the stairs at bedtime
+        }
+        done = {m for m, pr in probs.items() if rng.random() < clamp(pr, 0, 1)}
+        markers.set_responses(entry_id, done, set(marker_ids))
+        if not quick:
+            if i >= 20:
+                entries.set_entry_medications(entry_id, {joint} if rng.random() < 0.95 else set(), {joint})
+            # The signs: stiffness after rest drops hard once the chews take hold; energy comes back.
+            stiff = 7.2 - 4.0 * lift + rng.gauss(0, 0.9)
+            energy = 4.8 + 2.8 * lift + rng.gauss(0, 0.9)
+            signs.save_signs(animal_id, day, {"stiffness": clamp(round(stiff)), "energy": clamp(round(energy))})
+    for weeks_ago, status, note in ((7, "harder", "Hate watching him struggle to get up."),
+                                    (3, "okay", "He's himself again. Fingers crossed it lasts."),
+                                    (1, "okay", None)):
+        caregiver.save_checkin(animal_id, today - timedelta(days=7 * weeks_ago + 1), status, note)
+
+
 # What the "Try it with example pets" section shows. Order matters.
 EXAMPLES = (
     {"key": "maggie", "name": "Maggie", "species": "dog", "seed": 13, "fn": seed_maggie,
@@ -458,6 +560,10 @@ EXAMPLES = (
      "story": "15-year-old beagle mix, 30 days. A real first month: a week of daily check-ins, "
               "then missed days and quick check-ins, a heart murmur found at the vet, a new tablet, "
               "and a small drift that no single day shows."},
+    {"key": "bones", "name": "Bones", "species": "dog", "seed": 83, "fn": seed_bones,
+     "story": "12-year-old collie mix, 60 days. Stiff and slowing with arthritis, then a joint supplement "
+              "from week three: what it looks like when the signs a supplement is meant to help clearly "
+              "change, with the owner's own notes beside the numbers."},
 )
 
 

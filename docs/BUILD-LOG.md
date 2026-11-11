@@ -587,6 +587,18 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   "lower is less of it" or "higher is better". A footnote says these
   describe the records and are not a judgement of whether it is working.
   Supplements no longer repeat in the medications list of the PDF.
+- "Make a joint supplement example with a new dog called Bones; show that
+  he started a supplement for joints and it's working." A fifth example
+  pet: a twelve-year-old collie mix with hip arthritis, three weeks of
+  stiffness and shrinking walks, then glucosamine chews the vet suggested.
+  Within a week the stiffness scores fall from about 7.5 to under 5 and
+  keep falling, mobility climbs from about 4 to near 8, the car and the
+  stairs come back as good-day behaviours, and his owner's notes go from
+  "too early to tell" to "back to the full park loop". The app's own
+  sentence stays what it always is: the numbers before and after, and
+  "something to mention to your vet rather than a verdict". "It's
+  working" is the owner's reading, and the page is built so they can make
+  it with the numbers in front of them.
 
 ---
 
