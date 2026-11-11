@@ -70,6 +70,14 @@ def seed_maggie(rng: random.Random, today: date) -> None:
         # A joint supplement started in week six, watching stiffness and the mobility score.
         joint = entries.create_medication(animal_id, "Joint chews (glucosamine)", "2 chews", "with breakfast",
                                           d0 + timedelta(days=40), kind="supplement", signs=("stiffness", "mobility"))
+        entries.update_supplement_details(
+            joint, "Joint chews (glucosamine)", "2 chews", "with breakfast", d0 + timedelta(days=40),
+            "Stiff hips after naps; slow on the stairs", "vet_suggested",
+            "Vet suggested a glucosamine and chondroitin chew from the pet shop. About $25 a month. "
+            "She thinks they are treats.", ("stiffness", "mobility"))
+        entries.add_supplement_note(joint, d0 + timedelta(days=47), "unsure", "Hard to say yet. Maybe a bit quicker up in the morning.")
+        entries.add_supplement_note(joint, d0 + timedelta(days=61), "helping", "Up the back step without the pause. Vet noticed too.")
+        entries.add_supplement_note(joint, d0 + timedelta(days=82), "helping", "Still better than before them, even on her slower days.")
         med_change = d0 + timedelta(days=55)
         events.create_event(animal_id, d0 + timedelta(days=12), "vet_visit", "Check-up and bloodwork",
                             "Kidney values slightly worse. Discussed pain control.")

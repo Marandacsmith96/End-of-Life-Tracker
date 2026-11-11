@@ -8,7 +8,7 @@
 {% if views %}
   {% for v in views %}
     {% set sup = v.supplement %}
-    <section class="card block sup-card {{ '' if sup.active else 'inactive' }}" aria-label="{{ sup.name }}">
+    <section class="card block sup-card {{ '' if sup.active else 'inactive' }}" aria-label="{{ sup.name }}" id="supplement-{{ sup.id }}">
       <div class="section-head tight">
         <h2>{{ sup.name }} <span class="muted small">{{ sup.dose or '' }}{% if sup.dose and sup.schedule %} · {% endif %}{{ sup.schedule or '' }}</span></h2>
         <div class="row-actions">
@@ -21,6 +21,61 @@
         {% if not sup.active and sup.end_date %} Stopped {{ sup.end_date.strftime('%b') }} {{ sup.end_date.day }}.{% endif %}
         {% if given[sup.id] %} {{ given[sup.id].count_text }}{% endif %}
       </p>
+      <div class="sup-about">
+        <dl class="about-list">
+          <div><dt>For</dt><dd>{{ sup.purpose or '—' }}</dd></div>
+          <div><dt>Recommended by</dt><dd>{{ sup.source_label or '—' }}</dd></div>
+          <div><dt>Notes</dt><dd>{{ sup.notes or '—' }}</dd></div>
+        </dl>
+        <details class="sup-edit">
+          <summary class="link small">Edit details</summary>
+          <form method="post" action="{{ url_for('supplements.edit', medication_id=sup.id) }}" class="form">
+            <label>Name <input type="text" name="name" value="{{ sup.name }}" maxlength="80" required></label>
+            <label>Dose <input type="text" name="dose" value="{{ sup.dose or '' }}" maxlength="80"></label>
+            <label>How often <input type="text" name="schedule" value="{{ sup.schedule or '' }}" maxlength="80"></label>
+            <label>Start date <input type="date" name="start_date" value="{{ sup.start_date.isoformat() if sup.start_date else '' }}" max="{{ today }}"></label>
+            <label>What you're giving it for <input type="text" name="purpose" value="{{ sup.purpose or '' }}" maxlength="200" placeholder="e.g. stiff hips, itchy skin"></label>
+            <label>Who recommended it
+              <select name="source">
+                <option value="">—</option>
+                {% for key, label in sources %}<option value="{{ key }}" {% if sup.source == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+              </select></label>
+            <label>Notes <span class="muted">(brand, where you buy it, cost, anything else)</span> <textarea name="notes" rows="3" maxlength="1000">{{ sup.notes or '' }}</textarea></label>
+            <fieldset class="sign-choices">
+              <legend>Signs to watch</legend>
+              {% for s in signs %}
+                <label class="choice"><input type="checkbox" name="signs" value="{{ s.key }}" {% if s.key in sup.signs %}checked{% endif %}> {{ s.label }}</label>
+              {% endfor %}
+            </fieldset>
+            <div class="actions"><button class="button" type="submit">Save</button></div>
+          </form>
+        </details>
+      </div>
+      <div class="sup-impressions">
+        <h3>Is it helping? Your own take</h3>
+        <p class="muted small">Your impression, in your words, kept next to the numbers below. Neither replaces the other; both go to the vet.</p>
+        {% if notes[sup.id] %}
+          <ul class="impression-list">
+            {% for n in notes[sup.id] %}
+              <li><span class="date">{{ n.note_date.strftime('%b') }} {{ n.note_date.day }}</span> <span class="impression {{ n.impression }}">{{ n.label }}</span>{% if n.note %} <span class="muted">{{ n.note }}</span>{% endif %}
+                <form method="post" action="{{ url_for('supplements.delete_impression', note_id=n.id) }}" class="inline-form" data-confirm="Remove this note?"><button class="link small" type="submit">Remove</button></form></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if not animal.archived %}
+        <form method="post" action="{{ url_for('supplements.impression', medication_id=sup.id) }}" class="form impression-form">
+          <div class="impression-choices">
+            {% for key, label in impressions %}
+              <label class="choice"><input type="radio" name="impression" value="{{ key }}" required> {{ label }}</label>
+            {% endfor %}
+          </div>
+          <label>A note <span class="muted">(optional)</span> <input type="text" name="note" maxlength="500" placeholder="e.g. up the step without the pause this week"></label>
+          <input type="hidden" name="note_date" value="{{ today }}">
+          <div class="actions"><button class="button secondary" type="submit">Add today's note</button></div>
+        </form>
+        {% endif %}
+      </div>
+      <h3 class="sup-numbers-head">What the numbers show</h3>
       {% for sv in v.signs %}
         <div class="sign-view">
           <div class="sign-head">
@@ -77,6 +132,13 @@
   <label>Dose <span class="muted">(optional)</span> <input type="text" name="dose" value="{{ values.get('dose', '') }}" maxlength="80" placeholder="e.g. 1 capsule"></label>
   <label>How often <span class="muted">(optional)</span> <input type="text" name="schedule" value="{{ values.get('schedule', '') }}" maxlength="80" placeholder="e.g. once a day with dinner"></label>
   <label>Start date <span class="muted">(so before and after can be compared)</span> <input type="date" name="start_date" value="{{ values.get('start_date', '') }}" max="{{ today }}"></label>
+  <label>What you're giving it for <span class="muted">(optional)</span> <input type="text" name="purpose" value="{{ values.get('purpose', '') }}" maxlength="200" placeholder="e.g. stiff hips, itchy skin"></label>
+  <label>Who recommended it <span class="muted">(optional)</span>
+    <select name="source">
+      <option value="">—</option>
+      {% for key, label in sources %}<option value="{{ key }}" {% if values.get('source') == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select></label>
+  <label>Notes <span class="muted">(brand, where you buy it, cost, anything else)</span> <textarea name="notes" rows="2" maxlength="1000">{{ values.get('notes', '') }}</textarea></label>
   <fieldset class="sign-choices">
     <legend>Signs to watch</legend>
     {% for s in signs %}

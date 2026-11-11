@@ -85,13 +85,40 @@
     {% endfor %}
   </fieldset>
 
-  {# Step 10: anything different? #}
+  {# Other signs: the things a supplement or a diet change is usually meant to help. Optional, every day. #}
+  <fieldset class="signs">
+    <legend class="visually-hidden">Other signs</legend>
+    {% for s in sign_list %}
+      {% set is_set = (values.get('sign_' ~ s.key ~ '_set') == '1') or (s.key in sign_values and not request.form) %}
+      {% set current = values.get('sign_' ~ s.key, sign_values.get(s.key, 5)) %}
+      <div class="card panel step sign-step" data-step="sign-{{ s.key }}" data-title="{{ s.label }}">
+        <div class="score-row">
+          <div class="q-head">
+            <span class="q-tile cat-sign">{{ icon(s.icon, 'icon') }}</span>
+            <div><span class="tag cat-sign">{{ s.label }}</span>
+            <label class="question" for="sign-{{ s.key }}">{{ s.question.replace('{name}', animal.name) }}</label></div>
+          </div>
+          <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="{{ '1' if is_set else '0' }}">
+          <div class="slider">
+            <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ current }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
+            <output for="sign-{{ s.key }}">{{ current if is_set else '–' }}</output>
+          </div>
+          <div class="anchors" id="anchors-sign-{{ s.key }}"><span>0 · {{ s.low }}</span><span>10 · {{ s.high }}</span></div>
+          {% if loop.first %}
+            <p class="hint skip-hint">These are the things supplements and diet changes are usually meant to help. Score what you noticed, or leave it. <button class="link" type="button" id="skip-signs">Skip the other signs today</button></p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+
+  {# Anything different? #}
   <div class="card panel step" data-step="note" data-title="Anything different?">
     <div class="q-head"><span class="q-tile cat-note">{{ icon('pencil', 'icon') }}</span><label for="notes" class="question">Anything different today?</label></div>
     <textarea id="notes" name="notes" rows="3" maxlength="5000" placeholder="Medication change, vet visit, didn't finish breakfast, slept more than usual…">{{ values.get('notes', '') }}</textarea>
     <p class="hint">Optional.</p>
     <details class="extras">
-      <summary>More details (optional): weight, appetite, medications{% if watched_signs %}, supplement signs{% endif %}, photos</summary>
+      <summary>More details (optional): weight, appetite, medications, photos</summary>
       <input type="hidden" name="meds_included" value="1">
       <div class="extras-grid">
         <fieldset>
@@ -120,25 +147,6 @@
             <p class="muted small">None on the list. <a href="{{ url_for('entries.medications', animal_id=animal.id) }}">Add medications</a></p>
           {% endif %}
         </fieldset>
-        {% if watched_signs %}
-        <fieldset class="sign-block">
-          <legend>Supplement signs</legend>
-          <p class="muted small">The signs your supplements are meant to affect. Move a slider to score it; leave it if you didn't notice.</p>
-          {% for s in watched_signs %}
-            {% set is_set = (values.get('sign_' ~ s.key ~ '_set') == '1') or (s.key in sign_values and not request.form) %}
-            {% set current = values.get('sign_' ~ s.key, sign_values.get(s.key, 5)) %}
-            <div class="sign-row">
-              <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="{{ '1' if is_set else '0' }}">
-              <label class="question small" for="sign-{{ s.key }}">{{ s.question.replace('{name}', animal.name) }}</label>
-              <div class="slider">
-                <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ current }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
-                <output for="sign-{{ s.key }}">{{ current if is_set else '–' }}</output>
-              </div>
-              <div class="anchors" id="anchors-sign-{{ s.key }}"><span>0 · {{ s.low }}</span><span>10 · {{ s.high }}</span></div>
-            </div>
-          {% endfor %}
-        </fieldset>
-        {% endif %}
         <fieldset>
           <legend>Photos</legend>
           {% if photos %}

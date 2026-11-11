@@ -723,3 +723,32 @@ h2 { font-weight: 750; }
 .sign-choices { border: none; padding: 0; margin: 0 0 14px; }
 .sign-choices legend { font-weight: 700; margin-bottom: 8px; }
 .sign-choices .choice { margin-bottom: 8px; }
+
+/* ---- The owner's own record of a supplement ---- */
+.sup-about { border-top: 1px solid var(--border); padding-top: 10px; }
+.about-list { margin: 0 0 6px; display: grid; gap: 4px 14px; grid-template-columns: max-content 1fr; }
+.about-list div { display: contents; }
+.about-list dt { color: var(--muted); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding-top: 2px; }
+.about-list dd { margin: 0; }
+.sup-edit summary { cursor: pointer; list-style: none; }
+.sup-edit summary::-webkit-details-marker { display: none; }
+.sup-edit summary::before { content: "▸ "; }
+.sup-edit[open] summary::before { content: "▾ "; }
+.sup-edit .form { margin-top: 10px; }
+.sup-impressions { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
+.sup-impressions h3, .sup-numbers-head { font-size: 1rem; margin: 0 0 4px; }
+.sup-numbers-head { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.impression-list { list-style: none; padding: 0; margin: 0 0 10px; }
+.impression-list li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--border); }
+.impression-list li:first-child { border-top: none; }
+.impression-list .date { font-weight: 700; min-width: 56px; }
+.impression { padding: 1px 9px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; background: var(--surface-2, #f1ede6); }
+.impression.helping { background: var(--good-soft); color: var(--good); }
+.impression.worse { background: var(--bad-soft); color: var(--bad); }
+.impression.unsure, .impression.no_change { background: var(--mixed-soft); color: var(--mixed); }
+.impression-choices { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); margin-bottom: 10px; }
+.impression-form .actions { margin-top: 4px; }
+
+/* ---- Other signs in the daily check-in ---- */
+.q-tile.cat-sign { background: #e9efe6; color: #2f6b4a; }
+.tag.cat-sign { color: #2f6b4a; }

@@ -28,6 +28,7 @@ class Sign:
     high: str              # what 10 means
     higher_is_better: bool
     score_key: str | None = None   # taken from the HHHHHMM score of that name instead of asked
+    icon: str = "sparkles"         # the tile next to the question in the check-in
 
     @property
     def short(self) -> str:
@@ -41,19 +42,20 @@ class Sign:
 
 SIGNS: tuple[Sign, ...] = (
     Sign("itching", "Itching", "How much did {name} scratch, lick or chew today?",
-         "not at all", "constantly, hard to settle", higher_is_better=False),
+         "not at all", "constantly, hard to settle", higher_is_better=False, icon="sparkles"),
     Sign("stiffness", "Stiffness after rest", "How stiff was {name} getting up after a rest?",
-         "up like a youngster", "could not get up without help", higher_is_better=False),
+         "up like a youngster", "could not get up without help", higher_is_better=False, icon="stairs"),
     Sign("coat", "Skin and coat", "How did {name}'s skin and coat look today?",
-         "flaky, red or dull", "clear skin, glossy coat", higher_is_better=True),
+         "flaky, red or dull", "clear skin, glossy coat", higher_is_better=True, icon="leaf"),
     Sign("stool", "Stool", "What were {name}'s stools like today?",
-         "very loose or none", "normal and formed", higher_is_better=True),
+         "very loose or none", "normal and formed", higher_is_better=True, icon="bowl"),
     Sign("energy", "Energy", "How much energy did {name} have today?",
-         "flat all day", "full of beans", higher_is_better=True),
+         "flat all day", "full of beans", higher_is_better=True, icon="sun"),
     Sign("mobility", "Mobility (from the daily scores)", "", "", "", higher_is_better=True, score_key="mobility"),
     Sign("appetite", "Appetite (from the daily scores)", "", "", "", higher_is_better=True, score_key="hunger"),
 )
 SIGN_BY_KEY = {s.key: s for s in SIGNS}
+ASKED = tuple(s for s in SIGNS if s.asked)
 ASKED_KEYS = tuple(s.key for s in SIGNS if s.asked)
 WINDOW_DAYS = 30
 

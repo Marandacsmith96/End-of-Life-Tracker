@@ -1095,12 +1095,13 @@ def test_supplement_needs_a_name_and_a_sign(client):
     assert "/animals/1/supplements" in client.get("/more").get_data(as_text=True)
 
 
-def test_watched_signs_appear_in_the_checkin_and_are_saved_only_when_moved(client, app):
+def test_signs_are_daily_questions_and_are_saved_only_when_moved(client, app):
     _pet(client)
-    _supplement(client)
-    html = client.get("/animals/1/checkin").get_data(as_text=True)
-    assert 'name="sign_itching"' in html and 'name="sign_coat"' in html and 'name="sign_stool"' not in html
-    _checkin(client, 1, meds_included="1", sign_itching_set="1", sign_itching="6", sign_coat_set="0", sign_coat="5")
+    html = client.get("/animals/1/checkin").get_data(as_text=True)  # no supplement needed
+    for key in ("itching", "stiffness", "coat", "stool", "energy"):
+        assert f'name="sign_{key}"' in html and f'data-step="sign-{key}"' in html
+    assert 'id="skip-signs"' in html
+    _checkin(client, 1, sign_itching_set="1", sign_itching="6", sign_coat_set="0", sign_coat="5")
     from app import signs
     with app.app_context():
         assert signs.signs_on(1, TODAY - timedelta(days=1)) == {"itching": 6}
@@ -1160,3 +1161,72 @@ def test_example_maggie_has_a_supplement_with_signs(client, app):
     html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
     assert "Joint chews" in html and "Stiffness after rest" in html and "sign-comfort" in html
     assert "Given on" in html
+
+
+# --- the owner's own record of a supplement -------------------------------------
+
+def test_v4_database_gains_the_owners_supplement_record(tmp_path):
+    from app import db as dbm
+    path = tmp_path / "v4.sqlite"
+    conn = sqlite3.connect(path)
+    conn.executescript(__import__("pathlib").Path("app/schema.sql").read_text(encoding="utf-8"))
+    conn.executescript("ALTER TABLE medications DROP COLUMN purpose; ALTER TABLE medications DROP COLUMN source;"
+                       "ALTER TABLE medications DROP COLUMN notes; DROP TABLE supplement_notes;")
+    conn.execute("INSERT INTO animals (name, species) VALUES ('Old', 'dog')")
+    conn.execute("INSERT INTO medications (animal_id, name, kind, signs) VALUES (1, 'Chews', 'supplement', 'stiffness')")
+    conn.execute("PRAGMA user_version = 4")
+    conn.commit(); conn.close()
+    conn = dbm.connect(path)
+    dbm.upgrade(conn)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == dbm.SCHEMA_VERSION
+    assert tuple(conn.execute("SELECT purpose, source, notes FROM medications").fetchone()) == (None, None, None)
+    assert conn.execute("SELECT COUNT(*) FROM supplement_notes").fetchone()[0] == 0
+    assert dbm.check_schema(conn) == []
+
+
+def test_supplement_keeps_purpose_source_and_notes(client, app):
+    _pet(client)
+    r = client.post("/animals/1/supplements", data={"name": "Fish oil", "signs": ["itching"], "purpose": "Itchy skin",
+                                                     "source": "vet_suggested", "notes": "Brand X, from the pet shop, $18"})
+    assert r.status_code == 302
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert "Itchy skin" in html and "Suggested by the vet" in html and "Brand X" in html
+    r = client.post("/supplements/1/edit", data={"name": "Fish oil (new brand)", "signs": ["itching", "coat"],
+                                                 "purpose": "Itchy skin and dull coat", "source": "own_choice", "notes": ""})
+    assert r.status_code == 302
+    with app.app_context():
+        sup = entries.get_medication(1)
+        assert sup.name == "Fish oil (new brand)" and sup.signs == ("itching", "coat")
+        assert sup.purpose == "Itchy skin and dull coat" and sup.source == "own_choice" and sup.notes is None
+    assert client.post("/supplements/1/edit", data={"name": "", "signs": ["itching"]}).status_code == 302
+    with app.app_context():
+        assert entries.get_medication(1).name == "Fish oil (new brand)"  # a bad edit changes nothing
+    assert client.post("/animals/1/supplements", data={"name": "X", "signs": ["itching"],
+                                                        "start_date": (TODAY + timedelta(days=2)).isoformat()}).status_code == 400
+
+
+def test_owner_impressions_are_kept_next_to_the_numbers(client, app):
+    _pet(client)
+    client.post("/animals/1/supplements", data={"name": "Fish oil", "signs": ["itching"]})
+    r = client.post("/supplements/1/impression", data={"impression": "unsure", "note": "Too early to tell"}, follow_redirects=True)
+    html = unescape(r.get_data(as_text=True))
+    assert "Not sure yet" in html and "Too early to tell" in html and "Noted: not sure yet" in html
+    client.post("/supplements/1/impression", data={"impression": "helping", "note": "Less scratching at night"})
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert html.index("Seems to help") < html.index("Not sure yet")  # newest first
+    assert "Is it helping? Your own take" in html and "What the numbers show" in html
+    assert client.post("/supplements/1/impression", data={"impression": "magic"}).status_code == 302
+    with app.app_context():
+        assert len(entries.list_supplement_notes(1)) == 2
+    assert client.post("/supplements/notes/1/delete").status_code == 302
+    with app.app_context():
+        assert len(entries.list_supplement_notes(1)) == 1
+    assert client.post("/supplements/notes/99/delete").status_code == 404
+    assert client.post("/supplements/99/impression", data={"impression": "helping"}).status_code == 404
+
+
+def test_example_maggie_has_an_owner_record_for_her_chews(client):
+    client.post("/examples/add")
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert "Suggested by the vet" in html and "Stiff hips after naps" in html and "$25 a month" in html
+    assert "Seems to help" in html and "Not sure yet" in html and "Up the back step" in html

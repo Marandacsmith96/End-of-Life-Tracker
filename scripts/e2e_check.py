@@ -99,11 +99,19 @@ def main() -> int:
             page.evaluate("var r=document.getElementById('score-hunger'); r.value=9; r.dispatchEvent(new Event('input'))")
             for _ in range(6):
                 page.click("#step-next")
+            # The other signs: score itching, then skip the rest.
+            check("scratch, lick or chew" in page.inner_text("form"), "sign questions follow the scores")
+            page.evaluate("var r=document.getElementById('sign-itching'); r.value=2; r.dispatchEvent(new Event('input'))")
+            page.click("#step-next")
+            page.click("#skip-signs") if page.is_visible("#skip-signs") else None
+            while "Anything different today?" not in page.inner_text(".step:not([hidden])"):
+                page.click("#step-next")
             page.fill("textarea[name=notes]", "Slow on the stairs.")
             page.click("#step-next")
             review = page.inner_text("#review-list")
             check("Good day" in review and "7" in review and "Walks to the barn gate" in review, "review lists answers")
             check("–" in review, "untouched sliders show as unset in review")
+            check("Itching 2" in review, "scored sign shows in review")
             page.click("#final-actions button[type=submit]")
             check("Saved Pepper's check-in" in page.content(), "check-in saved")
             body = page.inner_text("body")

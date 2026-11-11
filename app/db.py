@@ -12,7 +12,7 @@ import click
 from flask import Flask, current_app, g
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 class UnsupportedDatabase(RuntimeError):
@@ -129,7 +129,16 @@ def _migrate_v3_to_v4(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE medications ADD COLUMN signs TEXT NOT NULL DEFAULT ''")
 
 
-MIGRATIONS = {1: _migrate_v1_to_v2, 2: _migrate_v2_to_v3, 3: _migrate_v3_to_v4}
+def _migrate_v4_to_v5(conn: sqlite3.Connection) -> None:
+    """Version 5 adds the owner's own record of a supplement: purpose, who
+    recommended it, notes, and a history of impressions."""
+    cols = _columns(conn, "medications")
+    for name in ("purpose", "source", "notes"):
+        if name not in cols:
+            conn.execute(f"ALTER TABLE medications ADD COLUMN {name} TEXT")
+
+
+MIGRATIONS = {1: _migrate_v1_to_v2, 2: _migrate_v2_to_v3, 3: _migrate_v3_to_v4, 4: _migrate_v4_to_v5}
 
 
 def upgrade(conn: sqlite3.Connection) -> None:

@@ -79,8 +79,9 @@
   var progress = document.getElementById("progress"), fill = document.getElementById("progress-fill"), label = document.getElementById("progress-label");
   var finalActions = document.getElementById("final-actions"), toggle = document.getElementById("mode-toggle");
   var reviewList = document.getElementById("review-list"), scoresIncluded = document.getElementById("scores-included");
-  var skip = document.getElementById("skip-scores");
-  var current = 0, skippingScores = false;
+  var skip = document.getElementById("skip-scores"), skipSigns = document.getElementById("skip-signs");
+  var removeRow = form.querySelector(".remove-entry");
+  var current = 0, skippingScores = false, skippingSigns = false;
 
   function prefGuided() {
     try { var v = localStorage.getItem("qol-guided"); if (v !== null) return v === "1"; } catch (e) {}
@@ -89,7 +90,11 @@
   function setPref(on) { try { localStorage.setItem("qol-guided", on ? "1" : "0"); } catch (e) {} }
 
   function visibleSteps() {
-    return steps.filter(function (s) { return !(skippingScores && s.classList.contains("score-step")); });
+    return steps.filter(function (s) {
+      if (skippingScores && s.classList.contains("score-step")) return false;
+      if (skippingSigns && s.classList.contains("sign-step")) return false;
+      return true;
+    });
   }
   function buildReview() {
     if (!reviewList) return;
@@ -111,6 +116,12 @@
     } else {
       add("Scores", "Skipped today", true);
     }
+    var signsScored = [];
+    form.querySelectorAll(".sign-step").forEach(function (s) {
+      var r = s.querySelector("input[type=range]");
+      if (!r.classList.contains("unset")) signsScored.push(s.dataset.title + " " + r.value);
+    });
+    add("Other signs", signsScored.length ? signsScored.join(", ") : "None scored", true);
     var notes = form.querySelector("textarea[name=notes]");
     if (notes && notes.value.trim()) add("Note", notes.value.trim(), true);
   }
@@ -121,6 +132,7 @@
     list[current].hidden = false;
     var last = current === list.length - 1;
     back.disabled = current === 0; next.hidden = last; finalActions.hidden = !last;
+    if (removeRow) removeRow.hidden = !last;   // "Remove this check-in" only on the review step
     fill.style.width = ((current + 1) / list.length * 100) + "%";
     label.textContent = last ? "Review" : "Step " + (current + 1) + " of " + list.length + " · " + list[current].dataset.title;
     if (last) buildReview();
@@ -138,6 +150,7 @@
     } else {
       steps.forEach(function (s) { s.hidden = false; });
       finalActions.hidden = false;
+      if (removeRow) removeRow.hidden = false;
       form.querySelector(".step.review").hidden = true;
     }
   }
@@ -148,6 +161,11 @@
   });
   form.querySelectorAll(".score-step input[type=range]").forEach(function (r) {
     r.addEventListener("input", function () { scoresIncluded.value = "1"; skippingScores = false; });
+  });
+  if (skipSigns) skipSigns.addEventListener("click", function () {
+    skippingSigns = true;
+    if (form.classList.contains("guided")) show(current);
+    else form.querySelectorAll(".sign-step").forEach(function (s) { s.hidden = true; });
   });
   back.addEventListener("click", function () { show(current - 1); });
   next.addEventListener("click", function () { show(current + 1); });

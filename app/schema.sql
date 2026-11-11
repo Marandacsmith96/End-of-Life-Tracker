@@ -88,8 +88,22 @@ CREATE TABLE IF NOT EXISTS medications (
     end_date    DATE,
     active      INTEGER NOT NULL DEFAULT 1,
     kind        TEXT    NOT NULL DEFAULT 'medication',   -- 'medication' or 'supplement'
-    signs       TEXT    NOT NULL DEFAULT ''              -- comma-separated sign keys a supplement watches
+    signs       TEXT    NOT NULL DEFAULT '',             -- comma-separated sign keys a supplement watches
+    purpose     TEXT,                                    -- what the owner is giving it for
+    source      TEXT,                                    -- who recommended it: vet_prescribed, vet_suggested, own_choice, other
+    notes       TEXT                                     -- brand, where it is bought, cost, anything else
 );
+
+-- The owner's own running impression of a supplement ("seems to help", "no
+-- change I can see"), kept next to the numbers rather than replaced by them.
+CREATE TABLE IF NOT EXISTS supplement_notes (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    medication_id INTEGER NOT NULL REFERENCES medications(id) ON DELETE CASCADE,
+    note_date     DATE    NOT NULL,
+    impression    TEXT    NOT NULL,
+    note          TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_supplement_notes_med ON supplement_notes(medication_id, note_date);
 
 -- Clinical signs scored 0-10 on a day, apart from the HHHHHMM scale: itching,
 -- stiffness after rest, skin and coat, stool, energy. Used to watch supplements.

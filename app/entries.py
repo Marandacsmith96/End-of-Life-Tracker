@@ -184,6 +184,13 @@ class Medication:
     active: bool
     kind: str = "medication"          # or "supplement"
     signs: tuple[str, ...] = ()       # sign keys a supplement watches
+    purpose: str | None = None        # what the owner gives it for
+    source: str | None = None         # who recommended it (see SUPPLEMENT_SOURCES)
+    notes: str | None = None          # brand, shop, cost, anything else
+
+    @property
+    def source_label(self) -> str:
+        return SUPPLEMENT_SOURCE_LABELS.get(self.source or "", "")
 
     @property
     def is_supplement(self) -> bool:
@@ -197,7 +204,8 @@ def _row_to_medication(row) -> Medication:
         id=row["id"], animal_id=row["animal_id"], name=row["name"], dose=row["dose"],
         schedule=row["schedule"], start_date=row["start_date"], end_date=row["end_date"],
         active=bool(row["active"]), kind=(row["kind"] if "kind" in keys else "medication") or "medication",
-        signs=signs,
+        signs=signs, purpose=row["purpose"] if "purpose" in keys else None,
+        source=row["source"] if "source" in keys else None, notes=row["notes"] if "notes" in keys else None,
     )
 
 
@@ -236,6 +244,75 @@ def set_medication_signs(medication_id: int, signs) -> None:
     db = get_db()
     db.execute("UPDATE medications SET signs = ? WHERE id = ?", (",".join(signs), medication_id))
     db.commit()
+
+
+SUPPLEMENT_SOURCES = (
+    ("vet_prescribed", "Prescribed by the vet"),
+    ("vet_suggested", "Suggested by the vet"),
+    ("own_choice", "My own choice"),
+    ("other", "Someone else recommended it"),
+)
+SUPPLEMENT_SOURCE_LABELS = dict(SUPPLEMENT_SOURCES)
+
+IMPRESSIONS = (
+    ("helping", "Seems to help"),
+    ("unsure", "Not sure yet"),
+    ("no_change", "No change I can see"),
+    ("worse", "Seems worse"),
+)
+IMPRESSION_LABELS = dict(IMPRESSIONS)
+
+
+def update_supplement_details(medication_id: int, name: str, dose, schedule, start_date, purpose, source,
+                              notes, signs) -> None:
+    """Everything about a supplement the owner can edit in one go."""
+    db = get_db()
+    db.execute(
+        """UPDATE medications SET name = ?, dose = ?, schedule = ?, start_date = ?, purpose = ?, source = ?,
+           notes = ?, signs = ? WHERE id = ?""",
+        (name, dose, schedule, start_date, purpose, source, notes, ",".join(signs), medication_id),
+    )
+    db.commit()
+
+
+@dataclass
+class SupplementNote:
+    id: int
+    medication_id: int
+    note_date: date
+    impression: str
+    note: str | None
+
+    @property
+    def label(self) -> str:
+        return IMPRESSION_LABELS.get(self.impression, self.impression)
+
+
+def add_supplement_note(medication_id: int, note_date: date, impression: str, note: str | None) -> int:
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO supplement_notes (medication_id, note_date, impression, note) VALUES (?, ?, ?, ?)",
+        (medication_id, note_date, impression, note),
+    )
+    db.commit()
+    return cur.lastrowid
+
+
+def list_supplement_notes(medication_id: int) -> list[SupplementNote]:
+    rows = get_db().execute(
+        "SELECT * FROM supplement_notes WHERE medication_id = ? ORDER BY note_date DESC, id DESC", (medication_id,)
+    ).fetchall()
+    return [SupplementNote(r["id"], r["medication_id"], r["note_date"], r["impression"], r["note"]) for r in rows]
+
+
+def delete_supplement_note(note_id: int) -> SupplementNote | None:
+    db = get_db()
+    row = db.execute("SELECT * FROM supplement_notes WHERE id = ?", (note_id,)).fetchone()
+    if row is None:
+        return None
+    db.execute("DELETE FROM supplement_notes WHERE id = ?", (note_id,))
+    db.commit()
+    return SupplementNote(row["id"], row["medication_id"], row["note_date"], row["impression"], row["note"])
 
 
 def set_medication_active(medication_id: int, active: bool, on: date | None = None) -> None:

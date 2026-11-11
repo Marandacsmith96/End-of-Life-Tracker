@@ -89,9 +89,9 @@ def _save_markers_and_meds(animal_id: int, entry_id: int, form) -> None:
         offered = {m.id for m in entries.list_medications(animal_id, active_only=True)}
         given = {int(x) for x in form.getlist("given") if x.isdecimal()} & offered
         entries.set_entry_medications(entry_id, given, offered)
-        sign_values, _ = signs.parse_form(form)
-        if sign_values:
-            signs.save_signs(animal_id, entries.get_entry(entry_id).entry_date, sign_values)
+    sign_values, _ = signs.parse_form(form)
+    if sign_values:
+        signs.save_signs(animal_id, entries.get_entry(entry_id).entry_date, sign_values)
 
 
 def _save_photos(entry_id: int, files) -> int:
@@ -146,8 +146,7 @@ def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=N
             photos=entries.list_entry_photos(entry.id) if entry else [],
             today=date.today().isoformat(), start_step=start_step,
             has_scores=entry.has_scores if entry else False,
-            watched_signs=signs.watched_signs(entries.list_medications(animal.id, kind="supplement")),
-            sign_values=signs.signs_on(animal.id, shown),
+            sign_list=signs.ASKED, sign_values=signs.signs_on(animal.id, shown),
             category_icons=scoring.CATEGORY_ICONS, nice_date=f"{shown:%A, %B} {shown.day}",
         ),
         status,

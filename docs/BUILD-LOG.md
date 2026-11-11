@@ -556,6 +556,29 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   working is the owner's reading of a page that only ever reports; that
   distinction is the whole product.
 
+### Nov 11 — the owner's own record of a supplement, and signs as daily questions
+
+- "I want a specific area where owners can log supplement info, and
+  whether it was prescribed or is helping." Each supplement now carries
+  what it is for, who recommended it (prescribed by the vet, suggested by
+  the vet, my own choice, someone else), and free notes for brand, shop
+  and cost, all editable in place. Underneath, "Is it helping? Your own
+  take": a dated history of the owner's impression (seems to help, not
+  sure yet, no change I can see, seems worse) with a line of their own
+  words, kept next to "What the numbers show". Neither replaces the other
+  and both go to the vet; that framing is the point. Schema version 5.
+- Then, mid-build: "I want itching and joint and the other things
+  supplements can help added to the daily questions." Until now the signs
+  only appeared when a supplement watched them, tucked under "More
+  details". They are now five of the daily questions, right after the
+  seven scores, each with its own tile and plain-words anchors, a "skip the
+  other signs today" button, and a line on the review step. Untouched
+  sliders are still never saved. The supplements page's own scoring form
+  stays for days that only got a quick check-in.
+- Maggie's chews carry an owner record (suggested by the vet, about $25 a
+  month, "she thinks they are treats") and three impressions over the
+  weeks: not sure yet, seems to help, still better.
+
 ---
 
 ## Answers to the assignment's questions (material)
