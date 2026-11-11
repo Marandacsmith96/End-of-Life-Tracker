@@ -110,7 +110,7 @@ def _clip(text: str | None, limit: int) -> str:
 
 def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], medications: list[Medication],
               markers, responses: dict, baseline, events, start: date | None, end: date,
-              include_appendix: bool = False, generated: date | None = None) -> bytes:
+              include_appendix: bool = False, generated: date | None = None, supplements=()) -> bytes:
     st = _styles()
     generated = generated or date.today()
     ordered = sorted(entries, key=lambda e: e.entry_date)
@@ -245,6 +245,33 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     two.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
                              ("RIGHTPADDING", (0, 0), (0, 0), 8)]))
     story.append(two)
+
+    # Supplements: what is given, why, how reliably, the owner's take, and the signs around the start.
+    if supplements:
+        story.append(Paragraph("Supplements and what the records show", st["h2"]))
+        rows = [["Supplement", "Given", "Owner's latest take", "Signs watched (two weeks before vs after the start)"]]
+        for s in supplements[:6]:
+            about = f"<b>{_esc(_clip(s.name, 60))}</b>"
+            if s.details:
+                about += f" · {_esc(_clip(s.details, 60))}"
+            if s.purpose:
+                about += f"<br/>For: {_esc(_clip(s.purpose, 90))}"
+            if s.source:
+                about += f"<br/>{_esc(s.source)}"
+            if s.started:
+                about += f"<br/>Started {s.started:%b} {s.started.day}, {s.started.year}" + ("" if s.active else " (stopped)")
+            rows.append([
+                Paragraph(about, st["cell"]),
+                Paragraph(_esc(s.given_text) if s.given_text else "—", st["cell"]),
+                Paragraph(_esc(_clip(s.owner_take, 160)) if s.owner_take else "No note yet", st["cell"]),
+                Paragraph("<br/>".join(_esc(line) for line in s.signs) or "—", st["cell"]),
+            ])
+        if len(supplements) > 6:
+            rows.append([Paragraph(f"… and {len(supplements) - 6} more in the app.", st["small"]), "", "", ""])
+        story.append(_table(rows, [1.9 * inch, 1.2 * inch, 1.6 * inch, width - 4.7 * inch], st))
+        story.append(Paragraph("Sign scores are the owner's 0–10 ratings. The before/after figures describe the "
+                               "records either side of the start date; they are not a judgement of whether the "
+                               "supplement is working.", st["small"]))
 
     story.append(Spacer(1, 4))
     story.append(Paragraph(ATTRIBUTION + " " + safety.DISCLAIMER, st["small"]))

@@ -1230,3 +1230,36 @@ def test_example_maggie_has_an_owner_record_for_her_chews(client):
     html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
     assert "Suggested by the vet" in html and "Stiff hips after naps" in html and "$25 a month" in html
     assert "Seems to help" in html and "Not sure yet" in html and "Up the back step" in html
+
+
+# --- supplements in the vet summary --------------------------------------------
+
+def test_vet_pdf_and_page_include_supplements_and_their_results(client):
+    _pet(client)
+    r = client.post("/animals/1/supplements", data={"name": "Joint chews", "dose": "2 chews", "signs": ["stiffness"],
+                                                     "purpose": "Stiff hips", "source": "vet_suggested",
+                                                     "start_date": (TODAY - timedelta(days=14)).isoformat()})
+    assert r.status_code == 302
+    for d in range(28, 14, -1):
+        _checkin(client, d, meds_included="1", sign_stiffness_set="1", sign_stiffness="7")
+    for d in range(14, 0, -1):
+        _checkin(client, d, meds_included="1", given="1", sign_stiffness_set="1", sign_stiffness="3")
+    client.post("/supplements/1/impression", data={"impression": "helping", "note": "Up the step without the pause"})
+    pdf_bytes = client.get("/animals/1/export.pdf").data
+    text = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf_bytes)).pages).replace("\n", " ")
+    assert "Supplements and what the records show" in text
+    assert "Joint chews" in text and "Stiff hips" in text and "Suggested by the vet" in text
+    assert "7.0 in the two weeks before, 3.0 in the two weeks after" in text and "lower is less of it" in text
+    assert "Seems to help" in text and "Up the step without the pause" in text
+    assert text.count("Joint chews") == 1  # listed as a supplement, not again as a medication
+    assert "not a judgement" in text
+    html = unescape(client.get("/animals/1/vet").get_data(as_text=True))
+    assert "Supplements and what the records show" in html and "Up the step without the pause" in html
+
+
+def test_vet_summary_without_supplements_has_no_supplement_section(client):
+    _pet(client)
+    _checkin(client, 1)
+    text = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(client.get("/animals/1/export.pdf").data)).pages)
+    assert "Supplements and what" not in text
+    assert "Supplements and what" not in client.get("/animals/1/vet").get_data(as_text=True)

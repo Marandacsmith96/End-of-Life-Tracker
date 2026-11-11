@@ -167,6 +167,47 @@ def _sentence(sign: Sign, supplement: Medication, eff: an.EventEffect) -> str | 
                  owner_text=(supplement.name,))
 
 
+@dataclass(frozen=True)
+class VetSupplement:
+    """One supplement as the vet sees it: what, why, how reliably given, the
+    owner's latest take, and each watched sign's numbers around the start."""
+    name: str
+    details: str            # dose · schedule
+    purpose: str | None
+    source: str             # who recommended it, as a label ("" when unknown)
+    started: date | None
+    active: bool
+    given_text: str         # from meds.summarize
+    owner_take: str | None  # "Seems to help (Nov 4): Up the back step without the pause."
+    signs: list[str]        # one short line per sign
+
+
+def for_vet(views: list[SupplementView], given: dict, notes: dict) -> list[VetSupplement]:
+    out = []
+    for v in views:
+        sup = v.supplement
+        latest = (notes.get(sup.id) or [None])[0]
+        take = None
+        if latest is not None:
+            take = f"{latest.label} ({latest.note_date:%b} {latest.note_date.day})"
+            if latest.note:
+                take += f": {latest.note}"
+        lines = []
+        for sv in v.signs:
+            hint = "higher is better" if sv.sign.higher_is_better else "lower is less of it"
+            if sv.before is not None and sv.after is not None and sv.before_n >= 4 and sv.after_n >= 4:
+                lines.append(f"{sv.sign.short}: {sv.before:.1f} in the two weeks before, {sv.after:.1f} in the two weeks after ({hint})")
+            elif sv.recent is not None:
+                lines.append(f"{sv.sign.short}: {sv.recent:.1f} over the last 7 days ({hint}); not enough scored days around the start to compare")
+            else:
+                lines.append(f"{sv.sign.short}: no recent scores")
+        details = " · ".join(x for x in (sup.dose, sup.schedule) if x)
+        given_text = given[sup.id].count_text if sup.id in given else ""
+        out.append(VetSupplement(sup.name, details, sup.purpose, sup.source_label, sup.start_date, sup.active,
+                                 given_text, take, lines))
+    return out
+
+
 def summarize(supplements: list[Medication], entries: list[Entry], end: date) -> list[SupplementView]:
     """One view per supplement: each watched sign's numbers around its start and over the last 30 days."""
     sign_points = signs_for_animal(supplements[0].animal_id) if supplements else {}

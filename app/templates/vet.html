@@ -65,9 +65,34 @@
   <p class="muted small">Based only on what you've recorded. Not a diagnosis or a treatment suggestion.</p>
 </section>
 
+{% if supplements %}
+<section class="card block" aria-label="Supplements">
+  <h2>Supplements and what the records show</h2>
+  <div class="table-scroll">
+  <table class="table">
+    <thead><tr><th>Supplement</th><th>Given</th><th>Your latest take</th><th>Signs watched</th></tr></thead>
+    <tbody>
+      {% for s in supplements %}
+        <tr>
+          <td><strong>{{ s.name }}</strong>{% if s.details %} <span class="muted small">{{ s.details }}</span>{% endif %}
+            {% if s.purpose %}<br><span class="small">For: {{ s.purpose }}</span>{% endif %}
+            {% if s.source %}<br><span class="muted small">{{ s.source }}</span>{% endif %}
+            {% if s.started %}<br><span class="muted small">Started {{ s.started.strftime('%b') }} {{ s.started.day }}, {{ s.started.year }}{% if not s.active %} (stopped){% endif %}</span>{% endif %}</td>
+          <td class="small">{{ s.given_text or '—' }}</td>
+          <td class="small">{{ s.owner_take or 'No note yet' }}</td>
+          <td class="small">{% for line in s.signs %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Before and after are the two weeks either side of the start date. These describe the records; they are not a judgement of whether a supplement is working. <a href="{{ url_for('supplements.supplements', animal_id=animal.id) }}">Supplements page</a>.</p>
+</section>
+{% endif %}
+
 <section class="card block share" id="share">
   <h2>Share with my vet</h2>
-  <p>A one-page summary: the trend chart, current scores with the previous period, good and bad days, {{ animal.name }}'s behaviors, events, medications, and the changes above.</p>
+  <p>A short summary for the appointment{% if supplements %} (two pages with supplements){% else %} (one page){% endif %}: the trend chart, current scores with the previous period, good and bad days, {{ animal.name }}'s behaviors, events, medications{% if supplements %}, supplements{% endif %}, and the changes above.</p>
   <form method="get" class="range-bar" action="#share">
     <input type="hidden" name="since" value="{{ prep.since.isoformat() }}">
     <div class="presets">

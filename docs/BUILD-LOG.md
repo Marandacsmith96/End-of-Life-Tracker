@@ -578,6 +578,15 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 - Maggie's chews carry an owner record (suggested by the vet, about $25 a
   month, "she thinks they are treats") and three impressions over the
   weeks: not sure yet, seems to help, still better.
+- "Add a section to the vet PDF about what supplements they're taking and
+  the results." The one-page summary (and the vet page itself) now has a
+  "Supplements and what the records show" table: the supplement with its
+  dose, purpose, who recommended it and start date; how many fully logged
+  days it was given; the owner's latest take in their own words; and each
+  watched sign's average in the two weeks before and after the start, with
+  "lower is less of it" or "higher is better". A footnote says these
+  describe the records and are not a judgement of whether it is working.
+  Supplements no longer repeat in the medications list of the PDF.
 
 ---
 

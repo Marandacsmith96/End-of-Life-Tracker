@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, send_file
 
 from .. import analytics as an
 from .. import baseline as bl
-from .. import entries, events, insights, markers, pdf, safety, scoring
+from .. import entries, events, insights, markers, meds, pdf, safety, scoring, signs
 from ..helpers import animal_or_404, parse_date, resolve_range
 
 bp = Blueprint("export", __name__)
@@ -70,7 +70,20 @@ def vet(animal_id: int):
                                        today=animal.passed_date or date.today(), default="90")
     count = len(entries.list_entries(animal_id, start=start, end=end))
     return render_template("vet.html", animal=animal, prep=prep, preset=preset, start=start, end=end,
-                           count=count, report_note=safety.REPORT_NOTE, guidance=safety.MAX_GUIDANCE)
+                           count=count, report_note=safety.REPORT_NOTE, guidance=safety.MAX_GUIDANCE,
+                           supplements=_vet_supplements(animal))
+
+
+def _vet_supplements(animal) -> list[signs.VetSupplement]:
+    sups = entries.list_medications(animal.id, kind="supplement")
+    if not sups:
+        return []
+    all_entries = entries.list_entries(animal.id)
+    end = animal.passed_date or date.today()
+    views = signs.summarize(sups, all_entries, end)
+    given = {s.medication.id: s for s in meds.summarize(sups, all_entries, entries.given_days_for_animal(animal.id), end)}
+    notes = {s.id: entries.list_supplement_notes(s.id) for s in sups}
+    return signs.for_vet(views, given, notes)
 
 
 @bp.route("/animals/<int:animal_id>/export.pdf")
@@ -87,7 +100,8 @@ def export_pdf(animal_id: int):
     marker_list = markers.list_markers(animal_id)
     responses = markers.responses_for_animal(animal_id)
     data = pdf.build_pdf(
-        animal=animal, entries=rows, all_entries=all_entries, medications=entries.list_medications(animal_id),
+        animal=animal, entries=rows, all_entries=all_entries,
+        medications=entries.list_medications(animal_id, kind="medication"), supplements=_vet_supplements(animal),
         markers=marker_list, responses=responses, baseline=bl.get_baseline(animal_id),
         events=events.list_events(animal_id, start=start, end=end, newest_first=False),
         start=start, end=end, include_appendix=request.args.get("appendix") == "1",

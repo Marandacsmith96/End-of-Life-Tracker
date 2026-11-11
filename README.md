@@ -49,7 +49,8 @@ observations, and it is not a validated medical device.
   visits, medication changes) marked on the charts.
 - **Prepare for my vet visit**: what changed since your last visit, and a short
   list of things you may want to discuss.
-- **A one-page PDF** for the appointment.
+- **A one-page PDF** for the appointment, including supplements with the
+  owner's take and the signs before and after each one started.
 - **A weekly "How are you doing?"** for the caregiver, kept apart from the
   pet's data.
 - **A gentle ending.** "My pet has passed away" keeps everything, stops
