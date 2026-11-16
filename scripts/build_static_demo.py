@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "dist" / "demo"
 PETS = {1: "", 2: "bruno-", 3: "juniper-", 4: "rosie-", 5: "bones-"}   # animal id -> file prefix (the first pet owns the plain names)
-MAX_PAGES = 320
+MAX_PAGES = 600   # five example pets with per-category trend pages need about 350
 
 BANNER = (
     '<aside class="notice demo-notice" aria-label="Demo">'
@@ -161,6 +161,8 @@ def main() -> None:
         written += 1
     (OUT / "static" / "style.css").open("a", encoding="utf-8").write(
         "\n.demo-notice { background: var(--accent-soft); border-color: var(--accent-soft); }\n")
+    if queue:
+        raise SystemExit(f"stopped at MAX_PAGES={MAX_PAGES} with {len(queue)} pages still queued; raise the cap")
     print(f"wrote {written} pages to {OUT}")
 
 

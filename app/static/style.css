@@ -377,6 +377,7 @@ body { font-size: 17px; line-height: 1.6; }
 /* Pet switcher bar under the header */
 .pet-switcher { display: flex; align-items: center; gap: 8px; padding: 8px 22px; overflow-x: auto; scrollbar-width: none; background: var(--surface); border-bottom: 1px solid var(--border); }
 .pet-switcher::-webkit-scrollbar { display: none; }
+.pet-switcher.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }   /* a fade says "more this way" */
 .pet-switcher-label { color: var(--muted); font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 2px; }
 .pet-chip { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; min-height: 34px; padding: 4px 12px 4px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 700; font-size: 0.92rem; text-decoration: none; white-space: nowrap; }
 .pet-chip .icon { width: 18px; height: 18px; color: var(--accent-dark); }
@@ -708,7 +709,17 @@ h2 { font-weight: 750; }
 .empty-state h1 { margin-top: 4px; }
 
 /* ---- Supplements and the signs they are meant to help ---- */
+.sup-card { scroll-margin-top: 64px; }   /* "#supplement-N" lands below the sticky top bar */
 .sup-card.inactive { opacity: .75; }
+.sup-card .section-head h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+@media (max-width: 700px) {   /* the vet page's supplements table stacks into one card per supplement */
+  .table.vet-sup thead { display: none; }
+  .table.vet-sup, .table.vet-sup tbody, .table.vet-sup tr, .table.vet-sup td { display: block; width: 100%; }
+  .table.vet-sup tr { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; margin-bottom: 10px; }
+  .table.vet-sup td { border: 0; padding: 6px 0; }
+  .table.vet-sup td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 2px; }
+  .table.vet-sup td[data-label="Supplement"]::before { display: none; }
+}
 .sup-card h2 .muted { font-weight: 500; font-size: 0.9rem; }
 .sign-view { border-top: 1px solid var(--border); padding: 12px 0 4px; }
 .sign-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; margin-bottom: 6px; }

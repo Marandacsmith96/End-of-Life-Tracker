@@ -1210,7 +1210,7 @@ def test_owner_impressions_are_kept_next_to_the_numbers(client, app):
     client.post("/animals/1/supplements", data={"name": "Fish oil", "signs": ["itching"]})
     r = client.post("/supplements/1/impression", data={"impression": "unsure", "note": "Too early to tell"}, follow_redirects=True)
     html = unescape(r.get_data(as_text=True))
-    assert "Not sure yet" in html and "Too early to tell" in html and "Noted: not sure yet" in html
+    assert "Not sure yet" in html and "Too early to tell" in html and "Noted: Not sure yet" in html
     client.post("/supplements/1/impression", data={"impression": "helping", "note": "Less scratching at night"})
     html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
     assert html.index("Seems to help") < html.index("Not sure yet")  # newest first
@@ -1273,3 +1273,96 @@ def test_example_bones_shows_a_joint_supplement_with_a_clear_change(client):
     assert "Mobility scores were higher in the two weeks after" in html
     assert "Jumped into the car on his own" in html
     assert "rather than a verdict" in html
+
+
+# --- sixth check: signs in the check-in, the port probe, the launcher with a passcode ---
+
+def test_a_check_in_that_only_scores_a_sign_is_saved(client):
+    from app import signs
+    _pet(client)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "sign_itching_set": "1", "sign_itching": "7"})
+    assert r.status_code == 302, r.get_data(as_text=True)[:300]
+    with client.application.app_context():
+        assert signs.signs_on(1, TODAY) == {"itching": 7}
+
+
+def test_a_bad_sign_value_in_the_check_in_is_reported_not_dropped(client):
+    from app import signs
+    _pet(client)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                                "sign_itching_set": "1", "sign_itching": "abc"})
+    assert r.status_code == 400
+    assert "Itching must be a whole number from 0 to 10" in r.get_data(as_text=True)
+    with client.application.app_context():
+        assert signs.signs_on(1, TODAY) == {} and entries.get_entry_for_date(1, TODAY) is None
+
+
+def test_removing_a_check_in_removes_that_days_sign_scores(client):
+    from app import signs
+    _pet(client)
+    _checkin(client, 1, sign_itching_set="1", sign_itching="6")
+    _checkin(client, 2, sign_itching_set="1", sign_itching="4")
+    with client.application.app_context():
+        entry = entries.get_entry_for_date(1, TODAY - timedelta(days=1))
+    assert client.post(f"/entries/{entry.id}/delete").status_code == 302
+    with client.application.app_context():
+        assert signs.signs_on(1, TODAY - timedelta(days=1)) == {}
+        assert signs.signs_on(1, TODAY - timedelta(days=2)) == {"itching": 4}   # other days untouched
+
+
+def test_score_today_form_starts_with_every_slider_unset(client):
+    """Pre-set flags plus a free date picker would copy today's scores onto whatever day was picked."""
+    _pet(client)
+    client.post("/animals/1/supplements", data={"name": "Fish oil", "signs": ["itching"]})
+    client.post("/animals/1/supplements/signs", data={"entry_date": TODAY.isoformat(), "sign_itching_set": "1", "sign_itching": "9"})
+    html = unescape(client.get("/animals/1/supplements").get_data(as_text=True))
+    assert 'name="sign_itching_set" id="set-sign-itching" value="0"' in html
+    assert "Already scored today: Itching 9" in html
+
+
+def test_port_probe_ignores_a_port_in_time_wait():
+    """A port this app just released reads as free, as it does to the server itself."""
+    import socket
+    from app.phone import port_is_free
+    port = _free_port()
+    srv = socket.socket(); srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", port)); srv.listen(1)
+    cli = socket.create_connection(("127.0.0.1", port))
+    conn, _ = srv.accept()
+    conn.close()          # the server closes first, so its side sits in TIME_WAIT
+    cli.close(); srv.close()
+    assert port_is_free("127.0.0.1", port)
+    held = socket.socket(); held.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    held.bind(("127.0.0.1", port)); held.listen(1)
+    try:
+        assert not port_is_free("127.0.0.1", port)   # a port still listened on is still taken
+    finally:
+        held.close()
+
+
+def test_launcher_alive_check_works_with_a_passcode_set(tmp_path):
+    import desktop
+    app = create_app({"TESTING": True, "DATA_DIR": tmp_path, "DATABASE": tmp_path / "t.sqlite",
+                      "PHOTO_DIR": tmp_path / "p", "PASSCODE": "secret12"})
+    token = "tok-with-passcode"
+    app.add_url_rule("/__alive", "alive", lambda: token)
+    chosen, httpd, thread = desktop._start_server(app, _free_port(), token)
+    try:
+        assert httpd is not None
+        assert desktop._answers_as_us(f"http://127.0.0.1:{chosen}/", token)
+    finally:
+        httpd.shutdown(); httpd.server_close()
+
+
+def test_seed_script_accepts_every_example_pet():
+    import subprocess, sys
+    out = subprocess.run([sys.executable, "scripts/seed_demo.py", "--help"], capture_output=True, text=True).stdout
+    assert "rosie" in out and "bones" in out
+
+
+def test_vet_supplements_table_stacks_on_a_phone(client):
+    client.post("/examples/add")
+    html = client.get("/animals/5/vet").get_data(as_text=True)
+    assert 'class="table vet-sup"' in html and 'data-label="Signs watched"' in html
+    css = (client.application.root_path + "/static/style.css")
+    assert ".table.vet-sup td[data-label]::before" in open(css, encoding="utf-8").read()

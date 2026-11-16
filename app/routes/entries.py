@@ -169,8 +169,9 @@ def checkin(animal_id: int):
         common, errors = _parse_common(request.form)
         scores, score_errors = _parse_scores(request.form)
         extras, extra_errors = _parse_extras(request.form)
-        errors += score_errors + extra_errors
-        if not errors and not (common["day_status"] or scores or any(extras.values())
+        sign_values, sign_errors = signs.parse_form(request.form)
+        errors += score_errors + extra_errors + sign_errors
+        if not errors and not (common["day_status"] or scores or sign_values or any(extras.values())
                                or any(f.filename for f in request.files.getlist("photos"))):
             errors.append("Nothing to save yet. Choose good, bad, or mixed, rate a category, or add a note.")
         if errors:

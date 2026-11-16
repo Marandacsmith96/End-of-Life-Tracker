@@ -99,24 +99,27 @@
   {% endfor %}
 {% else %}
   <section class="card block">
-    <p>No supplements yet. Add one below and choose which signs to watch. Mobility and appetite come from the daily scores you already give; the others get their own slider in the check-in.</p>
+    <p>No supplements yet. Add one below and choose which signs to watch. Mobility and appetite come from the daily scores you already give; the others are their own questions in the daily check-in.</p>
   </section>
 {% endif %}
 
 {% if watched and not animal.archived %}
 <section class="card block" aria-label="Score today's signs">
   <h2>Score today's signs</h2>
-  <p class="muted small">The same sliders are in the daily check-in under "More details". Scoring here is handy on days you only did a quick check-in.</p>
+  <p class="muted small">The same sliders are in the daily check-in, as their own questions after the seven scores. Scoring here is handy on days you only did a quick check-in.</p>
+  {% set scored_today = watched | selectattr('key', 'in', today_values) | list %}
+  {% if scored_today %}
+  <p class="muted small">Already scored today: {% for s in scored_today %}{{ s.short }} {{ today_values[s.key] }}{{ ', ' if not loop.last }}{% endfor %}. Only sliders you move are saved, so you can change one without touching the rest.</p>
+  {% endif %}
   <form method="post" action="{{ url_for('supplements.log_signs', animal_id=animal.id) }}" class="form">
     <label>Date <input type="date" name="entry_date" value="{{ today }}" max="{{ today }}"></label>
     {% for s in watched %}
-      {% set is_set = s.key in today_values %}
       <div class="sign-row">
-        <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="{{ '1' if is_set else '0' }}">
+        <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="0">
         <label class="question small" for="sign-{{ s.key }}">{{ s.question.replace('{name}', animal.name) }}</label>
         <div class="slider">
-          <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ today_values.get(s.key, 5) }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
-          <output for="sign-{{ s.key }}">{{ today_values.get(s.key) if is_set else '–' }}</output>
+          <input type="range" class="unset" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ today_values.get(s.key, 5) }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
+          <output for="sign-{{ s.key }}">–</output>
         </div>
         <div class="anchors" id="anchors-sign-{{ s.key }}"><span>0 · {{ s.low }}</span><span>10 · {{ s.high }}</span></div>
       </div>

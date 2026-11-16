@@ -625,6 +625,6 @@ def seed(reset: bool, pet: str = "all") -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--reset", action="store_true", help="delete existing data first")
-    parser.add_argument("--pet", choices=("maggie", "bruno", "juniper", "all"), default="all", help="which demo pet to add")
+    parser.add_argument("--pet", choices=tuple(e["key"] for e in EXAMPLES) + ("all",), default="all", help="which demo pet to add")
     args = parser.parse_args()
     seed(args.reset, args.pet)

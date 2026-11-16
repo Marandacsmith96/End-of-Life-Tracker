@@ -8,7 +8,7 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 from .. import phone
 
 bp = Blueprint("auth", __name__)
-OPEN_ENDPOINTS = {"static", "auth.login", "auth.logout"}
+OPEN_ENDPOINTS = {"static", "auth.login", "auth.logout", "alive"}  # "alive" is the launcher's port check
 
 
 def safe_next(target: str | None) -> str | None:

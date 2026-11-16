@@ -182,7 +182,7 @@
     <a class="link" href="{{ url_for('dashboard.today', animal_id=animal.id) }}">Cancel</a>
   </div>
   {% if entry %}
-  <p class="remove-entry"><button class="link small danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate data-confirm="Remove this day's check-in? This cannot be undone.">Remove this check-in</button></p>
+  <p class="remove-entry"><button class="link small danger" type="submit" formaction="{{ url_for('entries.delete_entry', entry_id=entry.id) }}" formnovalidate data-confirm="Remove this day's check-in, including any signs scored for it? This cannot be undone.">Remove this check-in</button></p>
   {% endif %}
 </form>
 {% endblock %}

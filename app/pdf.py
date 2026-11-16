@@ -247,8 +247,9 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     story.append(two)
 
     # Supplements: what is given, why, how reliably, the owner's take, and the signs around the start.
+    closing = []   # kept together with the supplements block, so a second page never holds the disclaimer alone
     if supplements:
-        story.append(Paragraph("Supplements and what the records show", st["h2"]))
+        closing.append(Paragraph("Supplements and what the records show", st["h2"]))
         rows = [["Supplement", "Given", "Owner's latest take", "Signs watched (two weeks before vs after the start)"]]
         for s in supplements[:6]:
             about = f"<b>{_esc(_clip(s.name, 60))}</b>"
@@ -268,13 +269,14 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
             ])
         if len(supplements) > 6:
             rows.append([Paragraph(f"… and {len(supplements) - 6} more in the app.", st["small"]), "", "", ""])
-        story.append(_table(rows, [1.9 * inch, 1.2 * inch, 1.6 * inch, width - 4.7 * inch], st))
-        story.append(Paragraph("Sign scores are the owner's 0–10 ratings. The before/after figures describe the "
-                               "records either side of the start date; they are not a judgement of whether the "
-                               "supplement is working.", st["small"]))
+        closing.append(_table(rows, [1.9 * inch, 1.2 * inch, 1.6 * inch, width - 4.7 * inch], st))
+        closing.append(Paragraph("Sign scores are the owner's 0–10 ratings. The before/after figures describe the "
+                                 "records either side of the start date; they are not a judgement of whether the "
+                                 "supplement is working.", st["small"]))
 
-    story.append(Spacer(1, 4))
-    story.append(Paragraph(ATTRIBUTION + " " + safety.DISCLAIMER, st["small"]))
+    closing.append(Spacer(1, 4))
+    closing.append(Paragraph(ATTRIBUTION + " " + safety.DISCLAIMER, st["small"]))
+    story.append(KeepTogether(closing))   # and the disclaimer itself never splits across pages
 
     # Appendix ---------------------------------------------------------------
     if include_appendix:

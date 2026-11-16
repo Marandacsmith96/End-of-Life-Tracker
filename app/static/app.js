@@ -52,6 +52,11 @@
   if (currentChip && currentChip.scrollIntoView) {
     currentChip.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "instant" });
   }
+  var switcher = document.querySelector(".pet-switcher");
+  if (switcher) {   // fade the right edge while there are more chips that way
+    function cue() { switcher.classList.toggle("more-right", switcher.scrollLeft + switcher.clientWidth < switcher.scrollWidth - 2); }
+    switcher.addEventListener("scroll", cue); window.addEventListener("resize", cue); cue();
+  }
 
   /* One click per form: once a submit goes through, its buttons are disabled
      so a double-click cannot send the same request twice. */
@@ -164,6 +169,11 @@
   });
   if (skipSigns) skipSigns.addEventListener("click", function () {
     skippingSigns = true;
+    form.querySelectorAll(".sign-step input[type=range]").forEach(function (r) {   // skipped means not scored
+      r.classList.add("unset"); paint(r);
+      var flag = r.dataset.setFlag && document.getElementById(r.dataset.setFlag);
+      if (flag) flag.value = "0";
+    });
     if (form.classList.contains("guided")) show(current);
     else form.querySelectorAll(".sign-step").forEach(function (s) { s.hidden = true; });
   });

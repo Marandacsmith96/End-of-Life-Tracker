@@ -126,13 +126,18 @@ def port_is_free(host: str, port: int) -> bool:
     Python's web server asks for "address reuse", and on Windows that lets a
     second program bind a port that is already in use. The result is a
     launcher that says it is running while the browser talks to whoever had
-    the port first. So probe with the exclusive flag on Windows (and a
-    plain bind elsewhere) before starting a server."""
+    the port first. So probe with the exclusive flag on Windows before
+    starting a server. Elsewhere, "address reuse" only skips the minute a
+    just-closed port spends in TIME_WAIT, which is what the server itself
+    asks for, so the probe asks for the same thing or a restart within that
+    minute would wrongly report the port as taken."""
     probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
         if exclusive is not None:
             probe.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        else:
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind((host, port))
         return True
     except OSError:

@@ -600,6 +600,84 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   working" is the owner's reading, and the page is built so they can make
   it with the numbers in front of them.
 
+### Nov 16 — sixth bug check, aimed at everything since the fifth
+
+- You asked for a bug check. Since the fifth one the app had gained the
+  supplements page, the owner's record and impressions, the five daily sign
+  questions, the vet PDF section, two example pets, and the launcher port
+  fix. Same method as before: two independent reviewers (one reading and
+  probing the code, one walking the app in a browser at phone and desktop
+  widths) while I read the diff myself. The suite was green at 197 tests
+  and the browser walkthrough passed before either reviewer started.
+- They found 17 real problems between them; none was in the parts the
+  fifth check had already covered, which is the first time that has
+  happened. The ones worth recording:
+  - **The launcher port probe called a free port "taken".** The new probe
+    binds without "address reuse", so on Linux and Mac a port this app had
+    released less than a minute earlier (its sockets still in the
+    operating system's closing state) read as busy. Restart the app within
+    a minute and it would print "Port 5000 was taken by another program"
+    and move to 5001; switch phone access off and on and the listener
+    would refuse to start. The probe now asks for the same reuse flag the
+    server itself uses, on everything but Windows, where the exclusive
+    flag is what the fix needed. Confirmed with a script that left a port
+    in that state and watched the old probe fail.
+  - **The launcher's "is it really us?" check failed when a passcode was
+    set.** The alive address was not on the list of pages that skip the
+    passcode, so the launcher got the unlock page instead of its token,
+    rejected all twenty ports, and quit with "no free port". Only someone
+    who sets the hosted-copy passcode on a local install would meet it,
+    but that is one line in the README away.
+  - **A check-in that only scored a sign was refused.** "Nothing to save
+    yet" did not count the new sign sliders, so answering only "how much
+    did Bones scratch today?" got an error and saved nothing. Signs now
+    count, and a malformed sign value is reported instead of silently
+    dropped.
+  - **"Skip the other signs today" still saved a sign you had moved.** It
+    hid the steps but left the slider's "set" flag on, so the review step
+    said "Itching 7" and the save kept it. Skipping now un-scores them.
+  - **"Score today's signs" could copy today's scores onto another day.**
+    The sliders were pre-set to today's values with their flags on, next
+    to a free date picker; change the date, press Save, and yesterday got
+    today's numbers. The sliders now start unset, with a line above saying
+    what was already scored today.
+  - **Removing a check-in left that day's sign scores behind.** Signs are
+    stored by date, not by check-in, so the day's numbers kept feeding the
+    strips and averages after "This cannot be undone". Removing a check-in
+    now removes the day's signs too, and the confirmation says so.
+  - **The vet page's supplements table was unreadable on a phone.** Four
+    columns squeezed into 390 pixels, one word per line, a row 748 pixels
+    tall. It now stacks into one card per supplement below 700 pixels.
+  - **The static demo silently dropped pages.** The crawler's cap of 320
+    pages was exactly what five pets produce, so Bones's per-category trend
+    pages were never written and their links were dead. The cap is 600 and
+    the builder now stops with an error if it is ever reached.
+  - Smaller: the PDF's second page held only the disclaimer (the
+    supplements block and the disclaimer now move together); "No change I
+    can see" was flashed as "no change i can see"; the supplements page
+    said the sliders were under "More details" when they are their own
+    steps; landing on a supplement card after saving hid its title under
+    the sticky top bar; the desktop heading ran the dose into the name;
+    the pet switcher gave no hint it scrolls with five pets (it now fades
+    at the edge while there is more); `--pet rosie` and `--pet bones` were
+    rejected by the seed script's own argument list.
+- Checked and clean: migrations from a real version-3 backup through
+  restore; deleting a supplement, a pet or an entry and what cascades;
+  the before/after windows, the 7-against-21 comparison and the wording
+  for "lower is less of it"; unicode and over-long owner text on the page,
+  the vet page and the PDF; the safety guard on every generated sentence;
+  both new example pets at four different "today" dates including a leap
+  day; cross-site posts; the alive route on the phone listener.
+- Fixed everything above, added eight regression tests (the two launcher
+  tests were run against the old code first and failed there), 205 tests
+  pass, the browser walkthrough passes, the demo was rebuilt and
+  republished with the missing Bones pages.
+- Pre-existing, noted, not changed: the Trends "All entries" table on a
+  phone has tall rows with the note off to the right.
+- Time the worst one lived: the port probe was six days old (since the
+  Nov 10 launcher fix); the signs-only check-in refusal was five days old
+  (since the sign steps were added on Nov 11).
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -663,6 +741,9 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Restore that deleted the data before copying the new data in | reviewer making the copy fail | since backup/restore was built, through two reviews of it |
 | Cross-site check that trusted the Host header | reviewer trying DNS rebinding | since the check was added |
 | Launcher trusting a "successful" bind on Windows | the owner opening the download | since the launcher was written |
+| Port probe that called a just-released port "taken" | reviewer leaving a port in the closing state | six days, since the Windows port fix |
+| "Skip the other signs" that still saved the sign | reviewer scoring then skipping in the browser | five days, since the sign steps |
+| Demo crawler cap that silently dropped pages | reviewer counting linked-but-missing files | since the fifth example pet |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

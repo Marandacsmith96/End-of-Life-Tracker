@@ -165,7 +165,13 @@ def save_entry(
 
 
 def delete_entry(entry_id: int) -> None:
+    """Remove a check-in and the sign scores recorded for that day, which are
+    kept by date rather than by entry."""
     db = get_db()
+    row = db.execute("SELECT animal_id, entry_date FROM entries WHERE id = ?", (entry_id,)).fetchone()
+    if row is not None:
+        db.execute("DELETE FROM sign_entries WHERE animal_id = ? AND entry_date = ?",
+                   (row["animal_id"], row["entry_date"]))
     db.execute("DELETE FROM entries WHERE id = ?", (entry_id,))
     db.commit()
 

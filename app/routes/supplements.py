@@ -45,7 +45,7 @@ def supplements(animal_id: int):
         entries.create_medication(animal_id, details["name"], details["dose"], details["schedule"],
                                   details["start_date"], kind="supplement", signs=details["signs"])
         entries.update_supplement_details(_last_supplement_id(animal_id), **details)
-        flash(f"{details['name']} added. Its signs now appear in the daily check-in under \"More details\".")
+        flash(f"{details['name']} added. Its signs are now their own questions in the daily check-in, after the seven scores.")
         return redirect(url_for("supplements.supplements", animal_id=animal_id))
     return render_template("supplements.html", **_context(animal))
 
@@ -90,7 +90,7 @@ def impression(medication_id: int):
         day = date.today()
     note = request.form.get("note", "").strip()[:500] or None
     entries.add_supplement_note(sup.id, day, choice, note)
-    flash(f"Noted: {entries.IMPRESSION_LABELS[choice].lower()} ({day:%b} {day.day}).")
+    flash(f"Noted: {entries.IMPRESSION_LABELS[choice]} ({day:%b} {day.day}).")
     return redirect(url_for("supplements.supplements", animal_id=sup.animal_id) + f"#supplement-{sup.id}")
 
 
