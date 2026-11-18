@@ -11,8 +11,11 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_SIDE = 800  # pixels
-MAX_PIXELS = 40_000_000  # a 40-megapixel ceiling: enough for any phone photo, not enough to exhaust memory
-Image.MAX_IMAGE_PIXELS = MAX_PIXELS  # Pillow refuses outright above twice this
+# JPEGs decode at reduced size (see draft below), so a 50-megapixel phone photo
+# costs little memory; PNG and WebP decode in full, so they get a lower ceiling.
+MAX_PIXELS_JPEG = 120_000_000
+MAX_PIXELS = 40_000_000
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS_JPEG  # Pillow refuses outright above twice this, at open
 
 
 class InvalidImage(ValueError):
@@ -23,6 +26,11 @@ def allowed_filename(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _too_big(width: int | None = None, height: int | None = None) -> str:
+    size = f"{width} by {height} pixels" if width else "far larger than any photo"
+    return f"That image is {size}, which is more than this app can open safely. Please choose a smaller copy."
+
+
 def _open_and_shrink(file_storage) -> Image.Image:
     if not file_storage or not file_storage.filename:
         raise InvalidImage("No file was chosen.")
@@ -31,15 +39,16 @@ def _open_and_shrink(file_storage) -> Image.Image:
     try:
         image = Image.open(file_storage.stream)
         width, height = image.size
-        if width * height > MAX_PIXELS:
-            raise InvalidImage(f"That image is {width} by {height} pixels, which is more than this app can "
-                               "open safely. Please choose a smaller copy.")
+        if width * height > (MAX_PIXELS_JPEG if image.format == "JPEG" else MAX_PIXELS):
+            raise InvalidImage(_too_big(width, height))
         if image.format == "JPEG":
             image.draft("RGB", (MAX_SIDE * 2, MAX_SIDE * 2))   # decode at a reduced size: far less memory
         image.load()
     except InvalidImage:
         raise
-    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
+    except Image.DecompressionBombError as exc:   # refused by Pillow at open, before the size check
+        raise InvalidImage(_too_big()) from exc
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise InvalidImage("That file does not look like an image.") from exc
     image = ImageOps.exif_transpose(image)  # respect phone rotation
     image.thumbnail((MAX_SIDE, MAX_SIDE))

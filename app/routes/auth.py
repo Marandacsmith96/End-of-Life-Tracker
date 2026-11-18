@@ -38,9 +38,9 @@ def _client_address(remote: bool) -> str:
     proxy, the address that proxy reports."""
     if remote:
         return request.remote_addr or ""
-    for header in ("Fly-Client-IP", "CF-Connecting-IP", "True-Client-IP"):   # set by the host, not the client
-        if request.headers.get(header):
-            return request.headers[header]
+    header = current_app.config.get("CLIENT_IP_HEADER")   # a header only the host's proxy sets, if it names one
+    if header and request.headers.get(header):
+        return request.headers[header]
     # X-Forwarded-For: the host's proxy appends the real client after anything
     # the client sent, so the rightmost hop is the one to trust.
     route = request.access_route

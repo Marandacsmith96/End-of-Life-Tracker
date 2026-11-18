@@ -37,7 +37,10 @@ def connect(path) -> sqlite3.Connection:
     if str(path) != ":memory:":
         # Write-ahead logging: readers never wait for a writer, and two writers
         # (the phone listener and the computer) queue instead of one failing.
-        conn.execute("PRAGMA journal_mode = WAL")
+        try:
+            conn.execute("PRAGMA journal_mode = WAL")
+        except sqlite3.OperationalError:
+            pass   # a read-only folder: reading still works in the plain journal mode
     return conn
 
 

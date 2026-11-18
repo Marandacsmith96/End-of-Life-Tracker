@@ -180,7 +180,7 @@ def test_giant_image_is_rejected_gracefully(client):
     r = client.post("/animals/1/photo", data={"photo": (buf, "big.png")}, content_type="multipart/form-data",
                     follow_redirects=True)
     assert r.status_code == 200
-    assert b"does not look like an image" in r.data
+    assert b"more than this app can open safely" in r.data
 
 
 def test_same_day_double_submit_becomes_an_update(app):
@@ -1385,6 +1385,7 @@ def test_hosted_throttle_cannot_be_dodged_with_a_forged_forwarded_header(app):
     assert c.post("/unlock", data={"passcode": "letmein99"},
                   headers={"X-Forwarded-For": "10.0.0.99, 203.0.113.9"}).status_code == 429
     ph._failures.clear()
+    app.config["CLIENT_IP_HEADER"] = "Fly-Client-IP"   # as on Fly, where the proxy sets it
     for _ in range(5):
         c.post("/unlock", data={"passcode": "nope"}, headers={"Fly-Client-IP": "198.51.100.4"})
     assert c.post("/unlock", data={"passcode": "letmein99"}, headers={"Fly-Client-IP": "198.51.100.4"}).status_code == 429
@@ -1580,3 +1581,57 @@ def test_all_time_pdf_spans_at_most_ten_years_and_a_long_strip_is_quick(client, 
     assert png[:8] == b"\x89PNG\r\n\x1a\n" and time.perf_counter() - t < 2.0
     r = client.get("/animals/1/export.pdf?range=all")
     assert r.status_code == 200 and r.data[:4] == b"%PDF"
+
+
+# --- eighth check: yesterday's fixes, second look ---
+
+def test_a_fifty_megapixel_phone_photo_is_accepted_but_a_huge_png_is_not(client, monkeypatch):
+    from app import photos as ph
+    _pet(client)
+    big_jpeg = io.BytesIO(); Image.new("RGB", (8160, 6144), "gray").save(big_jpeg, "JPEG", quality=30); big_jpeg.seek(0)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                                "photos": (big_jpeg, "IMG_0001.jpg")},
+                    content_type="multipart/form-data", follow_redirects=True)
+    assert "1 photo added" in r.get_data(as_text=True)
+    monkeypatch.setattr(ph, "MAX_PIXELS", 1_000_000)   # a PNG decodes in full, so it keeps the lower ceiling
+    png = io.BytesIO(); Image.new("L", (1200, 1200)).save(png, "PNG"); png.seek(0)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                                "photos": (png, "big.png")},
+                    content_type="multipart/form-data", follow_redirects=True)
+    assert "1200 by 1200 pixels" in r.get_data(as_text=True)
+
+
+def test_client_address_headers_are_ignored_unless_the_host_names_one(app):
+    app.config["PASSCODE"] = "letmein99"
+    app.config["CLIENT_IP_HEADER"] = None
+    from app import phone as ph
+    ph._failures.clear()
+    c = app.test_client()
+    for n in range(5):
+        c.post("/unlock", data={"passcode": "nope"}, headers={"CF-Connecting-IP": f"10.9.9.{n}", "Fly-Client-IP": f"10.8.8.{n}"})
+    assert c.post("/unlock", data={"passcode": "letmein99"}, headers={"Fly-Client-IP": "10.8.8.99"}).status_code == 429
+    ph._failures.clear()
+
+
+def test_birth_date_check_names_the_first_check_in_and_leaves_old_data_editable(client, app):
+    _pet(client)
+    _checkin(client, 30)
+    _checkin(client, 10)
+    r = client.post("/animals/1/edit", data={"name": "Maggie", "species": "dog", "birth_date": (TODAY - timedelta(days=5)).isoformat()})
+    first = TODAY - timedelta(days=30)
+    assert r.status_code == 400 and f"({first:%b} {first.day}, {first.year})" in r.get_data(as_text=True)
+    with app.app_context():
+        models.update_animal(1, "Maggie", "dog", None, TODAY - timedelta(days=5))   # legacy data nobody validated
+    r = client.post("/animals/1/edit", data={"name": "Maggie May", "species": "dog", "birth_date": (TODAY - timedelta(days=5)).isoformat()})
+    assert r.status_code == 302   # a rename with the stored birth date unchanged still saves
+
+
+def test_day_counts_never_span_a_negative_range(client):
+    _pet(client)
+    _checkin(client, 0)
+    client.post("/animals/1/passed", data={"passed_date": (TODAY - timedelta(days=40)).isoformat()})
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "-" not in html.split("not logged")[0][-40:] if "not logged" in html else True
+    from app.helpers import counted_from
+    from app.entries import Entry
+    assert counted_from(TODAY - timedelta(days=69), [], TODAY - timedelta(days=40)) == TODAY - timedelta(days=40)

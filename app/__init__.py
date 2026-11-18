@@ -46,6 +46,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         PHOTO_DIR=data_dir / "photos",
         MAX_CONTENT_LENGTH=40 * 1024 * 1024,  # a check-in with several phone photos
         PASSCODE=os.environ.get("PET_QOL_PASSCODE") or None,  # set this on a hosted copy
+        # The header the host's proxy sets to the real client address (for the
+        # passcode throttle). Fly sets Fly-Client-IP; name another with
+        # PET_QOL_CLIENT_IP_HEADER. Anything the client can set itself must not be here.
+        CLIENT_IP_HEADER=os.environ.get("PET_QOL_CLIENT_IP_HEADER")
+        or ("Fly-Client-IP" if os.environ.get("FLY_APP_NAME") else None),
         TRUSTED_HOSTS=[h.strip() for h in os.environ.get("PET_QOL_TRUSTED_HOSTS", "").split(",") if h.strip()] or None,
     )
     if test_config:

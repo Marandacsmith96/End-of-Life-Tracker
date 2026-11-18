@@ -78,10 +78,12 @@ def edit_animal(animal_id: int):
         values, errors = _parse_form(request.form)
         if values["birth_date"] and animal.passed_date and values["birth_date"] > animal.passed_date:
             errors.append(f"Birth date cannot be after {animal.name}'s passing date.")
-        first = entries.list_entries(animal_id, end=values["birth_date"] - timedelta(days=1), limit=1) if values["birth_date"] else []
-        if first:
-            errors.append(f"Birth date cannot be after {animal.name}'s first check-in "
-                          f"({first[-1].entry_date:%b} {first[-1].entry_date.day}, {first[-1].entry_date.year}).")
+        if values["birth_date"] and values["birth_date"] != animal.birth_date:
+            before = entries.list_entries(animal_id, end=values["birth_date"] - timedelta(days=1), newest_first=False, limit=1)
+            if before:
+                first = before[0].entry_date
+                errors.append(f"Birth date cannot be after {animal.name}'s first check-in "
+                              f"({first:%b} {first.day}, {first.year}).")
         if errors:
             for message in errors:
                 flash(message)

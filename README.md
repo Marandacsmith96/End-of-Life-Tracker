@@ -144,7 +144,10 @@ name with a `FLY_APP` repository variable). Entries are kept on a persistent
 disk, and every page asks for the passcode first. Five wrong passcodes in a
 row from one address bring a thirty-second wait. If you put the app behind
 your own domain, set `PET_QOL_TRUSTED_HOSTS` to that name (comma-separated
-for several) so requests for any other name are refused. A `Dockerfile` and a
+for several) so requests for any other name are refused. On Fly the wrong-passcode
+wait is counted per address using the `Fly-Client-IP` header Fly sets; on another
+host, name the header its proxy sets with `PET_QOL_CLIENT_IP_HEADER` (leave it unset
+and the last address in `X-Forwarded-For` is used). A `Dockerfile` and a
 `render.yaml` are included too if you prefer Render.
 
 ## Run it from a terminal

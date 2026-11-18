@@ -60,7 +60,7 @@ def counted_from(start: date | None, all_entries, end: date) -> date:
     """Where "not logged" counting begins: the range start, but never before
     the first check-in, so a new record is not scolded for the days before it."""
     first = min((e.entry_date for e in all_entries), default=end)
-    return max(start, first) if start else first
+    return min(max(start, first) if start else first, end)
 
 
 def current_or_choose():
