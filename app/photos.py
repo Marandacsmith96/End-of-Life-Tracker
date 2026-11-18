@@ -11,6 +11,8 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_SIDE = 800  # pixels
+MAX_PIXELS = 40_000_000  # a 40-megapixel ceiling: enough for any phone photo, not enough to exhaust memory
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS  # Pillow refuses outright above twice this
 
 
 class InvalidImage(ValueError):
@@ -28,7 +30,15 @@ def _open_and_shrink(file_storage) -> Image.Image:
         raise InvalidImage("Please choose a JPG, PNG, or WebP image.")
     try:
         image = Image.open(file_storage.stream)
+        width, height = image.size
+        if width * height > MAX_PIXELS:
+            raise InvalidImage(f"That image is {width} by {height} pixels, which is more than this app can "
+                               "open safely. Please choose a smaller copy.")
+        if image.format == "JPEG":
+            image.draft("RGB", (MAX_SIDE * 2, MAX_SIDE * 2))   # decode at a reduced size: far less memory
         image.load()
+    except InvalidImage:
+        raise
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as exc:
         raise InvalidImage("That file does not look like an image.") from exc
     image = ImageOps.exif_transpose(image)  # respect phone rotation

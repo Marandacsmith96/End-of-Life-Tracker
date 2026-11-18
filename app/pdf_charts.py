@@ -9,7 +9,6 @@ import matplotlib.dates as mdates  # noqa: E402
 from matplotlib import rcParams  # noqa: E402
 from matplotlib.backends.backend_agg import FigureCanvasAgg  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
-from matplotlib.patches import Rectangle  # noqa: E402
 from matplotlib.ticker import FuncFormatter  # noqa: E402
 
 SERIES = "#3d64c4"
@@ -126,10 +125,13 @@ def days_strip(entries_by_date: dict, start: date, end: date) -> bytes:
     days = (end - start).days + 1
     fig = _figure(figsize=(7.2, 0.4))
     ax = fig.subplots()
-    colors = {"good": GOOD, "mixed": MIXED, "bad": BAD}
+    colors = {"good": GOOD, "mixed": MIXED, "bad": BAD, None: "#eef2f9"}
+    spans: dict = {key: [] for key in colors}
     for i in range(days):
-        day = start + timedelta(days=i)
-        status = entries_by_date.get(day)
-        ax.add_patch(Rectangle((i, 0), 0.85, 1, color=colors.get(status, "#eef2f9"), linewidth=0))
+        status = entries_by_date.get(start + timedelta(days=i))
+        spans[status if status in colors else None].append((i, 0.85))
+    for status, ranges in spans.items():   # one drawing per colour, however many days
+        if ranges:
+            ax.broken_barh(ranges, (0, 1), color=colors[status], linewidth=0)
     ax.set_xlim(0, days); ax.set_ylim(0, 1); ax.axis("off")
     return _png(fig)

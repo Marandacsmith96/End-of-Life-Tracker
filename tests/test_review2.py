@@ -1528,3 +1528,55 @@ def test_baseline_revisit_leaves_the_sliders_usable(client):
 
 def test_pdf_drops_emoji_rather_than_printing_boxes():
     assert pdf._esc("Sits on my lap \U0001F408 & naps") == "Sits on my lap &amp; naps"
+
+
+def test_oversized_image_is_refused_before_it_is_decoded(client, monkeypatch):
+    from app import photos as ph
+    monkeypatch.setattr(ph, "MAX_PIXELS", 1_000_000)
+    _pet(client)
+    big = io.BytesIO(); Image.new("L", (1200, 1200)).save(big, "PNG"); big.seek(0)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                                "photos": (big, "big.png")},
+                    content_type="multipart/form-data", follow_redirects=True)
+    html = r.get_data(as_text=True)
+    assert "1200 by 1200 pixels" in html and "smaller copy" in html
+    small = io.BytesIO(); Image.new("RGB", (900, 900), "red").save(small, "JPEG"); small.seek(0)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                                "photos": (small, "ok.jpg")},
+                    content_type="multipart/form-data", follow_redirects=True)
+    assert "1 photo added" in r.get_data(as_text=True)
+
+
+def test_restore_refuses_a_zip_that_unpacks_far_beyond_its_size(client, monkeypatch):
+    from app import backup
+    monkeypatch.setattr(backup, "MAX_RESTORE_UNPACKED", 1024 * 1024)
+    _pet(client)
+    good = client.get("/settings/backup.zip").data
+    with zipfile.ZipFile(io.BytesIO(good)) as zf:
+        db_bytes = zf.read("tracker.sqlite")
+    bomb = _zip({"tracker.sqlite": db_bytes, "photos/entries/1/zeros.jpg": b"\0" * (3 * 1024 * 1024)})
+    assert len(bomb) < 64 * 1024
+    r = _restore(client, bomb)
+    assert "unpacks to more than 1 MB" in r.get_data(as_text=True)
+    assert client.get("/animals/1/today").status_code == 200   # current data untouched
+
+
+def test_database_uses_write_ahead_logging_with_a_patient_timeout(app):
+    from app.db import get_db, BUSY_TIMEOUT_SECONDS
+    with app.app_context():
+        assert get_db().execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert BUSY_TIMEOUT_SECONDS >= 5
+
+
+def test_all_time_pdf_spans_at_most_ten_years_and_a_long_strip_is_quick(client, app):
+    import time
+    from app import pdf_charts
+    _pet(client)
+    with app.app_context():
+        entries.save_entry(1, TODAY - timedelta(days=4000), "good", {k: 6 for k in KEYS})
+        by_date = {TODAY - timedelta(days=i): ("good", "mixed", "bad")[i % 3] for i in range(0, 1100, 2)}
+    t = time.perf_counter()
+    png = pdf_charts.days_strip(by_date, TODAY - timedelta(days=1099), TODAY)
+    assert png[:8] == b"\x89PNG\r\n\x1a\n" and time.perf_counter() - t < 2.0
+    r = client.get("/animals/1/export.pdf?range=all")
+    assert r.status_code == 200 and r.data[:4] == b"%PDF"

@@ -15,6 +15,7 @@ from . import db
 
 DB_NAME = "tracker.sqlite"
 MAX_RESTORE_BYTES = 500 * 1024 * 1024
+MAX_RESTORE_UNPACKED = 2 * MAX_RESTORE_BYTES   # photos barely compress, so a real backup never nears this
 
 
 class InvalidBackup(ValueError):
@@ -103,6 +104,9 @@ def restore_backup(file_storage) -> int:
         p = Path(name)
         if p.is_absolute() or ".." in p.parts:
             raise InvalidBackup("That zip contains unsafe paths.")
+    if sum(info.file_size for info in zf.infolist()) > MAX_RESTORE_UNPACKED:
+        raise InvalidBackup(f"That zip unpacks to more than {MAX_RESTORE_UNPACKED // (1024 * 1024)} MB, "
+                            "which is not a backup this app made.")
 
     data_dir = Path(current_app.config["DATA_DIR"])
     photo_dir = Path(current_app.config["PHOTO_DIR"])

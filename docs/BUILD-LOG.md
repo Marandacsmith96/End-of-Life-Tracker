@@ -678,6 +678,110 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   Nov 10 launcher fix); the signs-only check-in refusal was five days old
   (since the sign steps were added on Nov 11).
 
+### Nov 18 — seventh bug check, from three new angles
+
+- You asked for another bug check. The sixth had covered everything new,
+  so this one changed angle three ways: a browser walkthrough of a
+  brand-new user's first week with no example pets (a 19-year-old cat
+  called O'Malley), a code review of the parts no reviewer had touched
+  since the third check (the analysis, the routes, the request guards,
+  the hosted copy, the build), and a stress pass with three years of
+  daily records, twelve pets, and deliberately nasty files.
+- They found 11, 19 and 5 real problems. The ones worth recording:
+  - **A price in an event title crashed the vet PDF.** The chart library
+    reads anything between two dollar signs as a maths formula, so an
+    event called "Bloods $120 and $40 for tablets" made the whole PDF
+    fail with an error page. Titles are now drawn as plain text. This had
+    been possible since events first appeared on the chart.
+  - **The hosted copy's guessing limit could be dodged.** The throttle on
+    passcode guesses was keyed on the first address in a header the
+    client itself writes, so a guesser could change it per attempt, and
+    could also lock out a real user by naming their address. It now uses
+    the address the hosting provider vouches for. Changing the hosted
+    passcode also signs everyone out now, as the phone passcode already
+    did.
+  - **Nothing stopped another site framing the app.** With no framing
+    headers, a web page could have loaded the local app inside an
+    invisible frame and tricked a click onto "Remove". Every response now
+    refuses framing, and the session cookie is marked the way browsers
+    expect.
+  - **Eight-month-old records read as "the last 7 days".** The
+    observations about bad days, the baseline and a treatment event took
+    the last logged entries whatever their age, so a pet not logged since
+    spring showed "7 of the last 7 logged days were marked as bad" on
+    today's page, next to a trend line saying there was not enough
+    information. Those observations now look no further back than 60
+    days.
+  - **A 3 MB image could use 1.4 GB of memory.** The image library's own
+    guard only refuses pictures above about 180 megapixels; a
+    13,000-by-13,000 PNG under that was fully decoded. Measured: 79 MB to
+    1,389 MB. Images over 40 megapixels are now refused before decoding,
+    with a message naming the size, and JPEGs decode at reduced size.
+  - **A 1 MB backup could write a gigabyte.** Restore checked the zip's
+    size and paths but not what it unpacks to; a zip of zeros restored
+    1.07 GB into the photos folder in two seconds. The unpacked total is
+    now checked too.
+  - **Fifty simultaneous check-ins produced "database is locked".** The
+    database ran without write-ahead logging, so a burst of writers from
+    the phone and the computer failed with a raw error page (19 of 100
+    requests in the test). Realistic use, one phone and one computer,
+    never failed, but a double-tap on two devices should not be able to.
+    Write-ahead logging and a ten-second patience are on.
+  - **The all-time PDF took three seconds for three years** and would
+    take ten for ten. The day strip drew one shape per day; it now draws
+    four, one per colour. 2.0 s became 0.6 s, 3.2 s became 1.6 s with the
+    appendix, and "all time" spans at most ten years.
+  - **A new user's first week looked like nothing.** Every chart
+    defaulted to 90 days, so six days of scores were a cluster of dots at
+    the right edge and the page said "82 not logged in this range", which
+    reads as a reproach. The default is now 30 days while the record is
+    under a month old, and "not logged" counts start at the first
+    check-in.
+  - **A day with two of seven categories scored showed as "3.0 / 10"**
+    exactly like a fully scored day, so a tired owner would read a crash
+    from 7 to 3. It now says "(2 of 7 scored)" wherever that average
+    appears, and a partial baseline says how many categories it covers.
+  - **Sixteen guided steps on day one.** The five sign questions were
+    each their own step before any supplement existed. Signs no
+    supplement watches now share one panel: twelve steps, with the skip
+    link in the same place.
+  - **The baseline form disabled its own sliders on a return visit.**
+    "Unsure" was ticked automatically for every blank category, which
+    greys the slider, so dragging did nothing and "Baseline saved"
+    appeared with nothing saved. It is no longer auto-ticked, and the
+    questions under "think back to six months ago" no longer ask about
+    "today".
+  - Also fixed: medications and vet comparison tables stack into cards on
+    a phone (the actions were off-screen); row actions are 44 pixels tall
+    on touch screens; an event with no title showed its type twice;
+    "1 logged days"; the category page said "not enough data" twice; the
+    first Today page showed "30 not logged"; a passed pet was offered
+    "Add today's scores"; the review step said "Today" on a back-filled
+    day; missed days could not be filled in from the calendar; "Grooms
+    herself" for a cat of unknown sex; an emoji in a behaviour printed as
+    a box in the PDF; a future-dated entry hid today's check-in and the
+    reminder; a check-in whose only content was a rejected photo left an
+    empty day; a passed pet's check-ins could still be deleted; a check-in
+    could be dated before the pet was born; a phone port of 70000 in a
+    hand-edited settings file stopped the app from starting; the deploy
+    workflow would have mangled a passcode containing "$" or a quote.
+- Checked and clean: the analysis with a single entry, months-long gaps,
+  all-0 and all-10 scores, leap days and year boundaries; every generated
+  sentence against the safety rules; every state-changing route behind
+  the cross-site guard; the Host check with IPv6 and ports; the packaged
+  app's bundled files; memory over a thousand heavy requests (no leak);
+  twelve pets with a year each (nothing over 130 ms); zip-slip paths,
+  a 1 GB upload, sixteen threads saving the same date.
+- Not changed, noted: species is still dog or cat only (a rabbit owner has
+  no option; your call); the Trends page with "all time" selected embeds
+  every point, about 1.5 MB of page at three years, which would reach
+  5 MB at ten; the Trends "All entries" table on a phone is still tall.
+- Added 20 regression tests (225 pass), browser walkthrough passes, demo
+  rebuilt and republished, build green.
+- Time the worst ones lived: the formula crash since events were first
+  drawn on the chart (Sep 18, two months); the framing gap since day one;
+  the stale observations since the observations were written (day one).
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -744,6 +848,10 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Port probe that called a just-released port "taken" | reviewer leaving a port in the closing state | six days, since the Windows port fix |
 | "Skip the other signs" that still saved the sign | reviewer scoring then skipping in the browser | five days, since the sign steps |
 | Demo crawler cap that silently dropped pages | reviewer counting linked-but-missing files | since the fifth example pet |
+| Chart that read "$120 and $40" as a formula and crashed the PDF | reviewer typing a price into an event title | two months, since events were drawn on the chart |
+| Observations about "the last 7 logged days" from eight-month-old records | reviewer with a pet not logged since spring | since the observations were written |
+| Image guard that let a 3 MB file use 1.4 GB of memory | reviewer measuring memory on a 13,000-pixel PNG | since photos were added |
+| 90-day default that made a new user's first week look like nothing | reviewer playing a new user | since the charts were built |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

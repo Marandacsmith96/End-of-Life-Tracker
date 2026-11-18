@@ -27,10 +27,17 @@ sqlite3.register_converter(
 )
 
 
+BUSY_TIMEOUT_SECONDS = 10
+
+
 def connect(path) -> sqlite3.Connection:
-    conn = sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES)
+    conn = sqlite3.connect(path, detect_types=sqlite3.PARSE_DECLTYPES, timeout=BUSY_TIMEOUT_SECONDS)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    if str(path) != ":memory:":
+        # Write-ahead logging: readers never wait for a writer, and two writers
+        # (the phone listener and the computer) queue instead of one failing.
+        conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
