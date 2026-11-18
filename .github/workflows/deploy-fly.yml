@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      PET_QOL_PASSCODE: ${{ secrets.PET_QOL_PASSCODE }}
       FLY_APP: ${{ vars.FLY_APP || 'pet-qol-tracker-9uwy' }}
       FLY_REGION: ${{ vars.FLY_REGION || 'iad' }}
     steps:
