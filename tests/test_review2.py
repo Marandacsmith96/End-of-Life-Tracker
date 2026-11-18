@@ -1635,3 +1635,38 @@ def test_day_counts_never_span_a_negative_range(client):
     from app.helpers import counted_from
     from app.entries import Entry
     assert counted_from(TODAY - timedelta(days=69), [], TODAY - timedelta(days=40)) == TODAY - timedelta(days=40)
+
+
+def test_launcher_explains_a_data_folder_it_cannot_write_to(tmp_path, monkeypatch):
+    import desktop
+    blocker = tmp_path / "not-a-folder"
+    blocker.write_text("a file where the data folder should be")
+    monkeypatch.setenv("PET_QOL_DATA_DIR", str(blocker / "data"))
+    with pytest.raises(desktop.DataFolderUnwritable) as caught:
+        desktop._check_data_folder()
+    text = str(caught.value)
+    assert str(blocker / "data") in text and "PET_QOL_DATA_DIR" in text and "Traceback" not in text
+    monkeypatch.setenv("PET_QOL_DATA_DIR", str(tmp_path / "fine"))
+    assert desktop._check_data_folder() == tmp_path / "fine" and (tmp_path / "fine").is_dir()
+
+
+def test_pdf_text_keeps_only_characters_its_font_can_draw():
+    assert pdf._esc("Chirps at birds \U0001F426✨ café") == "Chirps at birds café"
+
+
+def test_logged_day_plural_on_the_behaviours_pages(client):
+    _pet(client)
+    client.post("/animals/1/markers", data={"labels": ["Comes to greet me", "Finishes dinner", "Seeks affection"]})
+    with client.application.app_context():
+        from app import markers as mk
+        ids = [m.id for m in mk.list_markers(1)]
+    _checkin(client, 0, markers_included="1", markers=[str(ids[0])])
+    for path in ("/animals/1/behaviors", "/animals/1/trends", "/animals/1/today"):
+        html = client.get(path).get_data(as_text=True)
+        assert "of 1 logged day<" in html and "of 1 logged days" not in html, path
+
+
+def test_touch_targets_rule_targets_the_real_nav_markup(client):
+    css = open(client.application.root_path + "/static/style.css", encoding="utf-8").read()
+    html = client.get("/").get_data(as_text=True)
+    assert ".nav .nav-item { min-height: 48px" in css and 'class="nav-item' in html and "bottom-nav" not in css

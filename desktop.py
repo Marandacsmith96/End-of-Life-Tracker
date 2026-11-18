@@ -102,6 +102,29 @@ def _say(*lines: str) -> None:
     sys.stdout.flush()
 
 
+class DataFolderUnwritable(Exception):
+    """The folder the app keeps its records in cannot be written to."""
+
+
+def _check_data_folder() -> Path:
+    """Make sure the records folder can be created and written, or explain why not."""
+    from app import PROJECT_ROOT
+    folder = Path(os.environ.get("PET_QOL_DATA_DIR", PROJECT_ROOT / "data"))
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        probe = folder / ".write-check"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+    except OSError as exc:
+        raise DataFolderUnwritable(
+            f"The app keeps your records in this folder, but it cannot write there:\n\n      {folder}\n\n"
+            f"  ({exc.strerror or exc})\n\n"
+            "  Move the app's folder somewhere you own (Documents, for example) and start it again, "
+            "or set PET_QOL_DATA_DIR to a folder you can write to."
+        ) from exc
+    return folder
+
+
 def main() -> None:
     # Keep the window readable: no "development server" banner, no per-request lines.
     logging.getLogger("werkzeug").setLevel(logging.ERROR)
@@ -110,6 +133,7 @@ def main() -> None:
         cli.show_server_banner = lambda *args, **kwargs: None
     except Exception:  # noqa: BLE001
         pass
+    _check_data_folder()
     app = create_app()
     from app.version import build_label
     _say("", f"Quality-of-Life Tracker ({build_label()}) is starting...")
@@ -149,7 +173,11 @@ def main() -> None:
     if webview is None:
         if not _open_browser(url):
             _say("  (Your browser did not open by itself; please open the address above yourself.)")
-        server.join()
+        try:
+            server.join()
+        except KeyboardInterrupt:
+            _say("", "  Stopping. Your records are saved.")
+            httpd.shutdown()
         return True
     webview.create_window("Pet Quality-of-Life Tracker", url, width=1100, height=800, min_size=(700, 500))
     webview.start()
@@ -180,10 +208,16 @@ if __name__ == "__main__":
         sys.exit(0)
     try:
         ok = main()
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except DataFolderUnwritable as exc:
+        _say("", str(exc))
+        _pause_if_frozen()
+        sys.exit(1)
     except Exception:  # noqa: BLE001
         traceback.print_exc()
         _pause_if_frozen()
-        raise
+        sys.exit(1)
     if not ok:
         _pause_if_frozen()
         sys.exit(1)

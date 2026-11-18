@@ -769,7 +769,7 @@ h2 { font-weight: 750; }
 /* Touch screens: every row action and nav item is at least 44px tall. */
 @media (pointer: coarse) {
   .row-actions .link, .row-actions .link.small, .inline-form .link, .actions.compact .link, .section-head .link.small { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 6px; }
-  .bottom-nav a { min-height: 48px; }
+  .nav .nav-item { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
 }
 
 /* Several signs on one check-in step */

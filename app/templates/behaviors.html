@@ -19,11 +19,11 @@
         <li>
           <div class="marker-head">
             <span>{{ r.label }}</span>
-            <span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of {{ r.logged }} logged days{% else %}No answers yet{% endif %}</span>
+            <span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of {{ r.logged }} logged {{ 'day' if r.logged == 1 else 'days' }}{% else %}No answers yet{% endif %}</span>
           </div>
           <div class="bar" aria-hidden="true"><span style="width: {{ r.pct or 0 }}%"></span></div>
           {% if p and p.pct is not none and r.pct is not none and p.logged >= 5 %}
-            <p class="muted small">Previous {{ window }} days: {{ p.pct }}% of {{ p.logged }} logged days.</p>
+            <p class="muted small">Previous {{ window }} days: {{ p.pct }}% of {{ p.logged }} logged {{ 'day' if p.logged == 1 else 'days' }}.</p>
           {% endif %}
         </li>
       {% endfor %}

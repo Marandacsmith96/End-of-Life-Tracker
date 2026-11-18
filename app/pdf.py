@@ -74,11 +74,24 @@ def _fmt(day: date) -> str:
     return f"{day:%b} {day.day}, {day.year}"
 
 
-_NO_GLYPH = re.compile("[\U00010000-\U0010FFFF\uFE0F\u200D]")   # emoji and their joiners: DejaVu has no glyphs for them
+_NO_GLYPH = re.compile("[\U00010000-\U0010FFFF\uFE0F\u200D]")   # emoji and their joiners: no font here draws them
+
+
+def _drawable(text: str) -> str:
+    """Drop characters the embedded font has no glyph for (emoji, dingbats),
+    which would otherwise print as boxes in a document meant for a vet."""
+    text = _NO_GLYPH.sub("", text)
+    _fonts()
+    try:
+        from reportlab.pdfbase import pdfmetrics
+        glyphs = pdfmetrics.getFont(FONT).face.charToGlyph   # only the TrueType face has this map
+    except Exception:  # noqa: BLE001 - built-in font: nothing to check against
+        return text
+    return "".join(ch for ch in text if ch.isspace() or ord(ch) in glyphs)
 
 
 def _esc(text) -> str:
-    text = _NO_GLYPH.sub("", str(text or "")).replace("  ", " ")
+    text = _drawable(str(text or "")).replace("  ", " ")
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
@@ -165,7 +178,8 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
         ("Good / mixed / bad", f"{counts.good} / {counts.mixed} / {counts.bad}",
          f"{counts.not_logged} not logged" + (f"; before: {prev_counts.good}/{prev_counts.mixed}/{prev_counts.bad}" if prev_counts.logged else "")),
         ("Baseline (owner estimate)", f"{baseline.mean:.1f} / 10" if baseline and baseline.mean is not None else "—",
-         baseline.label.replace("Owner-estimated baseline — ", "") if baseline else "not entered"),
+         (baseline.label.replace("Owner-estimated baseline — ", "")
+          + (f" · {baseline.scored_n} of 7 categories" if baseline.scored_n < 7 else "")) if baseline else "not entered"),
     ]
     cells = [[Paragraph(f"<font size=7 color='#5c6b84'>{_esc(l)}</font><br/><font size=12><b>{_esc(v)}</b></font><br/>"
                         f"<font size=6.5 color='#5c6b84'>{_esc(n)}</font>", st["body"]) for l, v, n in tiles]]
@@ -291,7 +305,7 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
         story.append(CondPageBreak(2.5 * inch))
         story.append(Paragraph("Appendix: daily check-ins", st["h2"]))
         short = {"hurt": "Hurt", "hunger": "Hung", "hydration": "Hydr", "hygiene": "Hyg",
-                 "happiness": "Happy", "mobility": "Mob", "good_days": "Good"}
+                 "happiness": "Hap", "mobility": "Mob", "good_days": "Good"}
         header = ["Date", "Day", "Avg"] + [short[k] for k, *_ in CATEGORIES] + ["Weight", "Note"]
         rows = [header]
         for e in sorted(ordered, key=lambda e: e.entry_date, reverse=True):

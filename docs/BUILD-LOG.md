@@ -782,6 +782,72 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
   drawn on the chart (Sep 18, two months); the framing gap since day one;
   the stale observations since the observations were written (day one).
 
+### Nov 18 — eighth bug check, aimed at yesterday's fixes
+
+- You asked for another check straight after the seventh. Freshly written
+  fixes are where new bugs live, so one reviewer went through yesterday's
+  35 fixes line by line, one built the packaged app the way it ships and
+  ran it (first time any check did that), and one walked the changed
+  pages in a browser. Before launching them I found two myself in the
+  diff: the deploy workflow read the passcode from an environment variable
+  it never set, so every deploy would have stopped at "add the secret
+  first"; and I confirmed the new Secure cookie flag does work behind the
+  host's proxy by running the real server with the proxy's header.
+- They found 6, 2 and 6 real problems, all in yesterday's work except two
+  older ones. The ones worth recording:
+  - **Yesterday's image guard refused real phone photos.** The 40-megapixel
+    ceiling I added to stop a 1.4 GB decode is below what current phones
+    produce: iPhone and Pixel "48 MP" photos are 48 to 50 megapixels. A
+    fix for a hostile file would have refused an ordinary one. JPEGs,
+    which the same fix made decode at reduced size, now get a 120-megapixel
+    ceiling; PNG and WebP, which decode in full, keep 40. Confirmed with an
+    8160-by-6144 JPEG, refused before, accepted after. Lived one day.
+  - **Yesterday's throttle fix opened a new hole.** To stop a forged
+    forwarded-address header I made the throttle trust three headers the
+    hosting providers set. On any host that does not set them, a client
+    can set them itself. The app now trusts only a header the deployment
+    names, Fly's by default on Fly. Lived one day.
+  - **Yesterday's birth-date check named the wrong day and blocked
+    renames.** It reported the latest check-in before the birth date as
+    "the first check-in", and it ran even when the birth date was not
+    being changed, so a pet with older records could not be renamed.
+  - **Ctrl+C on the packaged app printed a traceback** and "Failed to
+    execute script", which is what a person sees when they close the
+    window from the console. It now says "Stopping. Your records are
+    saved." Pre-existing since the launcher was written.
+  - **A folder the app cannot write to produced a raw traceback, twice.**
+    Realistic on Windows when the app is unzipped into Program Files. The
+    launcher now checks the folder first and prints which folder, why,
+    and what to do. Pre-existing.
+  - **A dingbat in a behaviour name still printed as a box in the PDF.**
+    Yesterday's fix dropped emoji outside the basic plane but kept
+    characters like the sparkles inside it, which the PDF font also lacks.
+    The PDF now drops any character its embedded font cannot draw.
+  - **The 44-pixel touch rule for the bottom bar targeted a class that
+    does not exist.** The rule named `.bottom-nav`; the markup is `.nav`.
+    Measured at 37 pixels on a phone, now 48.
+  - Also: "1 logged days" remained on two pages; the appendix table ran
+    "Happy" and "Mob" together; the PDF's baseline tile lacked the "of 7
+    categories" note; the skip link on the sign steps says it skips all
+    the sign questions, which is what it does; day counts could span a
+    negative range for a pet whose passing date was set before its
+    records; a database on a read-only folder can be read again.
+- Checked and clean: the packaged build opens every page, embeds the
+  right fonts, renders the QR code, backs up and restores; the phone
+  listener from a second browser (unlock, throttle, lock, passcode change,
+  refusals, no Secure flag over plain http); an upgrade from a version-3
+  folder with a string port and a stale journal file (migrates, switches
+  to write-ahead logging, resumes phone access); an outside process
+  reading the database during 1,256 writes; the five example pets and a
+  partly scored new pet on every changed page at both widths; backup
+  consistency and restore with the new journal mode; the new macros,
+  windows and cascades yesterday's fixes introduced.
+- Added 9 regression tests (233), browser walkthrough passes, demo
+  rebuilt and republished, build green.
+- Lesson for the essay: three of yesterday's fixes were themselves wrong
+  in ways only a second look found. A fix is new code, and new code needs
+  the same review as a feature.
+
 ---
 
 ## Answers to the assignment's questions (material)
@@ -852,6 +918,9 @@ editing couldn't blank a weight; fixed with an explicit sentinel.
 | Observations about "the last 7 logged days" from eight-month-old records | reviewer with a pet not logged since spring | since the observations were written |
 | Image guard that let a 3 MB file use 1.4 GB of memory | reviewer measuring memory on a 13,000-pixel PNG | since photos were added |
 | 90-day default that made a new user's first week look like nothing | reviewer playing a new user | since the charts were built |
+| Image ceiling that refused real 48-megapixel phone photos | reviewer checking current phone resolutions | one day |
+| Throttle fix that trusted headers any client can set | reviewer sending the headers on a host that does not | one day |
+| Touch-target rule naming a class that does not exist | reviewer measuring the bar on a phone | one day |
 
 The pattern worth writing about: unit tests written by the same author as
 the code share its blind spots. The two worst bugs were only visible from

@@ -223,9 +223,11 @@ How much of "shipping" was about the environment rather than the code:
 blocked networks, one operating system per build, a punctuation mark in a
 configuration file, a port a browser refuses to open.
 
-How a second reader kept finding things after the first one stopped. Seven
-rounds of "check for bugs" found 23, 10, 10, 9, 28, 17 and 35 real problems, and
-the two worst ones in the fifth round were old. The seventh round changed its
+How a second reader kept finding things after the first one stopped. Eight
+rounds of "check for bugs" found 23, 10, 10, 9, 28, 17, 35 and 14 real problems,
+and the two worst ones in the fifth round were old. The eighth round looked only
+at the seventh round's fixes and found three of them wrong: a fix is new code,
+and new code needs the same review as a feature. The seventh round changed its
 angle, playing a brand-new user and loading three years of data, and found a
 crash that had been possible for two months and a gap that had been there since
 day one. I no longer believe a review is
@@ -248,7 +250,7 @@ became a failing test before it became working code.
 
 What Claude Code did for me, in plain terms: it asked the questions a good
 contractor would ask before starting, wrote the plan, built every piece,
-wrote 225 automated tests, took and read its own screenshots and PDFs, ran
+wrote 233 automated tests, took and read its own screenshots and PDFs, ran
 reviews of its own work using separate reviewer agents and then fixed what
 they found, set up the automatic builds for Windows and Mac, and kept the
 running notes this essay is condensed from. What it got wrong is the section

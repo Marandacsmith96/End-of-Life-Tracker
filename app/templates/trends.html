@@ -72,7 +72,7 @@
   <ul class="marker-list">
     {% for r in rates %}
       <li>
-        <div class="marker-head"><span>{{ r.label }}</span><span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of {{ r.logged }} logged days{% else %}No answers yet{% endif %}</span></div>
+        <div class="marker-head"><span>{{ r.label }}</span><span class="muted small">{% if r.pct is not none %}{{ r.pct }}% of {{ r.logged }} logged {{ 'day' if r.logged == 1 else 'days' }}{% else %}No answers yet{% endif %}</span></div>
         <div class="bar" aria-hidden="true"><span style="width: {{ r.pct or 0 }}%"></span></div>
       </li>
     {% endfor %}
