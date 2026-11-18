@@ -22,7 +22,7 @@
       <span><i class="swatch dot"></i> Daily score</span><span><i class="swatch line"></i> 7-day average</span>
       {% if series.baseline is not none %}<span><i class="swatch dashed"></i> Owner-estimated baseline ({{ series.baseline }})</span>{% endif %}
     </div>
-    <p class="chart-summary">{{ text }} {{ classification.sufficiency.text }}</p>
+    <p class="chart-summary">{% if classification.kind == 'insufficient_data' %}{{ classification.sufficiency.text or text }}{% else %}{{ text }} {{ classification.sufficiency.text if classification.sufficiency.level != 'adequate' else '' }}{% endif %}</p>
     {% if below and below[1] >= 6 %}
       <p class="muted small">Below the owner-estimated baseline on {{ below[0] }} of the last {{ below[1] }} scored days.</p>
     {% endif %}

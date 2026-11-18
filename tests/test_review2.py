@@ -14,6 +14,7 @@ from pypdf import PdfReader
 from app import analytics as an, caregiver, create_app, entries, insights, models, pdf, safety
 from app.entries import Entry, Medication
 from app.events import Event
+from app import events as events_module
 from app.models import Animal
 
 KEYS = ("hurt", "hunger", "hydration", "hygiene", "happiness", "mobility", "good_days")
@@ -1099,7 +1100,8 @@ def test_signs_are_daily_questions_and_are_saved_only_when_moved(client, app):
     _pet(client)
     html = client.get("/animals/1/checkin").get_data(as_text=True)  # no supplement needed
     for key in ("itching", "stiffness", "coat", "stool", "energy"):
-        assert f'name="sign_{key}"' in html and f'data-step="sign-{key}"' in html
+        assert f'name="sign_{key}"' in html
+    assert 'data-step="signs-other"' in html and 'data-step="sign-itching"' not in html   # one shared step until a supplement watches a sign
     assert 'id="skip-signs"' in html
     _checkin(client, 1, sign_itching_set="1", sign_itching="6", sign_coat_set="0", sign_coat="5")
     from app import signs
@@ -1366,3 +1368,163 @@ def test_vet_supplements_table_stacks_on_a_phone(client):
     assert 'class="table vet-sup"' in html and 'data-label="Signs watched"' in html
     css = (client.application.root_path + "/static/style.css")
     assert ".table.vet-sup td[data-label]::before" in open(css, encoding="utf-8").read()
+
+
+# --- seventh check: hosted copy hardening, stale insights, a new user's first week ---
+
+def test_hosted_throttle_cannot_be_dodged_with_a_forged_forwarded_header(app):
+    """The host's proxy appends the real client to X-Forwarded-For (or sets
+    Fly-Client-IP); whatever the client put first must not pick the bucket."""
+    app.config["PASSCODE"] = "letmein99"
+    from app import phone as ph
+    ph._failures.clear()
+    c = app.test_client()
+    for n in range(5):
+        assert c.post("/unlock", data={"passcode": "nope"},
+                      headers={"X-Forwarded-For": f"10.0.0.{n}, 203.0.113.9"}).status_code == 401
+    assert c.post("/unlock", data={"passcode": "letmein99"},
+                  headers={"X-Forwarded-For": "10.0.0.99, 203.0.113.9"}).status_code == 429
+    ph._failures.clear()
+    for _ in range(5):
+        c.post("/unlock", data={"passcode": "nope"}, headers={"Fly-Client-IP": "198.51.100.4"})
+    assert c.post("/unlock", data={"passcode": "letmein99"}, headers={"Fly-Client-IP": "198.51.100.4"}).status_code == 429
+    assert c.post("/unlock", data={"passcode": "letmein99"}, headers={"Fly-Client-IP": "198.51.100.5"}).status_code == 302
+    ph._failures.clear()
+
+
+def test_changing_the_hosted_passcode_signs_everyone_out(app):
+    app.config["PASSCODE"] = "oldpass99"
+    c = app.test_client()
+    assert c.post("/unlock", data={"passcode": "oldpass99"}).status_code == 302
+    assert c.get("/settings").status_code == 200
+    app.config["PASSCODE"] = "newpass99"
+    r = c.get("/settings")
+    assert r.status_code == 302 and "/unlock" in r.headers["Location"]
+
+
+def test_responses_refuse_framing_and_the_cookie_is_samesite(client):
+    _pet(client)
+    r = client.get("/animals/1/today")
+    assert r.headers["X-Frame-Options"] == "DENY" and "frame-ancestors 'none'" in r.headers["Content-Security-Policy"]
+    assert r.headers["X-Content-Type-Options"] == "nosniff"
+    cookie = r.headers.get("Set-Cookie", "")
+    assert "SameSite=Lax" in cookie and "Secure" not in cookie   # plain http on the local copy
+    secure = client.get("/animals/1/today", base_url="https://localhost").headers.get("Set-Cookie", "")
+    assert "Secure" in secure
+
+
+def test_vet_pdf_survives_a_dollar_sign_in_an_event_title(client):
+    _pet(client)
+    for d in range(20):
+        _checkin(client, d)
+    client.post("/animals/1/events/new", data={"event_date": (TODAY - timedelta(days=5)).isoformat(),
+                                               "type": "vet_visit", "title": "Bloods $120 and $40 for $}$ tablets"})
+    r = client.get("/animals/1/export.pdf")
+    assert r.status_code == 200 and r.data[:4] == b"%PDF"
+
+
+def test_month_old_records_do_not_read_as_the_last_seven_days(client):
+    _pet(client)
+    for d in range(240, 247):
+        _checkin(client, d, each=4, status="bad")
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "of the last 7 logged days were marked as bad" not in html
+    assert "share these changes with your veterinarian" not in html
+
+
+def test_future_dated_entry_does_not_hide_todays_check_in(client, app):
+    _pet(client)
+    _checkin(client, 0)
+    with app.app_context():
+        entries.save_entry(1, TODAY + timedelta(days=3), "good")   # a clock that was ahead
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "No check-in recorded today" not in html
+
+
+def test_check_in_with_only_a_rejected_photo_leaves_no_empty_day(client, app):
+    _pet(client)
+    r = client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "scores_included": "0",
+                                                "photos": (io.BytesIO(b"not an image"), "notes.txt")},
+                    content_type="multipart/form-data")
+    assert r.status_code == 400
+    with app.app_context():
+        assert entries.get_entry_for_date(1, TODAY) is None
+
+
+def test_a_passed_pets_check_ins_cannot_be_deleted(client, app):
+    _pet(client)
+    _checkin(client, 3)
+    client.post("/animals/1/passed", data={"passed_date": TODAY.isoformat()})
+    r = client.post("/entries/1/delete")
+    assert r.status_code == 302
+    with app.app_context():
+        assert entries.get_entry(1) is not None
+
+
+def test_no_check_in_before_the_birth_date_and_no_birth_date_after_the_first_check_in(client):
+    _pet(client, birth_date=(TODAY - timedelta(days=10)).isoformat())
+    r = client.post("/animals/1/checkin", data={"entry_date": (TODAY - timedelta(days=100)).isoformat(), "day_status": "good"})
+    assert r.status_code == 400 and "birth date" in r.get_data(as_text=True)
+    _checkin(client, 5)
+    r = client.post("/animals/1/edit", data={"name": "Maggie", "species": "dog", "birth_date": (TODAY - timedelta(days=2)).isoformat()})
+    assert r.status_code == 400 and "first check-in" in r.get_data(as_text=True)
+
+
+def test_phone_port_outside_the_valid_range_falls_back(app):
+    from app import phone as ph
+    with app.app_context():
+        ph.prefs.update(phone_port=70000)
+        assert ph.port_is_free("127.0.0.1", 70000) is False   # no crash
+        assert 1 <= ph.port() <= 65535
+
+
+def test_new_record_defaults_to_thirty_days_and_is_not_scolded_for_days_before_it(client):
+    _pet(client)
+    for d in range(6):
+        _checkin(client, d)
+    html = client.get("/animals/1/trends").get_data(as_text=True)
+    assert "0 not logged in this range" in html
+    assert 'class="chip active" href="/animals/1/trends?range=30"' in html
+    for d in range(30, 40):
+        _checkin(client, d)
+    html = client.get("/animals/1/trends").get_data(as_text=True)
+    assert 'class="chip active" href="/animals/1/trends?range=90"' in html
+
+
+def test_partly_scored_day_says_how_many_categories_it_covers(client):
+    _pet(client)
+    client.post("/animals/1/checkin", data={"entry_date": TODAY.isoformat(), "day_status": "good",
+                                            "hurt": "3", "hurt_set": "1", "happiness": "3", "happiness_set": "1"})
+    html = client.get("/animals/1/today").get_data(as_text=True)
+    assert "3.0 / 10 (2 of 7 scored)" in html
+    _checkin(client, 0, each=6)
+    assert "of 7 scored" not in client.get("/animals/1/today").get_data(as_text=True)
+
+
+def test_event_without_its_own_title_shows_its_type_once(client):
+    _pet(client)
+    client.post("/animals/1/events/new", data={"event_date": TODAY.isoformat(), "type": "vet_visit", "title": ""})
+    html = unescape(client.get("/animals/1/events").get_data(as_text=True))
+    label = events_module.EVENT_LABELS["vet_visit"]
+    assert html.count(label) == 1
+
+
+def test_calendar_lets_a_missed_day_be_filled_in(client):
+    _pet(client)
+    _checkin(client, 1)
+    html = client.get("/animals/1/calendar").get_data(as_text=True)
+    assert f'class="empty" href="/animals/1/log?date={(TODAY - timedelta(days=2)).isoformat()}"' in html
+    client.post("/animals/1/passed", data={"passed_date": TODAY.isoformat()})
+    assert 'class="empty"' not in client.get("/animals/1/calendar").get_data(as_text=True)
+
+
+def test_baseline_revisit_leaves_the_sliders_usable(client):
+    _pet(client)
+    client.post("/animals/1/baseline", data={"hurt": "8", "hurt_set": "1"})
+    html = client.get("/animals/1/baseline").get_data(as_text=True)
+    assert 'class="unsure" data-for="base-hunger" checked' not in html and "checked> Unsure" not in html
+    assert "back then?" in html and "seem today?" not in html
+
+
+def test_pdf_drops_emoji_rather_than_printing_boxes():
+    assert pdf._esc("Sits on my lap \U0001F408 & naps") == "Sits on my lap &amp; naps"

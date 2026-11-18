@@ -7,7 +7,7 @@ from flask import Blueprint, abort, render_template, request
 from .. import analytics as an
 from .. import baseline as bl
 from .. import charts, entries, events, insights, markers, scoring
-from ..helpers import MAX_YEAR, MIN_YEAR, animal_or_404, parse_date, resolve_range
+from ..helpers import MAX_YEAR, MIN_YEAR, animal_or_404, counted_from, default_range, parse_date, resolve_range
 
 bp = Blueprint("trends", __name__)
 
@@ -16,9 +16,10 @@ bp = Blueprint("trends", __name__)
 def trends(animal_id: int):
     animal = animal_or_404(animal_id)
     end_default = animal.passed_date or date.today()
-    start, end, preset = resolve_range(request.args.get("range"), request.args.get("start"),
-                                       request.args.get("end"), today=end_default, default="90")
     all_entries = entries.list_entries(animal_id)
+    start, end, preset = resolve_range(request.args.get("range"), request.args.get("start"),
+                                       request.args.get("end"), today=end_default,
+                                       default=default_range(all_entries, end_default))
     rows = [e for e in all_entries if (start is None or e.entry_date >= start) and e.entry_date <= end]
     base = bl.get_baseline(animal_id)
     event_list = events.list_events(animal_id, start=start, end=end, newest_first=False)
@@ -32,7 +33,7 @@ def trends(animal_id: int):
         cat_summaries.append({"key": key, "label": label, "n": len(pts),
                               "latest": pts[-1].value if pts else None, "comparison": comp,
                               "baseline": getattr(base, key) if base else None})
-    counts = an.day_counts(rows, start or (rows[-1].entry_date if rows else end), end)
+    counts = an.day_counts(rows, counted_from(start, all_entries, end), end)
     rates = an.marker_rates(all_entries, responses, marker_list, end - timedelta(days=29), end)
     return render_template(
         "trends.html", animal=animal, start=start, end=end, preset=preset,
@@ -52,8 +53,9 @@ def category(animal_id: int, key: str):
     if key not in scoring.CATEGORY_KEYS:
         abort(404)
     end_default = animal.passed_date or date.today()
-    start, end, preset = resolve_range(request.args.get("range"), None, None, today=end_default, default="90")
     all_entries = entries.list_entries(animal_id)
+    start, end, preset = resolve_range(request.args.get("range"), None, None, today=end_default,
+                                       default=default_range(all_entries, end_default))
     rows = [e for e in all_entries if (start is None or e.entry_date >= start) and e.entry_date <= end]
     base = bl.get_baseline(animal_id)
     pts = an.category_points(rows, key)

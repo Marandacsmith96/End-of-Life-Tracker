@@ -14,6 +14,8 @@ from .events import Event, TREATMENT_TYPES
 from .safety import MAX_GUIDANCE, guard
 from .scoring import CATEGORY_KEYS, CATEGORY_LABELS
 
+RECENT_WINDOW_DAYS = 60   # observations about "the last N logged days" look no further back than this
+
 # How the trend classification is described to the owner. Cautious on purpose.
 TREND_TEXT = {
     "insufficient_data": "There isn't enough information yet to identify a clear pattern.",
@@ -64,8 +66,11 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
                        "attention" if cls.kind in ("gradual_down", "increased_variability") else "info",
                        numbers))
 
-    # 2. Good / bad days, last 7 logged days.
-    statuses = [e for e in sorted(entries, key=lambda e: e.entry_date) if e.day_status and e.entry_date <= end][-7:]
+    # 2. Good / bad days, last 7 logged days (within the recent window: a month-old
+    # record must not read as "the last 7 days" on today's page).
+    recent_from = end - timedelta(days=RECENT_WINDOW_DAYS)
+    statuses = [e for e in sorted(entries, key=lambda e: e.entry_date)
+                if e.day_status and recent_from <= e.entry_date <= end][-7:]
     if len(statuses) >= 5:
         not_good = sum(1 for e in statuses if e.day_status != "good")
         bad = sum(1 for e in statuses if e.day_status == "bad")
@@ -117,7 +122,7 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
             base_value = getattr(baseline, key)
             if base_value is None:
                 continue
-            pts = an.category_points(entries, key)
+            pts = [p for p in an.category_points(entries, key) if p.day >= recent_from]
             below, n = an.below_baseline(pts, base_value, end=end)
             if n >= 8 and below / n >= 0.7:
                 out.append(Insight(
@@ -158,7 +163,7 @@ def generate(entries: list[Entry], end: date, name: str, markers=(), responses=N
     # 6. Before/after a treatment event (comfort = Hurt score).
     comfort = an.category_points(entries, "hurt")
     for ev in sorted(events, key=lambda e: e.event_date, reverse=True):
-        if ev.type not in TREATMENT_TYPES or ev.event_date > end:
+        if ev.type not in TREATMENT_TYPES or not (recent_from <= ev.event_date <= end):
             continue
         eff = an.event_effect(comfort, ev.event_date)
         if eff.usable and eff.delta is not None and abs(eff.delta) >= 1.0:

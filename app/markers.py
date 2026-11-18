@@ -23,7 +23,7 @@ SUGGESTIONS = {
         "Finishes dinner",
         "Jumps onto the bed or windowsill",
         "Uses the litter box normally",
-        "Grooms herself",
+        "Grooms as usual",
         "Seeks affection",
         "Plays or chases something",
         "Sleeps comfortably",

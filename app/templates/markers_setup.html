@@ -19,7 +19,7 @@
     <p class="hint">Anything specific to {{ animal.name }}: "Walks to the barn gate", "Sleeps on my pillow", "Comes when the treat jar opens".</p>
     {% set custom = labels|reject('in', suggestions)|list %}
     {% for i in range(3) %}
-      <input type="text" name="labels" maxlength="80" value="{{ custom[i] if i < custom|length else '' }}" placeholder="Something {{ animal.name }} does on a good day" aria-label="Custom behavior {{ i + 1 }}">
+      <input type="text" name="labels" maxlength="80" value="{{ custom[i] if i < custom|length else '' }}" placeholder="e.g. greets me at the door" aria-label="Custom behavior {{ i + 1 }}">
     {% endfor %}
   </fieldset>
   <p class="muted small" id="marker-count"></p>

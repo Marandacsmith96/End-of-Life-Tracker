@@ -1,5 +1,6 @@
 """Optional passcode. Active when PET_QOL_PASSCODE is set (a hosted copy), and
 for requests that reach the app from another device through phone access."""
+import hashlib
 import hmac
 import time
 
@@ -37,8 +38,18 @@ def _client_address(remote: bool) -> str:
     proxy, the address that proxy reports."""
     if remote:
         return request.remote_addr or ""
+    for header in ("Fly-Client-IP", "CF-Connecting-IP", "True-Client-IP"):   # set by the host, not the client
+        if request.headers.get(header):
+            return request.headers[header]
+    # X-Forwarded-For: the host's proxy appends the real client after anything
+    # the client sent, so the rightmost hop is the one to trust.
     route = request.access_route
-    return (route[0] if route else request.remote_addr) or ""
+    return (route[-1] if route else request.remote_addr) or ""
+
+
+def _hosted_fingerprint() -> str:
+    """Identifies the hosted passcode without storing it in the cookie."""
+    return hashlib.sha256((current_app.config.get("PASSCODE") or "").encode("utf-8")).hexdigest()[:16]
 
 
 def is_unlocked() -> bool:
@@ -47,7 +58,8 @@ def is_unlocked() -> bool:
     if phone.is_remote_request():
         # A phone stays unlocked only while the passcode it unlocked under is current.
         return session.get("phone_generation") == phone.generation()
-    return True
+    # Likewise a hosted copy: changing PET_QOL_PASSCODE signs everyone out.
+    return session.get("passcode_fingerprint") == _hosted_fingerprint()
 
 
 def can_lock() -> bool:
@@ -71,6 +83,8 @@ def login():
             session.permanent = True
             if remote:
                 session["phone_generation"] = phone.generation()
+            else:
+                session["passcode_fingerprint"] = _hosted_fingerprint()
             phone.note_success(addr)
             return redirect(safe_next(request.args.get("next")) or url_for("dashboard.home"))
         phone.note_failure(addr)

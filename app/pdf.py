@@ -1,5 +1,6 @@
 """The one-page vet summary (ReportLab), with an optional appendix."""
 import io
+import re
 from pathlib import Path
 from datetime import date, timedelta
 
@@ -73,8 +74,12 @@ def _fmt(day: date) -> str:
     return f"{day:%b} {day.day}, {day.year}"
 
 
+_NO_GLYPH = re.compile("[\U00010000-\U0010FFFF\uFE0F\u200D]")   # emoji and their joiners: DejaVu has no glyphs for them
+
+
 def _esc(text) -> str:
-    return str(text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    text = _NO_GLYPH.sub("", str(text or "")).replace("  ", " ")
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _image(png: bytes, width: float) -> Image:
@@ -224,7 +229,7 @@ def build_pdf(animal: Animal, entries: list[Entry], all_entries: list[Entry], me
     # Events + medications side by side ----------------------------------------
     left_items = [Paragraph("Events", st["h2"])]
     if events:
-        rows = [[f"{e.event_date:%b} {e.event_date.day}", Paragraph(f"{_esc(e.title)} <font color='#5c6b84'>({_esc(e.type_label)})</font>", st["cell"])]
+        rows = [[f"{e.event_date:%b} {e.event_date.day}", Paragraph(_esc(e.title) + (f" <font color='#5c6b84'>({_esc(e.type_label)})</font>" if e.title != e.type_label else ""), st["cell"])]
                 for e in sorted(events, key=lambda e: e.event_date, reverse=True)[:8]]
         if len(events) > 8:
             rows.append(["", Paragraph(f"… and {len(events) - 8} more in the app.", st["small"])])

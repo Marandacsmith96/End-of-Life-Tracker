@@ -4,10 +4,19 @@ from datetime import date
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
-from .. import entries, markers, meds, photos, scoring, signs
+from .. import entries, markers, meds, models, photos, scoring, signs
 from ..helpers import animal_or_404, parse_date
 
 bp = Blueprint("entries", __name__)
+
+
+def _kept_in_memory(animal_id: int):
+    """A passed pet's record is kept as it is: the redirect to send instead, or None."""
+    animal = models.get_animal(animal_id)
+    if animal is not None and animal.passed:
+        flash(f"{animal.name}'s record is kept in memory, so check-ins can no longer be added or changed.")
+        return redirect(url_for("dashboard.today", animal_id=animal_id))
+    return None
 
 
 def _entry_or_404(entry_id: int) -> entries.Entry:
@@ -17,13 +26,16 @@ def _entry_or_404(entry_id: int) -> entries.Entry:
     return entry
 
 
-def _parse_common(form) -> tuple[dict, list[str]]:
+def _parse_common(form, animal=None) -> tuple[dict, list[str]]:
     errors: list[str] = []
     entry_date = parse_date(form.get("entry_date"))
     if entry_date is None:
         errors.append("Please choose a valid date.")
     elif entry_date > date.today():
         errors.append("You can't record a day that hasn't happened yet.")
+    elif animal is not None and animal.birth_date and entry_date < animal.birth_date:
+        errors.append(f"That is before {animal.name}'s birth date ({animal.birth_date:%b} {animal.birth_date.day}, "
+                      f"{animal.birth_date.year}). Check the date, or change the birth date on the pet's settings page.")
     day_status = form.get("day_status") or None
     if day_status is not None and day_status not in entries.DAY_STATUS_LABELS:
         errors.append("Please choose good, bad, or mixed.")
@@ -147,7 +159,8 @@ def _render_checkin(animal, entry, values, quick: bool, status=200, start_step=N
             today=date.today().isoformat(), start_step=start_step,
             has_scores=entry.has_scores if entry else False,
             sign_list=signs.ASKED, sign_values=signs.signs_on(animal.id, shown),
-            category_icons=scoring.CATEGORY_ICONS, nice_date=f"{shown:%A, %B} {shown.day}",
+            watched_keys=[s.key for s in signs.watched_signs(entries.list_medications(animal.id, kind="supplement"))],
+            category_icons=scoring.CATEGORY_ICONS, nice_date=f"{shown:%A, %B} {shown.day}", is_today=shown == date.today(),
         ),
         status,
     )
@@ -166,7 +179,7 @@ def checkin(animal_id: int):
         return redirect(url_for("dashboard.today", animal_id=animal_id))
 
     if request.method == "POST":
-        common, errors = _parse_common(request.form)
+        common, errors = _parse_common(request.form, animal)
         scores, score_errors = _parse_scores(request.form)
         extras, extra_errors = _parse_extras(request.form)
         sign_values, sign_errors = signs.parse_form(request.form)
@@ -182,9 +195,15 @@ def checkin(animal_id: int):
         # A form without the day-status field at all (older page, crafted post)
         # leaves an existing status alone rather than clearing it.
         day_status = common["day_status"] if "day_status" in request.form else entries.KEEP
+        was_new = entries.get_entry_for_date(animal_id, common["entry_date"]) is None
         entry_id = entries.save_entry(animal_id, common["entry_date"], day_status, scores, **extras)
         _save_markers_and_meds(animal_id, entry_id, request.form)
         saved_photos = _save_photos(entry_id, request.files.getlist("photos"))
+        if was_new and not saved_photos and not (common["day_status"] or scores or sign_values or any(extras.values())):
+            # The only content was a photo that was refused: leave no empty day behind.
+            entries.delete_entry(entry_id)
+            photos.remove_entry_folder(entry_id)
+            return _render_checkin(animal, None, request.form, quick=False, status=400)
         session["current_animal_id"] = animal_id
         message = f"Saved {animal.name}'s check-in for {common['entry_date']:%B} {common['entry_date'].day}."
         if saved_photos:
@@ -209,7 +228,7 @@ def quick_checkin(animal_id: int):
         flash(f"{animal.name}'s profile is archived. Restore it to add new check-ins.")
         return redirect(url_for("dashboard.today", animal_id=animal_id))
     if request.method == "POST":
-        common, errors = _parse_common(request.form)
+        common, errors = _parse_common(request.form, animal)
         if not common["day_status"]:
             errors.append("Please choose good, bad, or mixed.")
         if errors:
@@ -230,6 +249,8 @@ def quick_checkin(animal_id: int):
 @bp.post("/entries/<int:entry_id>/delete")
 def delete_entry(entry_id: int):
     entry = _entry_or_404(entry_id)
+    if (kept := _kept_in_memory(entry.animal_id)) is not None:
+        return kept
     for photo in entries.list_entry_photos(entry_id):
         photos.delete_photo_file(photo.file_path)
     photos.remove_entry_folder(entry_id)
@@ -244,6 +265,8 @@ def delete_entry_photo(photo_id: int):
     if photo is None:
         abort(404)
     entry = _entry_or_404(photo.entry_id)
+    if (kept := _kept_in_memory(entry.animal_id)) is not None:
+        return kept
     photos.delete_photo_file(photo.file_path)
     entries.delete_entry_photo(photo_id)
     flash("Photo removed.")

@@ -6,7 +6,7 @@ from flask import Blueprint, g, redirect, render_template, request, session, url
 from .. import analytics as an
 from .. import baseline as bl
 from .. import caregiver, charts, entries, events, insights, markers, models, scoring
-from ..helpers import animal_or_404, current_or_choose, redirect_to_pet, resolve_range
+from ..helpers import animal_or_404, counted_from, current_or_choose, default_range, redirect_to_pet, resolve_range
 
 bp = Blueprint("dashboard", __name__)
 
@@ -52,15 +52,16 @@ def today(animal_id: int):
     session["current_animal_id"] = animal_id
     g.current_animal = animal  # so this response's navigation already reflects the choice
     end = animal.passed_date or date.today()
-    start, _, preset = resolve_range(request.args.get("range"), None, None, today=end, default="90")
     all_entries = entries.list_entries(animal_id)
+    start, _, preset = resolve_range(request.args.get("range"), None, None, today=end,
+                                     default=default_range(all_entries, end))
     in_range = [e for e in all_entries if (start is None or e.entry_date >= start) and e.entry_date <= end]
     today_entry = entries.get_entry_for_date(animal_id, date.today()) if not animal.archived else None
     marker_list = markers.list_markers(animal_id)
     responses = markers.responses_for_animal(animal_id)
     base = bl.get_baseline(animal_id)
     event_list = events.list_events(animal_id, start=start, end=end, newest_first=False)
-    month = an.day_counts(all_entries, end - timedelta(days=29), end)
+    month = an.day_counts(all_entries, counted_from(end - timedelta(days=29), all_entries, end), end)
     week = an.day_counts(all_entries, end - timedelta(days=6), end)
     classification, trend_text = insights.trend_summary(all_entries, end, animal.name)
     observations = insights.generate(all_entries, end, animal.name, marker_list, responses, base,

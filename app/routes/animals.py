@@ -1,6 +1,6 @@
 """Pets: add, edit, photo, choose, settings, archive, and the passing flow."""
 import re
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import urlsplit
 
 from flask import (
@@ -78,6 +78,10 @@ def edit_animal(animal_id: int):
         values, errors = _parse_form(request.form)
         if values["birth_date"] and animal.passed_date and values["birth_date"] > animal.passed_date:
             errors.append(f"Birth date cannot be after {animal.name}'s passing date.")
+        first = entries.list_entries(animal_id, end=values["birth_date"] - timedelta(days=1), limit=1) if values["birth_date"] else []
+        if first:
+            errors.append(f"Birth date cannot be after {animal.name}'s first check-in "
+                          f"({first[-1].entry_date:%b} {first[-1].entry_date.day}, {first[-1].entry_date.year}).")
         if errors:
             for message in errors:
                 flash(message)

@@ -82,6 +82,7 @@ def trend_chart(series: dict, start: date, end: date) -> bytes:
         when = date.fromisoformat(ev["date"])
         ax.axvline(when, color=FAINT, linewidth=0.8, linestyle=(0, (2, 3)), zorder=1)
         ax.text(when, 9.8 - 0.85 * (i % 3), ev["title"][:22], fontsize=5.5, color=MUTED, ha="left", va="top",
+                parse_math=False,   # "$40 for $tablets" is a price, not a formula
                 bbox=dict(facecolor="white", edgecolor="none", pad=0.6, alpha=0.8))
     ax.set_ylim(0, 10)
     ax.set_yticks(range(0, 11, 2))

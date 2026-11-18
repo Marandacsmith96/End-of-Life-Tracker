@@ -38,6 +38,10 @@
                 <span class="num">{{ cell.date.day }}</span>
                 <span class="glyph {{ status or 'logged' }}" aria-hidden="true"></span>
               </a>
+            {% elif not cell.future and not animal.archived %}
+              <a class="empty" href="{{ url_for('entries.checkin', animal_id=animal.id, date=cell.date.isoformat()) }}" aria-label="{{ cell.date.strftime('%B') }} {{ cell.date.day }}: no entry, add one">
+                <span class="num">{{ cell.date.day }}</span>
+              </a>
             {% else %}
               <span class="num" aria-label="{{ cell.date.strftime('%B') }} {{ cell.date.day }}: {{ 'future' if cell.future else 'no entry' }}">{{ cell.date.day }}</span>
             {% endif %}

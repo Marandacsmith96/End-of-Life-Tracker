@@ -45,6 +45,10 @@ class Baseline:
         return round(sum(values) / len(values), 2) if values else None
 
     @property
+    def scored_n(self) -> int:
+        return sum(1 for v in self.scores.values() if v is not None)
+
+    @property
     def label(self) -> str:
         when = f"approximately {self.approximate_date:%B} {self.approximate_date.year}" \
             if self.approximate_date else "approximately 6 months ago"

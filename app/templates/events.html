@@ -12,7 +12,7 @@
       <li>
         <span class="date">{{ ev.event_date.strftime('%b') }} {{ ev.event_date.day }}, {{ ev.event_date.year }}</span>
         <div>
-          <strong>{{ ev.title }}</strong> <span class="muted small">{{ ev.type_label }}</span>
+          <strong>{{ ev.title }}</strong>{% if ev.title != ev.type_label %} <span class="muted small">{{ ev.type_label }}</span>{% endif %}
           {% if ev.note %}<p class="muted">{{ ev.note }}</p>{% endif %}
           <div class="row-actions">
             <a class="link small" href="{{ url_for('events.edit', event_id=ev.id) }}">Edit</a>

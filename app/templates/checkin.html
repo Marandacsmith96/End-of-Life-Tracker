@@ -8,7 +8,7 @@
 </div>
 
 <form method="post" class="form entry-form" enctype="multipart/form-data" id="entry-form"
-      data-guided="{{ '0' if entry and not start_step else '1' }}" data-start="{{ start_step or '' }}">
+      data-guided="{{ '0' if entry and not start_step else '1' }}" data-start="{{ start_step or '' }}" data-day-label="{{ 'Today' if is_today else nice_date }}">
   <div class="progress" id="progress" hidden>
     <div class="progress-bar"><span id="progress-fill"></span></div>
     <span class="progress-label" id="progress-label"></span>
@@ -86,12 +86,9 @@
   </fieldset>
 
   {# Other signs: the things a supplement or a diet change is usually meant to help. Optional, every day. #}
-  <fieldset class="signs">
-    <legend class="visually-hidden">Other signs</legend>
-    {% for s in sign_list %}
+  {% macro sign_row(s, with_skip) %}
       {% set is_set = (values.get('sign_' ~ s.key ~ '_set') == '1') or (s.key in sign_values and not request.form) %}
       {% set current = values.get('sign_' ~ s.key, sign_values.get(s.key, 5)) %}
-      <div class="card panel step sign-step" data-step="sign-{{ s.key }}" data-title="{{ s.label }}">
         <div class="score-row">
           <div class="q-head">
             <span class="q-tile cat-sign">{{ icon(s.icon, 'icon') }}</span>
@@ -100,16 +97,31 @@
           </div>
           <input type="hidden" name="sign_{{ s.key }}_set" id="set-sign-{{ s.key }}" value="{{ '1' if is_set else '0' }}">
           <div class="slider">
-            <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ current }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}">
+            <input type="range" class="{{ '' if is_set else 'unset' }}" id="sign-{{ s.key }}" name="sign_{{ s.key }}" min="0" max="10" step="1" value="{{ current }}" aria-describedby="anchors-sign-{{ s.key }}" data-set-flag="set-sign-{{ s.key }}" data-title="{{ s.label }}">
             <output for="sign-{{ s.key }}">{{ current if is_set else '–' }}</output>
           </div>
           <div class="anchors" id="anchors-sign-{{ s.key }}"><span>0 · {{ s.low }}</span><span>10 · {{ s.high }}</span></div>
-          {% if loop.first %}
+          {% if with_skip %}
             <p class="hint skip-hint">These are the things supplements and diet changes are usually meant to help. Score what you noticed, or leave it. <button class="link" type="button" id="skip-signs">Skip the other signs today</button></p>
           {% endif %}
         </div>
+  {% endmacro %}
+  {# Signs a supplement is watching get a step each; the rest share one step, so a
+     pet on nothing answers one optional panel rather than five. #}
+  <fieldset class="signs">
+    <legend class="visually-hidden">Other signs</legend>
+    {% set watched_list = sign_list | selectattr('key', 'in', watched_keys) | list %}
+    {% set other_list = sign_list | rejectattr('key', 'in', watched_keys) | list %}
+    {% for s in watched_list %}
+      <div class="card panel step sign-step" data-step="sign-{{ s.key }}" data-title="{{ s.label }}">
+        {{ sign_row(s, loop.first) }}
       </div>
     {% endfor %}
+    {% if other_list %}
+      <div class="card panel step sign-step sign-group" data-step="signs-other" data-title="Other signs">
+        {% for s in other_list %}{{ sign_row(s, loop.first and not watched_list) }}{% endfor %}
+      </div>
+    {% endif %}
   </fieldset>
 
   {# Anything different? #}
@@ -167,7 +179,7 @@
 
   {# Step 11: review #}
   <div class="card panel step review" data-step="review" data-title="Review">
-    <h2 class="review-title">Today at a glance</h2>
+    <h2 class="review-title">{{ 'Today' if is_today else nice_date }} at a glance</h2>
     <ul class="review-list" id="review-list"></ul>
     <p class="hint">Use Back to change anything.</p>
   </div>

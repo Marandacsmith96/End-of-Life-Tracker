@@ -106,7 +106,7 @@
     reviewList.innerHTML = "";
     function add(k, v, wide) { var li = document.createElement("li"); if (wide) li.className = "wide"; li.innerHTML = "<span>" + k + "</span><strong>" + v + "</strong>"; reviewList.appendChild(li); }
     var status = form.querySelector("input[name=day_status]:checked");
-    add("Today", status ? status.parentElement.textContent.trim() : "Not rated", true);
+    add(form.dataset.dayLabel || "Today", status ? status.parentElement.textContent.trim() : "Not rated", true);
     var done = [], all = form.querySelectorAll("input[name=markers]");
     all.forEach(function (i) { if (i.checked) done.push(i.parentElement.textContent.trim()); });
     if (all.length) add("Behaviors", done.length ? done.join(", ") : "None today", true);
@@ -122,9 +122,8 @@
       add("Scores", "Skipped today", true);
     }
     var signsScored = [];
-    form.querySelectorAll(".sign-step").forEach(function (s) {
-      var r = s.querySelector("input[type=range]");
-      if (!r.classList.contains("unset")) signsScored.push(s.dataset.title + " " + r.value);
+    form.querySelectorAll(".sign-step input[type=range]").forEach(function (r) {
+      if (!r.classList.contains("unset")) signsScored.push(r.dataset.title + " " + r.value);
     });
     add("Other signs", signsScored.length ? signsScored.join(", ") : "None scored", true);
     var notes = form.querySelector("textarea[name=notes]");

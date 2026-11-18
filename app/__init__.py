@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from flask import Flask, abort, g, redirect, render_template, request, session, url_for
+from flask.sessions import SecureCookieSessionInterface
 from werkzeug.routing import IntegerConverter, ValidationError
 
 from . import db, entries, models, phone, safety, scoring, version
@@ -25,6 +26,14 @@ class IdConverter(IntegerConverter):
         return number
 
 
+class _SecureWhenHttps(SecureCookieSessionInterface):
+    """The session cookie is marked Secure whenever it was issued over HTTPS
+    (the hosted copy), and plain on the local http://127.0.0.1 address."""
+
+    def get_cookie_secure(self, app) -> bool:
+        return bool(request and request.is_secure)
+
+
 def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.url_map.converters["int"] = IdConverter
@@ -41,8 +50,22 @@ def create_app(test_config: dict | None = None) -> Flask:
     )
     if test_config:
         app.config.update(test_config)
+    if not app.config.get("SESSION_COOKIE_SAMESITE"):
+        app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.session_interface = _SecureWhenHttps()
 
     db.init_app(app)
+
+    @app.after_request
+    def harden(response):
+        """No page of the app may be framed by another site (its one-click
+        buttons would be clickable through the frame), and browsers must not
+        second-guess content types."""
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Content-Security-Policy", "frame-ancestors 'none'")
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
     if not app.config["SECRET_KEY"]:
         app.config["SECRET_KEY"] = _load_or_create_secret(Path(app.config["DATA_DIR"]))
 
@@ -152,7 +175,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         g.checkin_prompt = False
         if g.current_animal and not g.current_animal.archived:
             today = date.today()
-            latest = entries.list_entries(g.current_animal.id, limit=1)
+            latest = entries.list_entries(g.current_animal.id, end=today, limit=1)
             g.today_logged = bool(latest) and latest[0].entry_date == today
             interval = models.REMINDER_DAYS.get(g.current_animal.reminder)
             if interval and not g.today_logged:

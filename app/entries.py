@@ -47,6 +47,15 @@ class Entry:
         return sum(self.scored_values) if self.has_scores else None
 
     @property
+    def scored_n(self) -> int:
+        return len(self.scored_values)
+
+    @property
+    def partial(self) -> bool:
+        """Scored, but not on every category, so the mean is of a subset."""
+        return 0 < self.scored_n < len(self.scores)
+
+    @property
     def mean(self) -> float | None:
         """Overall quality-of-life score, 0-10: mean of whichever categories were scored."""
         values = self.scored_values

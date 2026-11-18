@@ -11,15 +11,15 @@
 <section class="card block">
   <h2>Quality-of-life scores</h2>
   <div class="table-scroll">
-  <table class="table compare">
+  <table class="table compare stack">
     <thead><tr><th>Category</th><th>Previous period</th><th>Recent period</th><th></th></tr></thead>
     <tbody>
       {% for c in prep.cats %}
         <tr>
-          <td>{{ c.label }}</td>
-          <td>{% if c.previous is not none %}{{ '%.1f'|format(c.previous) }} <span class="muted small">({{ c.previous_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
-          <td>{% if c.recent is not none %}{{ '%.1f'|format(c.recent) }} <span class="muted small">({{ c.recent_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
-          <td class="small verdict {{ 'down' if c.text.startswith('Lower') else 'up' if c.text.startswith('Higher') else 'muted' }}">{{ c.text }}</td>
+          <td data-label="Category"><strong>{{ c.label }}</strong></td>
+          <td data-label="Previous period">{% if c.previous is not none %}{{ '%.1f'|format(c.previous) }} <span class="muted small">({{ c.previous_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td data-label="Recent period">{% if c.recent is not none %}{{ '%.1f'|format(c.recent) }} <span class="muted small">({{ c.recent_n }})</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td data-label="" class="small verdict {{ 'down' if c.text.startswith('Lower') else 'up' if c.text.startswith('Higher') else 'muted' }}">{{ c.text }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -51,7 +51,7 @@
 {% if prep.events %}
 <section class="card block">
   <h2>Events in this period</h2>
-  <ul class="event-list">{% for ev in prep.events %}<li><span class="date">{{ ev.event_date.strftime('%b') }} {{ ev.event_date.day }}</span> <span>{{ ev.title }}</span> <span class="muted small">{{ ev.type_label }}</span></li>{% endfor %}</ul>
+  <ul class="event-list">{% for ev in prep.events %}<li><span class="date">{{ ev.event_date.strftime('%b') }} {{ ev.event_date.day }}</span> <span>{{ ev.title }}</span>{% if ev.title != ev.type_label %} <span class="muted small">{{ ev.type_label }}</span>{% endif %}</li>{% endfor %}</ul>
 </section>
 {% endif %}
 

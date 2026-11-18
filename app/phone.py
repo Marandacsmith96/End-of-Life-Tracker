@@ -36,9 +36,10 @@ def is_enabled() -> bool:
 
 def port() -> int:
     try:
-        return int(prefs.get("phone_port", DEFAULT_PORT))
+        value = int(prefs.get("phone_port", DEFAULT_PORT))
     except (TypeError, ValueError):
         return DEFAULT_PORT
+    return value if 1 <= value <= 65535 else DEFAULT_PORT
 
 
 def enable(passcode: str) -> None:
@@ -140,7 +141,7 @@ def port_is_free(host: str, port: int) -> bool:
             probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         probe.bind((host, port))
         return True
-    except OSError:
+    except (OSError, OverflowError):   # OverflowError: a port outside 0-65535
         return False
     finally:
         probe.close()

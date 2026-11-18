@@ -712,13 +712,15 @@ h2 { font-weight: 750; }
 .sup-card { scroll-margin-top: 64px; }   /* "#supplement-N" lands below the sticky top bar */
 .sup-card.inactive { opacity: .75; }
 .sup-card .section-head h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
-@media (max-width: 700px) {   /* the vet page's supplements table stacks into one card per supplement */
-  .table.vet-sup thead { display: none; }
-  .table.vet-sup, .table.vet-sup tbody, .table.vet-sup tr, .table.vet-sup td { display: block; width: 100%; }
-  .table.vet-sup tr { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; margin-bottom: 10px; }
-  .table.vet-sup td { border: 0; padding: 6px 0; }
-  .table.vet-sup td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 2px; }
-  .table.vet-sup td[data-label="Supplement"]::before { display: none; }
+@media (max-width: 700px) {   /* tables that would squeeze on a phone stack into one card per row */
+  .table.vet-sup thead, .table.stack thead { display: none; }
+  .table.vet-sup, .table.vet-sup tbody, .table.vet-sup tr, .table.vet-sup td,
+  .table.stack, .table.stack tbody, .table.stack tr, .table.stack td { display: block; width: 100%; }
+  .table.vet-sup tr, .table.stack tr { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; margin-bottom: 10px; }
+  .table.vet-sup td, .table.stack td { border: 0; padding: 6px 0; }
+  .table.vet-sup td[data-label]::before, .table.stack td[data-label]::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 2px; }
+  .table.vet-sup td[data-label="Supplement"]::before, .table.stack td[data-label=""]::before, .table.stack td[data-label="Name"]::before, .table.stack td[data-label="Category"]::before { display: none; }
+  .table.stack td.row-actions { display: flex; gap: 14px; padding-top: 8px; }
 }
 .sup-card h2 .muted { font-weight: 500; font-size: 0.9rem; }
 .sign-view { border-top: 1px solid var(--border); padding: 12px 0 4px; }
@@ -763,3 +765,14 @@ h2 { font-weight: 750; }
 /* ---- Other signs in the daily check-in ---- */
 .q-tile.cat-sign { background: #e9efe6; color: #2f6b4a; }
 .tag.cat-sign { color: #2f6b4a; }
+
+/* Touch screens: every row action and nav item is at least 44px tall. */
+@media (pointer: coarse) {
+  .row-actions .link, .row-actions .link.small, .inline-form .link, .actions.compact .link, .section-head .link.small { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 6px; }
+  .bottom-nav a { min-height: 48px; }
+}
+
+/* Several signs on one check-in step */
+.sign-group .score-row + .score-row { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px; }
+.cal-cell a.empty { color: var(--muted); }
+.cal-cell a.empty:hover .num, .cal-cell a.empty:focus-visible .num { text-decoration: underline; }

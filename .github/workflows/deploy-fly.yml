@@ -34,11 +34,11 @@ jobs:
       FLY_REGION: ${{ vars.FLY_REGION || 'iad' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@1.5
       - name: Check secrets are set
         run: |
           if [ -z "$FLY_API_TOKEN" ]; then echo "::error::Add the FLY_API_TOKEN repository secret first."; exit 1; fi
-          if [ -z "${{ secrets.PET_QOL_PASSCODE }}" ]; then echo "::error::Add the PET_QOL_PASSCODE repository secret first."; exit 1; fi
+          if [ -z "$PET_QOL_PASSCODE" ]; then echo "::error::Add the PET_QOL_PASSCODE repository secret first."; exit 1; fi
       - name: Create the app if it doesn't exist
         run: |
           if flyctl status -a "$FLY_APP" >/dev/null 2>&1; then
@@ -54,7 +54,7 @@ jobs:
             flyctl volumes create data -a "$FLY_APP" --region "$FLY_REGION" --size 1 --yes
           fi
       - name: Set the passcode
-        run: flyctl secrets set -a "$FLY_APP" --stage PET_QOL_PASSCODE="${{ secrets.PET_QOL_PASSCODE }}"
+        run: flyctl secrets set -a "$FLY_APP" --stage PET_QOL_PASSCODE="$PET_QOL_PASSCODE"
       - name: Deploy
         run: flyctl deploy -a "$FLY_APP" --primary-region "$FLY_REGION" --remote-only --ha=false
       - name: Show the address

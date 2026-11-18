@@ -47,6 +47,22 @@ def resolve_range(preset: str | None, start_raw: str | None, end_raw: str | None
     return end - timedelta(days=days - 1), end, preset
 
 
+def default_range(all_entries, end: date) -> str:
+    """The range to show when none was chosen: 30 days while the record is
+    young, so a first week is not a cluster of dots at the edge of 90."""
+    if not all_entries:
+        return "30"
+    first = min(e.entry_date for e in all_entries)
+    return "30" if first > end - timedelta(days=30) else "90"
+
+
+def counted_from(start: date | None, all_entries, end: date) -> date:
+    """Where "not logged" counting begins: the range start, but never before
+    the first check-in, so a new record is not scolded for the days before it."""
+    first = min((e.entry_date for e in all_entries), default=end)
+    return max(start, first) if start else first
+
+
 def current_or_choose():
     """Redirect helper for the shortcut routes (/today, /trends, ...)."""
     if g.current_animal:
