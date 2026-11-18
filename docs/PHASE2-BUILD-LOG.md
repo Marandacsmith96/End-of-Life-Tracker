@@ -257,5 +257,5 @@ above, and it is long.
   with one saved change per milestone or fix and messages that say what
   changed and why.
 - The Windows and Mac downloads on the repository's Releases page.
-- The read-only demo with the three example pets, and `docs/BUILD-LOG.md`
+- The read-only demo with the five example pets, and `docs/BUILD-LOG.md`
   for the full dated notes behind every claim made here.

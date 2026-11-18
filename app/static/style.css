@@ -424,7 +424,7 @@ body { background: radial-gradient(1200px 420px at 50% -120px, #e6edfb 0%, var(-
 .q-tile .icon { width: 28px; height: 28px; stroke-width: 1.7; }
 .q-tile.small { width: 30px; height: 30px; border-radius: 9px; margin-right: 8px; vertical-align: middle; }
 .q-tile.small .icon { width: 17px; height: 17px; stroke-width: 1.9; }
-h1.with-badge { display: flex; align-items: center; gap: 12px; }
+h1.with-tile { display: flex; align-items: center; gap: 12px; }
 .q-tile.cat-hurt { background: var(--cat-hurt-soft); color: var(--cat-hurt); }
 .q-tile.cat-hunger { background: var(--cat-hunger-soft); color: var(--cat-hunger); }
 .q-tile.cat-hydration { background: var(--cat-hydration-soft); color: var(--cat-hydration); }

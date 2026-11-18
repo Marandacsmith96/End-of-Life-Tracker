@@ -40,7 +40,7 @@
 {% if not animal.archived %}
 <section class="card block">
   <h2>Optional check-in reminder</h2>
-  <p class="muted">Shown inside the app as a quiet note. Never a notification, never a streak.</p>
+  <p class="muted">Shown inside the app as a quiet note. Never a notification, never a count of days in a row.</p>
   <form method="post" action="{{ url_for('animals.set_reminder', animal_id=animal.id) }}" class="form">
     <div class="choice-grid">
       {% for value, label in reminders %}
